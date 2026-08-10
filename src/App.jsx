@@ -9,6 +9,8 @@ import Nosotros from './screens/Nosotros.jsx';
 import CandidateProfile from './screens/CandidateProfile.jsx';
 import AdminDashboard from './screens/AdminDashboard.jsx';
 
+
+
 // ─── INITIAL DUMMY DATA ────────────────────────────────────
 const initialJobsData = [
   {
