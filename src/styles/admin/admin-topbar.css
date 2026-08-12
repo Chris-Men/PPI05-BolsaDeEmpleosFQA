@@ -1,0 +1,311 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMIN TOPBAR
+===================================================== */
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.topbar {
+    width: 100%;
+
+    min-height: 85px;
+    height: 85px;
+
+    background: white;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 0 40px;
+
+    box-shadow: var(--shadow);
+
+    position: sticky;
+    top: 0;
+
+    z-index: 10;
+}
+
+
+/* =====================================================
+   TOP LEFT
+===================================================== */
+
+.top-left {
+    min-width: 0;
+}
+
+
+.top-left h1 {
+    color: var(--dark);
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    margin: 0;
+}
+
+
+.top-left span {
+    display: block;
+
+    color: #777;
+
+    font-size: 13px;
+
+    margin-top: 4px;
+}
+
+
+/* =====================================================
+   TOP RIGHT
+===================================================== */
+
+.top-right {
+    display: flex;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search {
+    display: flex;
+
+    align-items: center;
+}
+
+
+.search input {
+    width: 280px;
+
+    border: none;
+    outline: none;
+
+    background: #F1F5F9;
+
+    padding: 14px 18px;
+
+    border-radius: 10px;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    color: var(--text);
+
+    transition: 0.3s;
+}
+
+
+.search input::placeholder {
+    color: #9CA3AF;
+}
+
+
+.search input:focus {
+    background: white;
+
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+
+/* =====================================================
+   NOTIFICATION
+===================================================== */
+
+.notification {
+    width: 48px;
+    height: 48px;
+
+    min-width: 48px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 50%;
+
+    background: #F3F4F6;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+
+    font-size: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+}
+
+
+.notification:hover {
+    background: var(--primary);
+
+    color: white;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   PROFILE
+===================================================== */
+
+.profile {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.profile strong {
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 14px;
+}
+
+
+.profile small {
+    display: block;
+
+    color: #777;
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+/* =====================================================
+   AVATAR
+===================================================== */
+
+.avatar {
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+
+    border-radius: 50%;
+
+    background: var(--primary);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    color: white;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
+===================================================== */
+
+@media (max-width: 1200px) {
+
+    .search input {
+        width: 220px;
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET PEQUEÑA
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .search input {
+        display: none;
+    }
+
+
+    .topbar {
+        padding: 0 25px;
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .topbar {
+        height: auto;
+
+        min-height: 80px;
+
+        padding: 15px 20px;
+
+        gap: 15px;
+    }
+
+
+    .top-left h1 {
+        font-size: 22px;
+    }
+
+
+    .top-left span {
+        font-size: 11px;
+    }
+
+
+    .profile>div:last-child {
+        display: none;
+    }
+
+
+    .avatar {
+        width: 42px;
+        height: 42px;
+
+        min-width: 42px;
+    }
+
+
+    .notification {
+        width: 42px;
+        height: 42px;
+
+        min-width: 42px;
+    }
+
+
+    .top-right {
+        gap: 10px;
+    }
+
+}

@@ -1,11 +1,41 @@
 import { useEffect, useState } from "react";
-import "../styleadmin.css";
 
-function AdminDashboard() {
-    const [activeMenu, setActiveMenu] = useState("Dashboard");
+import AdminSidebar from "../../components/admin/AdminSidebar";
+import AdminTopbar from "../../components/admin/AdminTopbar";
+
+import "../../styles/admin/dashboard.css";
+import "../../styles/admin/admin-layout.css";
+import "../../styles/admin/admin-topbar.css";
+import "../../styles/admin/admin-sidebar.css";
+
+function AdminDashboard({
+    currentUser,
+    handleLogout,
+    adminTab,
+    setAdminTab,
+    jobs,
+    setJobs,
+    newJobForm,
+    setNewJobForm,
+    handleCreateJob,
+    handleAdminDeleteJob,
+    applications,
+    handleUpdateAppStatus
+}) {
+
+    // =====================================================
+    // ESTADOS LOCALES
+    // =====================================================
+
     const [search, setSearch] = useState("");
+
     const [selectedRow, setSelectedRow] = useState(null);
+
     const [notifications, setNotifications] = useState(false);
+
+    // =====================================================
+    // ESTADÍSTICAS
+    // =====================================================
 
     const [stats, setStats] = useState({
         vacantes: 0,
@@ -13,22 +43,6 @@ function AdminDashboard() {
         empresas: 0,
         usuarios: 0,
     });
-
-    // =====================================================
-    // MENU
-    // =====================================================
-
-    const menuItems = [
-        { icon: "🏠", name: "Dashboard" },
-        { icon: "➕", name: "Nueva Postulación" },
-        { icon: "📄", name: "Administrar Postulaciones" },
-        { icon: "📁", name: "CV Recibidos" },
-        { icon: "🏢", name: "Organizaciones" },
-        { icon: "📚", name: "Categorías" },
-        { icon: "📊", name: "Estadísticas" },
-        { icon: "👥", name: "Usuarios" },
-        { icon: "⚙", name: "Configuración" },
-    ];
 
     // =====================================================
     // POSTULACIONES
@@ -56,6 +70,7 @@ function AdminDashboard() {
     // =====================================================
 
     useEffect(() => {
+
         const objetivos = {
             vacantes: 28,
             cvs: 135,
@@ -64,12 +79,15 @@ function AdminDashboard() {
         };
 
         const duration = 1000;
+
         const startTime = Date.now();
 
         let animationFrame;
 
         const animate = () => {
-            const elapsed = Date.now() - startTime;
+
+            const elapsed =
+                Date.now() - startTime;
 
             const progress = Math.min(
                 elapsed / duration,
@@ -77,40 +95,63 @@ function AdminDashboard() {
             );
 
             setStats({
+
                 vacantes: Math.floor(
                     objetivos.vacantes * progress
                 ),
+
                 cvs: Math.floor(
                     objetivos.cvs * progress
                 ),
+
                 empresas: Math.floor(
                     objetivos.empresas * progress
                 ),
+
                 usuarios: Math.floor(
                     objetivos.usuarios * progress
                 ),
+
             });
 
             if (progress < 1) {
+
                 animationFrame =
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(
+                        animate
+                    );
+
             }
+
         };
 
         animate();
 
         return () => {
-            cancelAnimationFrame(animationFrame);
+
+            cancelAnimationFrame(
+                animationFrame
+            );
+
         };
+
     }, []);
 
     // =====================================================
-    // CAMBIAR SECCIÓN
+    // CAMBIAR MENÚ ADMINISTRATIVO
     // =====================================================
 
     const handleMenuClick = (name) => {
-        setActiveMenu(name);
+
+        setAdminTab(name);
+
         setSelectedRow(null);
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
     };
 
     // =====================================================
@@ -118,19 +159,24 @@ function AdminDashboard() {
     // =====================================================
 
     const handleNotifications = () => {
+
         setNotifications(true);
 
         setTimeout(() => {
+
             setNotifications(false);
+
         }, 3000);
+
     };
 
     // =====================================================
-    // BUSCADOR
+    // FILTRO DE POSTULACIONES
     // =====================================================
 
     const filteredPostulaciones =
         postulaciones.filter((item) => {
+
             const texto = `
                 ${item.puesto}
                 ${item.empresa}
@@ -141,6 +187,7 @@ function AdminDashboard() {
             return texto.includes(
                 search.toLowerCase()
             );
+
         });
 
     // =====================================================
@@ -148,181 +195,37 @@ function AdminDashboard() {
     // =====================================================
 
     return (
-        <div className="container">
+
+        <div className="admin-container">
 
             {/* =================================================
                 SIDEBAR
             ================================================= */}
 
-            <aside className="sidebar">
-
-                {/* LOGO */}
-
-                <div className="logo">
-
-                    <div className="logo-icon">
-                        FQA
-                    </div>
-
-                    <div className="logo-text">
-
-                        <h2>
-                            FQA Empleos
-                        </h2>
-
-                        <span>
-                            Panel Administrativo
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                {/* MENU */}
-
-                <nav className="menu">
-
-                    {menuItems.map((item) => (
-                        <button
-                            key={item.name}
-                            type="button"
-                            className={`menu-item ${
-                                activeMenu === item.name
-                                    ? "active"
-                                    : ""
-                            }`}
-                            onClick={() =>
-                                handleMenuClick(
-                                    item.name
-                                )
-                            }
-                        >
-
-                            <i>
-                                {item.icon}
-                            </i>
-
-                            <span>
-                                {item.name}
-                            </span>
-
-                        </button>
-                    ))}
-
-                </nav>
-
-
-                {/* FOOTER */}
-
-                <div className="sidebar-footer">
-
-                    <div className="admin-photo">
-                        A
-                    </div>
-
-                    <div>
-                        <strong>
-                            Administrador
-                        </strong>
-
-                        <small>
-                            admin@fqa.org
-                        </small>
-                    </div>
-
-                </div>
-
-            </aside>
-
+            <AdminSidebar
+                activeMenu={adminTab}
+                onMenuClick={handleMenuClick}
+            />
 
             {/* =================================================
                 MAIN
             ================================================= */}
 
-            <main className="main">
+            <main className="admin-main">
 
                 {/* =================================================
                     TOPBAR
                 ================================================= */}
 
-                <header className="topbar">
-
-                    <div className="top-left">
-
-                        <h1>
-                            {activeMenu}
-                        </h1>
-
-                        <span>
-                            Bienvenido nuevamente
-                        </span>
-
-                    </div>
-
-
-                    <div className="top-right">
-
-                        {/* BUSCADOR */}
-
-                        <div className="search">
-
-                            <input
-                                type="text"
-                                placeholder="Buscar..."
-                                value={search}
-                                onChange={(e) =>
-                                    setSearch(
-                                        e.target.value
-                                    )
-                                }
-                            />
-
-                        </div>
-
-
-                        {/* NOTIFICACIONES */}
-
-                        <button
-                            type="button"
-                            className="notification"
-                            onClick={
-                                handleNotifications
-                            }
-                        >
-                            🔔
-                        </button>
-
-
-                        {/* PERFIL */}
-
-                        <div className="profile">
-
-                            <div className="avatar">
-                                A
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Administrador
-                                </strong>
-
-                                <small>
-                                    Super Admin
-                                </small>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </header>
-
+                <AdminTopbar
+                    activeMenu={adminTab}
+                    search={search}
+                    setSearch={setSearch}
+                    onNotifications={handleNotifications}
+                />
 
                 {/* =================================================
-                    CONTENT
+                    CONTENIDO DEL DASHBOARD
                 ================================================= */}
 
                 <section className="content">
@@ -332,6 +235,8 @@ function AdminDashboard() {
                     ================================================= */}
 
                     <div className="cards">
+
+                        {/* VACANTES */}
 
                         <div className="card">
 
@@ -345,6 +250,7 @@ function AdminDashboard() {
 
                         </div>
 
+                        {/* CV */}
 
                         <div className="card">
 
@@ -358,6 +264,7 @@ function AdminDashboard() {
 
                         </div>
 
+                        {/* EMPRESAS */}
 
                         <div className="card">
 
@@ -371,6 +278,7 @@ function AdminDashboard() {
 
                         </div>
 
+                        {/* USUARIOS */}
 
                         <div className="card">
 
@@ -386,12 +294,13 @@ function AdminDashboard() {
 
                     </div>
 
-
                     {/* =================================================
-                        TABLA
+                        ÚLTIMAS POSTULACIONES
                     ================================================= */}
 
                     <div className="table-box">
+
+                        {/* HEADER */}
 
                         <div className="table-header">
 
@@ -402,8 +311,8 @@ function AdminDashboard() {
                             <button
                                 type="button"
                                 onClick={() =>
-                                    alert(
-                                        "Aquí mostraremos todas las postulaciones."
+                                    setAdminTab(
+                                        "Postulaciones"
                                     )
                                 }
                             >
@@ -412,21 +321,36 @@ function AdminDashboard() {
 
                         </div>
 
+                        {/* TABLA */}
 
                         <table>
 
                             <thead>
 
                                 <tr>
-                                    <th>Puesto</th>
-                                    <th>Empresa</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                    <th></th>
+
+                                    <th>
+                                        Puesto
+                                    </th>
+
+                                    <th>
+                                        Empresa
+                                    </th>
+
+                                    <th>
+                                        Estado
+                                    </th>
+
+                                    <th>
+                                        Fecha
+                                    </th>
+
+                                    <th>
+                                    </th>
+
                                 </tr>
 
                             </thead>
-
 
                             <tbody>
 
@@ -435,12 +359,14 @@ function AdminDashboard() {
 
                                         <tr
                                             key={item.id}
+
                                             className={
                                                 selectedRow ===
                                                 item.id
                                                     ? "selected"
                                                     : ""
                                             }
+
                                             onClick={() =>
                                                 setSelectedRow(
                                                     item.id
@@ -457,9 +383,11 @@ function AdminDashboard() {
                                             </td>
 
                                             <td>
+
                                                 <span className="status">
                                                     {item.estado}
                                                 </span>
+
                                             </td>
 
                                             <td>
@@ -471,12 +399,15 @@ function AdminDashboard() {
                                                 <button
                                                     type="button"
                                                     className="edit-button"
+
                                                     onClick={(e) => {
+
                                                         e.stopPropagation();
 
                                                         alert(
                                                             `Editando: ${item.puesto}`
                                                         );
+
                                                     }}
                                                 >
                                                     Editar
@@ -489,9 +420,9 @@ function AdminDashboard() {
                                     )
                                 )}
 
+                                {/* SIN RESULTADOS */}
 
-                                {filteredPostulaciones.length ===
-                                    0 && (
+                                {filteredPostulaciones.length === 0 && (
 
                                     <tr>
 
@@ -517,19 +448,24 @@ function AdminDashboard() {
 
             </main>
 
-
             {/* =================================================
                 TOAST
             ================================================= */}
 
             {notifications && (
+
                 <div className="toast show">
+
                     No hay nuevas notificaciones.
+
                 </div>
+
             )}
 
         </div>
+
     );
+
 }
 
 export default AdminDashboard;
