@@ -9,15 +9,20 @@ import Volunteers from './screens/Volunteers.jsx';
 import Nosotros from './screens/Nosotros.jsx';
 import CandidateProfile from './screens/CandidateProfile.jsx';
 
+import Login from './screens/auth/Login.jsx';
+import Register from './screens/auth/Register.jsx';
+
+
 import AdminDashboard from './screens/admin/AdminDashboard.jsx';
 import Users from './screens/admin/Users.jsx';
 import NuevaPostulacion from './screens/admin/NuevaPostulacion.jsx';
 import Organizaciones from './screens/admin/Organizaciones.jsx';
-import Categorias from "./screens/admin/Categorias.jsx";
+import Categorias from './screens/admin/Categorias.jsx';
 import AdministrarPostulaciones from './screens/admin/AdministrarPostulaciones.jsx';
-import CVRecibidos from "./screens/admin/CVRecibidos.jsx";
-import Estadisticas from "./screens/admin/Estadisticas.jsx";
-import Configuracion from "./screens/admin/configuracion.jsx";
+import CVRecibidos from './screens/admin/CVRecibidos.jsx';
+import Estadisticas from './screens/admin/Estadisticas.jsx';
+import Configuracion from './screens/admin/configuracion.jsx';
+
 
 
 // ============================================================
@@ -476,45 +481,46 @@ export default function App() {
 
   // ==========================================================
   // LOGIN
-  // ==========================================================
+// ==========================================================
 
-  const handleLoginSubmit = e => {
-    e.preventDefault();
+const handleLoginSubmit = e => {
+  e.preventDefault();
 
-    if (!loginEmail.trim()) return;
+  if (!loginEmail.trim() || !loginPassword.trim()) return;
 
-    if (
-      loginEmail.toLowerCase() ===
-      'admin@fundaqa.org'
-    ) {
-      const adminUser = {
-        email: loginEmail,
-        role: 'admin',
-        name: 'Administrador FQA',
-        initial: 'A'
-      };
+  if (
+    loginEmail.toLowerCase() === 'admin@fundaqa.org' &&
+    loginPassword === '12345678'
+  ) {
+    const adminUser = {
+      email: loginEmail,
+      role: 'admin',
+      name: 'Administrador FQA',
+      password: '12345678',
+      initial: 'A'
+    };
 
-      setCurrentUser(adminUser);
+    setCurrentUser(adminUser);
 
-      setLoginOpen(false);
+    setLoginOpen(false);
 
-      setAdminTab('Dashboard');
+    setAdminTab('Dashboard');
 
-      setScreenHistory([]);
+    setScreenHistory([]);
 
-      setScreen('admin');
+    setScreen('admin');
 
-      showToast(
-        '🔑 Sesión de administrador iniciada'
-      );
+    showToast(
+      '🔑 Sesión de administrador iniciada'
+    );
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
 
-      return;
-    }
+    return;
+  }
 
     const normalUser = {
       email: loginEmail,
@@ -771,8 +777,40 @@ export default function App() {
   // RENDER
   // ==========================================================
 
+  // La pantalla de inicio de sesión se muestra como una pantalla
+  // independiente, sin la navegación principal del portal.
+  
+
+  // ======================================================
+// LOGIN
+// ======================================================
+
+if (screen === 'login') {
   return (
-    <div id="app">
+    <Login
+      navigateTo={navigateTo}
+      setCurrentUser={setCurrentUser}
+      showToast={showToast}
+    />
+  );
+}
+
+// ======================================================
+// REGISTRO
+// ======================================================
+
+if (screen === 'register') {
+  return (
+    <Register
+      navigateTo={navigateTo}
+      setCurrentUser={setCurrentUser}
+      showToast={showToast}
+    />
+  );
+}
+
+return (
+  <div id="app">
 
       {/* ======================================================
           NAVEGACIÓN PRINCIPAL
@@ -994,7 +1032,7 @@ export default function App() {
             <button
               className="btn-ghost"
               onClick={() =>
-                setLoginOpen(true)
+                setScreen('login')
               }
             >
               Ingresar

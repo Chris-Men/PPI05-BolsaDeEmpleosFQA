@@ -1,0 +1,954 @@
+/* =========================================
+   AUTH PAGE
+========================================= */
+
+.auth-page {
+    min-height: 100vh;
+    width: 100%;
+
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at 72% 45%,
+            rgba(117, 174, 50, 0.10),
+            transparent 35%),
+        linear-gradient(135deg,
+            #f8fbf3 0%,
+            #f1f7e9 100%);
+
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================
+   CONTAINER
+========================================= */
+
+.auth-container {
+    width: min(1180px, 92%);
+
+    min-height: 100vh;
+
+    margin: auto;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    align-items: center;
+
+    gap: 70px;
+
+    position: relative;
+
+    z-index: 2;
+}
+
+
+/* =========================================
+   DECORACIONES
+========================================= */
+
+.auth-decoration {
+    position: absolute;
+
+    pointer-events: none;
+
+    z-index: 0;
+}
+
+.auth-decoration-top {
+    width: 180px;
+    height: 180px;
+
+    background: #79b638;
+
+    border-radius:
+        0 0 100% 0;
+
+    top: 0;
+    left: 0;
+}
+
+.auth-decoration-bottom {
+    width: 420px;
+    height: 220px;
+
+    background: #518f2d;
+
+    border-radius:
+        100% 100% 0 0;
+
+    bottom: -120px;
+    left: -90px;
+
+    transform: rotate(12deg);
+}
+
+
+/* =========================================
+   LEFT SIDE
+========================================= */
+
+.auth-brand {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 700px;
+}
+
+.auth-brand-content {
+    width: 100%;
+
+    max-width: 510px;
+
+    padding-left: 20px;
+}
+
+
+/* =========================================
+   FQA LOGO
+========================================= */
+
+.fqa-logo {
+    position: relative;
+
+    display: inline-block;
+
+    margin-bottom: 25px;
+}
+
+.fqa-logo-main {
+    display: block;
+
+    font-size: 118px;
+
+    line-height: 0.85;
+
+    font-weight: 900;
+
+    letter-spacing: -8px;
+
+    color: #092b0d;
+}
+
+
+/* Persona dentro de la Q */
+
+.fqa-logo-person {
+    position: absolute;
+
+    width: 72px;
+    height: 72px;
+
+    border-radius: 50%;
+
+    background: #77b832;
+
+    left: 153px;
+    top: 29px;
+}
+
+.fqa-logo-person::before {
+    content: "";
+
+    position: absolute;
+
+    width: 24px;
+    height: 24px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    top: 10px;
+    left: 24px;
+}
+
+.fqa-logo-person span {
+    position: absolute;
+
+    width: 42px;
+    height: 22px;
+
+    background: #ffffff;
+
+    border-radius:
+        30px 30px 0 0;
+
+    bottom: 10px;
+    left: 15px;
+}
+
+
+/* EMPLEOS */
+
+.fqa-logo-sub {
+    display: flex;
+
+    align-items: center;
+
+    gap: 17px;
+
+    margin-top: 12px;
+
+    color: #63a72c;
+}
+
+.fqa-logo-sub strong {
+    font-size: 51px;
+
+    line-height: 1;
+
+    font-weight: 800;
+}
+
+.fqa-logo-sub span {
+    font-size: 35px;
+
+    font-weight: 500;
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.auth-brand-description {
+    margin: 25px 0 0;
+
+    font-size: 25px;
+
+    line-height: 1.4;
+
+    color: #4d6e62;
+
+    font-weight: 500;
+}
+
+
+/* =========================================
+   ILLUSTRATION
+========================================= */
+
+.job-illustration {
+    width: 420px;
+
+    height: 260px;
+
+    position: relative;
+
+    margin-top: 45px;
+}
+
+
+/* Sombra */
+
+.job-illustration::after {
+    content: "";
+
+    position: absolute;
+
+    width: 350px;
+    height: 35px;
+
+    background: rgba(113,
+            163,
+            67,
+            0.18);
+
+    border-radius: 50%;
+
+    bottom: 10px;
+    left: 35px;
+
+    filter: blur(4px);
+}
+
+
+/* Documento */
+
+.illustration-paper {
+    position: absolute;
+
+    width: 145px;
+    height: 190px;
+
+    background: #f8fff2;
+
+    border-radius: 8px;
+
+    right: 25px;
+    top: 5px;
+
+    transform: rotate(-10deg);
+
+    box-shadow:
+        0 8px 25px rgba(65, 105, 55, 0.10);
+
+    z-index: 1;
+}
+
+.paper-person {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 50%;
+
+    background: #37752c;
+
+    margin: 22px auto 12px;
+}
+
+.paper-line {
+    width: 75px;
+    height: 7px;
+
+    background: #b8d39d;
+
+    border-radius: 20px;
+
+    margin: 10px auto;
+}
+
+.paper-line.short {
+    width: 55px;
+}
+
+
+/* Maletín */
+
+.briefcase {
+    position: absolute;
+
+    width: 220px;
+    height: 145px;
+
+    left: 75px;
+    bottom: 30px;
+
+    transform: rotate(7deg);
+
+    z-index: 4;
+}
+
+.briefcase-handle {
+    position: absolute;
+
+    width: 85px;
+    height: 45px;
+
+    border:
+        12px solid #185620;
+
+    border-bottom: 0;
+
+    border-radius:
+        50px 50px 0 0;
+
+    left: 68px;
+    top: -22px;
+}
+
+.briefcase-body {
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+
+    background:
+        linear-gradient(180deg,
+            #4f9429,
+            #17551d);
+
+    border-radius:
+        14px 14px 22px 22px;
+
+    box-shadow:
+        0 15px 25px rgba(32, 87, 24, 0.22);
+}
+
+.briefcase-body::before {
+    content: "";
+
+    position: absolute;
+
+    height: 22px;
+
+    left: 0;
+    right: 0;
+
+    top: 48px;
+
+    background: #d6e9b6;
+}
+
+.briefcase-lock {
+    position: absolute;
+
+    width: 42px;
+    height: 38px;
+
+    background: #eef8dc;
+
+    border-radius: 8px;
+
+    left: calc(50% - 21px);
+
+    top: 37px;
+
+    z-index: 2;
+}
+
+
+/* Hojas */
+
+.illustration-leaf {
+    position: absolute;
+
+    width: 45px;
+    height: 105px;
+
+    background:
+        linear-gradient(135deg,
+            #86bd46,
+            #559c2c);
+
+    border-radius:
+        100% 0 100% 0;
+
+    z-index: 2;
+}
+
+.leaf-one {
+    left: 25px;
+    bottom: 45px;
+
+    transform: rotate(-35deg);
+}
+
+.leaf-two {
+    left: 5px;
+    bottom: 105px;
+
+    transform: rotate(-50deg);
+}
+
+.leaf-three {
+    left: 60px;
+    bottom: 130px;
+
+    transform: rotate(-20deg);
+
+    opacity: 0.75;
+}
+
+
+/* =========================================
+   LOGIN CARD
+========================================= */
+
+.auth-card {
+    width: 100%;
+
+    max-width: 600px;
+
+    justify-self: end;
+
+    background:
+        rgba(255, 255, 255, 0.94);
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 20px 60px rgba(44, 91, 40, 0.10);
+
+    padding: 65px 75px;
+
+    box-sizing: border-box;
+}
+
+.auth-card-content {
+    width: 100%;
+}
+
+
+/* =========================================
+   HEADING
+========================================= */
+
+.auth-heading h1 {
+    margin: 0;
+
+    font-size: 45px;
+
+    line-height: 1.1;
+
+    color: #123e18;
+
+    font-weight: 800;
+
+    letter-spacing: -1px;
+}
+
+.auth-heading p {
+    margin: 23px 0 38px;
+
+    font-size: 21px;
+
+    line-height: 1.55;
+
+    color: #597269;
+
+    font-weight: 400;
+}
+
+
+/* =========================================
+   FORM
+========================================= */
+
+.login-form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 29px;
+}
+
+.input-wrapper {
+    height: 72px;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    position: relative;
+
+    box-sizing: border-box;
+
+    border:
+        2px solid #cbdcc0;
+
+    border-radius: 15px;
+
+    background: #ffffff;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+    border-color: #65a934;
+
+    box-shadow:
+        0 0 0 4px rgba(101, 169, 52, 0.10);
+}
+
+.input-icon {
+    color: #2e6b24;
+
+    margin-left: 24px;
+
+    flex-shrink: 0;
+}
+
+.input-wrapper input {
+    width: 100%;
+
+    height: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    padding:
+        0 22px;
+
+    font-size: 18px;
+
+    color: #274a31;
+
+    font-family: inherit;
+}
+
+.input-wrapper input::placeholder {
+    color: #9ba6a4;
+}
+
+
+/* =========================================
+   PASSWORD
+========================================= */
+
+.password-toggle {
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    color: #628174;
+
+    padding: 10px 22px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+.auth-error {
+    padding: 12px 15px;
+
+    margin:
+        -10px 0 20px;
+
+    border-radius: 10px;
+
+    background: #fff0f0;
+
+    color: #a52828;
+
+    font-size: 14px;
+}
+
+
+/* =========================================
+   FORGOT PASSWORD
+========================================= */
+
+.forgot-password {
+    display: flex;
+
+    justify-content: flex-end;
+
+    margin-top: -10px;
+
+    margin-bottom: 37px;
+}
+
+.forgot-password button {
+    border: none;
+
+    background: transparent;
+
+    color: #4f9225;
+
+    text-decoration: underline;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================
+   LOGIN BUTTON
+========================================= */
+
+.login-button {
+    width: 100%;
+
+    height: 68px;
+
+    border: none;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(90deg,
+            #579d27,
+            #4b8f20);
+
+    color: white;
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 18px;
+
+    box-shadow:
+        0 8px 18px rgba(75, 143, 32, 0.18);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 24px rgba(75, 143, 32, 0.25);
+}
+
+.login-button:disabled {
+    opacity: 0.7;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================
+   DIVIDER
+========================================= */
+
+.auth-divider {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    margin: 35px 0;
+}
+
+.auth-divider span {
+    height: 1px;
+
+    background: #cbdcc0;
+
+    flex: 1;
+}
+
+.auth-divider strong {
+    color: #719168;
+
+    font-size: 17px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================
+   REGISTER BUTTON
+========================================= */
+
+.register-button {
+    width: 100%;
+
+    height: 67px;
+
+    border:
+        2px solid #4f8f25;
+
+    border-radius: 15px;
+
+    background: #ffffff;
+
+    color: #2f6622;
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 15px;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.register-button:hover {
+    background: #f2f9eb;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1050px) {
+
+    .auth-container {
+        gap: 30px;
+    }
+
+    .auth-card {
+        padding: 50px 45px;
+    }
+
+    .auth-brand-content {
+        padding-left: 0;
+    }
+
+    .fqa-logo-main {
+        font-size: 95px;
+    }
+
+    .fqa-logo-person {
+        left: 123px;
+        width: 60px;
+        height: 60px;
+    }
+
+    .fqa-logo-sub strong {
+        font-size: 43px;
+    }
+
+    .auth-heading h1 {
+        font-size: 38px;
+    }
+
+    .auth-heading p {
+        font-size: 18px;
+    }
+}
+
+
+@media (max-width: 800px) {
+
+    .auth-container {
+        grid-template-columns: 1fr;
+
+        width: 90%;
+
+        padding: 40px 0;
+
+        gap: 30px;
+    }
+
+    .auth-brand {
+        min-height: auto;
+
+        text-align: center;
+    }
+
+    .auth-brand-content {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+    }
+
+    .auth-brand-description {
+        font-size: 21px;
+    }
+
+    .auth-card {
+        justify-self: center;
+
+        max-width: 600px;
+
+        padding: 45px 35px;
+    }
+
+    .job-illustration {
+        transform: scale(0.85);
+
+        margin-top: 20px;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .auth-container {
+        width: 94%;
+    }
+
+    .auth-card {
+        padding: 35px 22px;
+
+        border-radius: 18px;
+    }
+
+    .auth-heading h1 {
+        font-size: 32px;
+    }
+
+    .auth-heading p {
+        font-size: 17px;
+    }
+
+    .auth-heading p br {
+        display: none;
+    }
+
+    .input-wrapper {
+        height: 62px;
+    }
+
+    .login-button,
+    .register-button {
+        height: 60px;
+
+        font-size: 17px;
+    }
+
+    .job-illustration {
+        transform: scale(0.65);
+
+        margin-top: -5px;
+
+        margin-bottom: -50px;
+    }
+
+    .fqa-logo-main {
+        font-size: 80px;
+    }
+
+    .fqa-logo-person {
+        left: 104px;
+        top: 23px;
+
+        width: 50px;
+        height: 50px;
+    }
+
+    .fqa-logo-sub strong {
+        font-size: 35px;
+    }
+
+    .fqa-logo-sub span {
+        font-size: 25px;
+    }
+
+    .auth-decoration-top {
+        width: 110px;
+        height: 110px;
+    }
+
+}
