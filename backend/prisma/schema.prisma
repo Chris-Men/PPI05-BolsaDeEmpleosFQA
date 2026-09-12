@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Authentication account with one role and one lifecycle state.
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  roleId       String       @map("role_id")
+  statusId     String       @map("status_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  role         Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  status       UserStatus   @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  profile      UserProfile?
+
+  @@index([roleId])
+  @@index([statusId])
+  @@map("users")
+}
+
+/// Registration creates this profile atomically with its account.
+model UserProfile {
+  id       String @id @default(cuid())
+  userId   String @unique @map("user_id")
+  fullName String @map("full_name") @db.VarChar(150)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+/// Assignable roles identified by stable machine-readable codes.
+model Role {
+  id    String @id @default(cuid())
+  code  String @unique
+  name  String
+  users User[]
+
+  @@map("roles")
+}
+
+/// Account lifecycle states identified by stable machine-readable codes.
+model UserStatus {
+  id    String @id @default(cuid())
+  code  String @unique
+  name  String
+  users User[]
+
+  @@map("user_statuses")
+}

@@ -1,0 +1,21 @@
+# Dependencies and build outputs
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Database data and backups
+postgres-data/
+backups/
+
+# IDE and operating system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
