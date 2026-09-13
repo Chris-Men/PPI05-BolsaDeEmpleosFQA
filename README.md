@@ -10,22 +10,24 @@ Monorepo de la bolsa de empleo de FQA. Incluye una aplicación React, una API RE
 
 ## Desarrollo con Docker Compose
 
+El archivo `docker-compose.dev.yml` configura el desarrollo local. El archivo predeterminado `docker-compose.yml` configura producción.
+
 Ejecutar desde la raíz, con Docker Desktop iniciado. La primera instalación requiere preparar la base, generar el cliente y cargar los catálogos antes de registrar usuarios:
 
 ```bash
-docker compose up -d --wait postgres
-docker compose run --build --rm --no-deps backend npm ci
-docker compose run --rm --no-deps backend npm run prisma:generate
-docker compose run --rm --no-deps backend npm run prisma:deploy
-docker compose run --rm --no-deps backend npm run prisma:seed
-docker compose up --build -d backend frontend
+docker compose -f docker-compose.dev.yml up -d --wait postgres
+docker compose -f docker-compose.dev.yml run --build --rm --no-deps backend npm ci
+docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:generate
+docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:deploy
+docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:seed
+docker compose -f docker-compose.dev.yml up --build -d backend frontend
 ```
 
 La interfaz queda disponible en `http://localhost:5173`, la API en `http://localhost:3000/api` y la comprobación de salud en `http://localhost:3000/api/health`.
 
 La migración inicial corresponde a una base nueva. No ejecutar resets para adaptar una base que ya contenga datos: primero se debe revisar su compatibilidad. La carga de catálogos es idempotente y conserva los identificadores al volver a ejecutarse.
 
-En posteriores arranques, usar `docker compose up --build`. Si cambian dependencias, volver a ejecutar `npm ci` en el servicio backend; si cambia Prisma, regenerar el cliente y aplicar las migraciones.
+En posteriores arranques, usar `docker compose -f docker-compose.dev.yml up --build`. Si cambian dependencias, volver a ejecutar `npm ci` en el servicio backend; si cambia Prisma, regenerar el cliente y aplicar las migraciones.
 
 ## Backend ejecutado en el equipo
 
@@ -144,7 +146,7 @@ Las pruebas unitarias usan `node:test` con `tsx` y no necesitan PostgreSQL. El c
 Las pruebas de integración requieren una base PostgreSQL **exclusiva de pruebas**. Por ejemplo, con el usuario de ejemplo de Compose:
 
 ```bash
-docker compose exec postgres createdb -U fqa_user fqa_empleos_test
+docker compose -f docker-compose.dev.yml exec postgres createdb -U fqa_user fqa_empleos_test
 ```
 
 Adaptar el usuario si `POSTGRES_USER` tiene otro valor. Esta creación se ejecuta una sola vez. Configurar `TEST_DATABASE_URL` en `backend/.env` o como variable del proceso, y ejecutar desde `backend`:

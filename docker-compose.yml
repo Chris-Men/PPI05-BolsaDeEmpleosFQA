@@ -1,33 +1,31 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-    command: npm run dev
+      - "80:80"
+      - "443:443"
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
-      backend:
-        condition: service_healthy
+      - frontend
+      - backend
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER}/fqa-empleos-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
 
   backend:
-    build:
-      context: ./backend
-      target: dependencies
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./backend:/app
-      - backend_node_modules:/app/node_modules
-    command: npm run dev
+    image: ghcr.io/${GHCR_OWNER}/fqa-empleos-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      CORS_ORIGIN: https://${DOMAIN}
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
@@ -35,15 +33,13 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
 
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -52,11 +48,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
 
 volumes:
-  backend_node_modules:
-  frontend_node_modules:
+  caddy_data:
+  caddy_config:
   postgres_data:

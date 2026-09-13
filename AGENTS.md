@@ -25,7 +25,7 @@
 - **Chequeo de tipos:** `npm run typecheck` (equivalente a `tsc --noEmit`)
 - **Lint (ambos):** `npm run lint`
 - **Pruebas (ambos):** `npm test`
-- **Entorno completo:** `docker compose up --build`
+- **Entorno completo:** `docker compose -f docker-compose.dev.yml up --build`
 
 ## 3. Convenciones de estilo de código
 
