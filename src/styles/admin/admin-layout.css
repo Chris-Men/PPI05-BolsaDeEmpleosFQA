@@ -85,3 +85,8 @@
 .admin-main::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
+
+/* Ocultar navbar pública cuando estamos en el panel administrativo */
+body:has(.admin-container) .nav {
+    display: none !important;
+}
