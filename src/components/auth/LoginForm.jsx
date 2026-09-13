@@ -95,7 +95,7 @@ export default function LoginForm({
         );
 
         // Ir al perfil
-        navigateTo("profile");
+        navigateTo("home");
 
         setLoading(false);
     };

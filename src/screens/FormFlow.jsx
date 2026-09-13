@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function FormFlow({
-  selectedJob,
+  applyingTo,
   formStep,
   setFormStep,
   formPersonal,
@@ -10,29 +10,14 @@ export default function FormFlow({
   setFormExp,
   uploadedCVName,
   setUploadedCVName,
-  setApplications,
-  navigateTo,
+  onSubmitApplication,
   showToast
 }) {
   const handleNextFormStep = () => {
     if (formStep < 4) {
       setFormStep(prev => prev + 1);
     } else {
-      const refNum = 'FQA-2025-' + Math.floor(Math.random() * 90000 + 10000);
-      const newApp = {
-        id: refNum,
-        jobId: selectedJob.id,
-        jobTitle: selectedJob.title,
-        orgName: selectedJob.org,
-        candidateName: formPersonal.name + ' ' + formPersonal.lastname,
-        candidateEmail: formPersonal.email,
-        phone: formPersonal.phone,
-        cvName: uploadedCVName || 'María_López_CV.pdf',
-        status: 'Pendiente',
-        date: 'Hoy mismo'
-      };
-      setApplications(prev => [newApp, ...prev]);
-      navigateTo('confirm');
+      onSubmitApplication();
     }
   };
 
@@ -81,8 +66,8 @@ export default function FormFlow({
 
           <div className="fa-vac">
             <div className="fa-vac-lbl">Aplicando a</div>
-            <div className="fa-vac-title">{selectedJob.title}</div>
-            <div className="fa-vac-org">{selectedJob.org}</div>
+            <div className="fa-vac-title">{applyingTo?.title}</div>
+            <div className="fa-vac-org">{applyingTo?.org}</div>
           </div>
         </div>
 
@@ -173,7 +158,7 @@ export default function FormFlow({
                     />
                   </div>
                   <div className="ff full">
-                    <label>¿Por qué deseas ser parte de {selectedJob.org}? *</label>
+                    <label>¿Por qué deseas ser parte de {applyingTo?.org}? *</label>
                     <textarea 
                       value={formExp.motivation}
                       onChange={(e) => setFormExp({ ...formExp, motivation: e.target.value })}

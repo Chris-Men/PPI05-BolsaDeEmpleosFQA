@@ -6,6 +6,7 @@ import JobDetail from './screens/JobDetail.jsx';
 import FormFlow from './screens/FormFlow.jsx';
 import Confirmation from './screens/Confirmation.jsx';
 import Volunteers from './screens/Volunteers.jsx';
+import Students from './screens/student.jsx';
 import Nosotros from './screens/Nosotros.jsx';
 import CandidateProfile from './screens/CandidateProfile.jsx';
 
@@ -262,6 +263,31 @@ const initialVolunteersData = [
   }
 ];
 
+const initialStudentSpotsData = [
+  {
+    id: 1,
+    tipo: 'social',
+    title: 'Voluntariado en Refuerzo Escolar',
+    org: 'Fundación Quintanilla Amaya',
+    location: 'San Salvador',
+    area: 'Educación',
+    desc: 'Apoya sesiones de refuerzo escolar para niños de comunidades vulnerables.',
+    horas: 40,
+    contact: '+503 7623-4832'
+  },
+  {
+    id: 2,
+    tipo: 'practica',
+    title: 'Práctica en Trabajo Social',
+    org: 'CARITAS El Salvador',
+    location: 'Mejicanos',
+    area: 'Bienestar Social',
+    desc: 'Acompaña visitas domiciliarias y estudios socioeconómicos como parte de tu práctica profesional.',
+    duracion: '3 meses',
+    contact: '+503 2225-1033'
+  }
+];
+
 // ============================================================
 // APP
 // ============================================================
@@ -292,6 +318,8 @@ export default function App() {
     initialVolunteersData
   );
 
+  const [studentSpots, setStudentSpots] = useState(initialStudentSpotsData);
+
   const [savedJobs, setSavedJobs] = useState([]);
 
   const [applications, setApplications] = useState([
@@ -310,6 +338,11 @@ export default function App() {
   ]);
 
   const [volunteerApps, setVolunteerApps] = useState([]);
+  const [studentApps, setStudentApps] = useState([]);
+  const [activeStudentTab, setActiveStudentTab] = useState('social');
+
+  // Menú desplegable del avatar (Mi Perfil / Cerrar Sesión), persistente en todas las vistas
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // ==========================================================
   // SELECCIONES
@@ -321,11 +354,16 @@ export default function App() {
 
   const [selectedOrg, setSelectedOrg] = useState(null);
 
-  const [doubleConfirmSpot, setDoubleConfirmSpot] =
-    useState(null);
-
   const [volSuccessContact, setVolSuccessContact] =
     useState(null);
+
+  // ==========================================================
+  // FLUJO DE POSTULACIÓN (empleo / voluntariado / estudiante)
+  // ==========================================================
+
+  // 'job' | 'volunteer' | 'student' — qué tipo de postulación está activa
+  const [applyFlowType, setApplyFlowType] = useState('job');
+  const [applyFlowTarget, setApplyFlowTarget] = useState(null);
 
   // ==========================================================
   // QUICK VIEW
@@ -340,6 +378,7 @@ export default function App() {
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   // ==========================================================
   // BÚSQUEDA / FILTROS
@@ -424,6 +463,8 @@ export default function App() {
 
     if (data && nextScreen === 'detail') {
       setSelectedJob(data);
+      setApplyFlowType('job');
+      setApplyFlowTarget(data);
     }
 
     window.scrollTo({
@@ -479,48 +520,58 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [toastShow]);
 
+  useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const closeMenu = () => setUserMenuOpen(false);
+
+    document.addEventListener('click', closeMenu);
+
+    return () => document.removeEventListener('click', closeMenu);
+  }, [userMenuOpen]);
+
   // ==========================================================
   // LOGIN
-// ==========================================================
+  // ==========================================================
 
-const handleLoginSubmit = e => {
-  e.preventDefault();
+  const handleLoginSubmit = e => {
+    e.preventDefault();
 
-  if (!loginEmail.trim() || !loginPassword.trim()) return;
+    if (!loginEmail.trim() || !loginPassword.trim()) return;
 
-  if (
-    loginEmail.toLowerCase() === 'admin@fundaqa.org' &&
-    loginPassword === '12345678'
-  ) {
-    const adminUser = {
-      email: loginEmail,
-      role: 'admin',
-      name: 'Administrador FQA',
-      password: '12345678',
-      initial: 'A'
-    };
+    if (
+      loginEmail.toLowerCase() === 'admin@fundaqa.org' &&
+      loginPassword === '12345678'
+    ) {
+      const adminUser = {
+        email: loginEmail,
+        role: 'admin',
+        name: 'Administrador FQA',
+        password: '12345678',
+        initial: 'A'
+      };
 
-    setCurrentUser(adminUser);
+      setCurrentUser(adminUser);
 
-    setLoginOpen(false);
+      setLoginOpen(false);
 
-    setAdminTab('Dashboard');
+      setAdminTab('Dashboard');
 
-    setScreenHistory([]);
+      setScreenHistory([]);
 
-    setScreen('admin');
+      setScreen('admin');
 
-    showToast(
-      '🔑 Sesión de administrador iniciada'
-    );
+      showToast(
+        '🔑 Sesión de administrador iniciada'
+      );
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
 
-    return;
-  }
+      return;
+    }
 
     const normalUser = {
       email: loginEmail,
@@ -540,7 +591,9 @@ const handleLoginSubmit = e => {
         normalUser.name
     );
 
-    navigateTo('profile');
+    setScreenHistory([]);
+
+    navigateTo('home');
   };
 
   // ==========================================================
@@ -590,30 +643,72 @@ const handleLoginSubmit = e => {
   };
 
   // ==========================================================
-  // VOLUNTARIADO
+  // POSTULACIONES — VOLUNTARIADO Y ESTUDIANTES
+  // (usan el mismo wizard de FormFlow que los empleos)
   // ==========================================================
 
   const handleVolunteerApplyClick = spot => {
-    setDoubleConfirmSpot(spot);
+    setApplyFlowType('volunteer');
+    setApplyFlowTarget(spot);
+    setFormStep(1);
+    navigateTo('form');
   };
 
-  const handleConfirmVolunteerApply = () => {
-    if (!doubleConfirmSpot) return;
+  const handleStudentApplyClick = spot => {
+    setApplyFlowType('student');
+    setApplyFlowTarget(spot);
+    setFormStep(1);
+    navigateTo('form');
+  };
 
-    const spot = doubleConfirmSpot;
+  // ==========================================================
+  // ENVÍO DE POSTULACIÓN (empleo / voluntariado / estudiante)
+  // ==========================================================
 
-    setVolunteerApps(prev => [
-      ...prev,
-      spot.id
-    ]);
+  const handleSubmitApplication = () => {
+    const target = applyFlowTarget;
+    if (!target) return;
 
-    setDoubleConfirmSpot(null);
+    if (applyFlowType === 'job') {
+      const refNum = 'FQA-2025-' + Math.floor(Math.random() * 90000 + 10000);
+      const newApp = {
+        id: refNum,
+        jobId: target.id,
+        jobTitle: target.title,
+        orgName: target.org,
+        candidateName: formPersonal.name + ' ' + formPersonal.lastname,
+        candidateEmail: formPersonal.email,
+        phone: formPersonal.phone,
+        cvName: uploadedCVName || 'María_López_CV.pdf',
+        status: 'Pendiente',
+        date: 'Hoy mismo'
+      };
+      setApplications(prev => [newApp, ...prev]);
+      navigateTo('confirm');
+      return;
+    }
 
-    setVolSuccessContact({
-      title: spot.title,
-      org: spot.org,
-      contact: spot.contact
-    });
+    if (applyFlowType === 'volunteer') {
+      setVolunteerApps(prev => [...prev, target.id]);
+      setVolSuccessContact({
+        title: target.title,
+        org: target.org,
+        contact: target.contact
+      });
+      goBack();
+      return;
+    }
+
+    if (applyFlowType === 'student') {
+      setStudentApps(prev => [...prev, target.id]);
+      setVolSuccessContact({
+        title: target.title,
+        org: target.org,
+        contact: target.contact
+      });
+      goBack();
+      return;
+    }
   };
 
   // ==========================================================
@@ -779,38 +874,38 @@ const handleLoginSubmit = e => {
 
   // La pantalla de inicio de sesión se muestra como una pantalla
   // independiente, sin la navegación principal del portal.
-  
+
 
   // ======================================================
-// LOGIN
-// ======================================================
+  // LOGIN
+  // ======================================================
 
-if (screen === 'login') {
+  if (screen === 'login') {
+    return (
+      <Login
+        navigateTo={navigateTo}
+        setCurrentUser={setCurrentUser}
+        showToast={showToast}
+      />
+    );
+  }
+
+  // ======================================================
+  // REGISTRO
+  // ======================================================
+
+  if (screen === 'register') {
+    return (
+      <Register
+        navigateTo={navigateTo}
+        setCurrentUser={setCurrentUser}
+        showToast={showToast}
+      />
+    );
+  }
+
   return (
-    <Login
-      navigateTo={navigateTo}
-      setCurrentUser={setCurrentUser}
-      showToast={showToast}
-    />
-  );
-}
-
-// ======================================================
-// REGISTRO
-// ======================================================
-
-if (screen === 'register') {
-  return (
-    <Register
-      navigateTo={navigateTo}
-      setCurrentUser={setCurrentUser}
-      showToast={showToast}
-    />
-  );
-}
-
-return (
-  <div id="app">
+    <div id="app">
 
       {/* ======================================================
           NAVEGACIÓN PRINCIPAL
@@ -878,109 +973,18 @@ return (
 
         <div className="nav-links">
 
-          <div className="mega-wrap">
-
-            <span
-              className={`nav-link ${
-                screen === 'jobs'
-                  ? 'active'
-                  : ''
-              }`}
-              onClick={() =>
-                navigateTo('jobs')
-              }
-            >
-              Empleos
-            </span>
-
-            <div className="mega-menu">
-
-              <p className="mega-label">
-                Explorar por área de impacto
-              </p>
-
-              <div className="mega-grid">
-
-                {[
-                  'Salud',
-                  'Educación',
-                  'Bienestar Social',
-                  'Medio Ambiente',
-                  'Autonomía Económica'
-                ].map(area => (
-
-                  <div
-                    className="mega-item"
-                    key={area}
-                    onClick={() => {
-                      setSelectedArea(area);
-                      navigateTo('jobs');
-                    }}
-                  >
-
-                    <div
-                      className="mega-icon"
-                      style={{
-                        background:
-                          '#EEF5E2'
-                      }}
-                    >
-                      🌱
-                    </div>
-
-                    <div className="mega-text">
-
-                      <strong>
-                        {area}
-                      </strong>
-
-                      <span>
-                        Explorar vacantes
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
-                <div
-                  className="mega-item"
-                  onClick={() => {
-                    setSelectedArea('Todos');
-                    navigateTo('jobs');
-                  }}
-                >
-
-                  <div
-                    className="mega-icon"
-                    style={{
-                      background:
-                        'var(--c50)'
-                    }}
-                  >
-                    🔍
-                  </div>
-
-                  <div className="mega-text">
-
-                    <strong>
-                      Ver todas
-                    </strong>
-
-                    <span>
-                      {jobs.length} vacantes activas
-                    </span>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
+          <span
+            className={`nav-link ${
+              screen === 'jobs'
+                ? 'active'
+                : ''
+            }`}
+            onClick={() =>
+              navigateTo('jobs')
+            }
+          >
+            Empleos
+          </span>
 
           <span
             className={`nav-link ${
@@ -993,6 +997,15 @@ return (
             }
           >
             Voluntariado
+          </span>
+
+          <span
+            className={`nav-link ${
+              screen === 'students' ? 'active' : ''
+            }`}
+            onClick={() => navigateTo('students')}
+          >
+            Estudiantes
           </span>
 
           <span
@@ -1014,18 +1027,55 @@ return (
 
           {currentUser ? (
 
-            <div
-              className="nav-avatar"
-              onClick={() =>
-                navigateTo(
-                  currentUser.role === 'admin'
-                    ? 'admin'
-                    : 'profile'
-                )
-              }
-            >
-              {currentUser.initial}
-            </div>
+            currentUser.role === 'admin' ? (
+
+              <div
+                className="nav-avatar"
+                onClick={() => navigateTo('admin')}
+              >
+                {currentUser.initial}
+              </div>
+
+            ) : (
+
+<div
+  className="nav-user-menu"
+  onClick={e => e.stopPropagation()}
+>
+  <div
+    className="nav-avatar"
+    onClick={() => setUserMenuOpen(prev => !prev)}
+    title="Menú de usuario"
+  >
+    {currentUser.initial}
+  </div>
+
+  {userMenuOpen && (
+    <div className="nav-user-dropdown">
+      <button
+        className="nav-user-dropdown-item"
+        onClick={() => {
+          setUserMenuOpen(false);
+          navigateTo('profile');
+        }}
+      >
+        Ir al perfil
+      </button>
+
+      <button
+        className="nav-user-dropdown-item danger"
+        onClick={() => {
+          setUserMenuOpen(false);
+          handleLogout();
+        }}
+      >
+        Cerrar sesión
+      </button>
+    </div>
+  )}
+</div>
+
+            )
 
           ) : (
 
@@ -1097,10 +1147,20 @@ return (
                 <>
                   <span
                     onClick={() =>
-                      navigateTo('jobs')
+                      navigateTo(
+                        applyFlowType === 'volunteer'
+                          ? 'volunteers'
+                          : applyFlowType === 'student'
+                          ? 'students'
+                          : 'jobs'
+                      )
                     }
                   >
-                    Empleos
+                    {applyFlowType === 'volunteer'
+                      ? 'Voluntariado'
+                      : applyFlowType === 'student'
+                      ? 'Estudiantes'
+                      : 'Empleos'}
                   </span>
 
                   <span className="bsep">
@@ -1122,6 +1182,12 @@ return (
               {screen === 'volunteers' && (
                 <span className="bcur">
                   Voluntariados disponibles
+                </span>
+              )}
+
+              {screen === 'students' && (
+                <span className="bcur">
+                  Oportunidades para Estudiantes
                 </span>
               )}
 
@@ -1218,13 +1284,13 @@ return (
         )}
 
         {/* ====================================================
-            FORMULARIO
+            FORMULARIO (empleo / voluntariado / estudiante)
         ==================================================== */}
 
         {screen === 'form' && (
 
           <FormFlow
-            selectedJob={selectedJob}
+            applyingTo={applyFlowTarget}
             formStep={formStep}
             setFormStep={setFormStep}
             formPersonal={formPersonal}
@@ -1233,8 +1299,7 @@ return (
             setFormExp={setFormExp}
             uploadedCVName={uploadedCVName}
             setUploadedCVName={setUploadedCVName}
-            setApplications={setApplications}
-            navigateTo={navigateTo}
+            onSubmitApplication={handleSubmitApplication}
             showToast={showToast}
           />
 
@@ -1274,6 +1339,22 @@ return (
         )}
 
         {/* ====================================================
+            ESTUDIANTES
+        ==================================================== */}
+
+        {screen === 'students' && (
+
+          <Students
+            studentSpots={studentSpots}
+            studentApps={studentApps}
+            activeStudentTab={activeStudentTab}
+            setActiveStudentTab={setActiveStudentTab}
+            handleStudentApplyClick={handleStudentApplyClick}
+          />
+
+        )}
+
+        {/* ====================================================
             NOSOTROS
         ==================================================== */}
 
@@ -1295,6 +1376,13 @@ return (
             volunteerApps={volunteerApps}
             setVolunteerApps={setVolunteerApps}
             volunteerSpots={volunteerSpots}
+            studentApps={studentApps}
+            setStudentApps={setStudentApps}
+            studentSpots={studentSpots}
+            savedJobs={savedJobs}
+            jobs={jobs}
+            toggleSaveJob={toggleSaveJob}
+            navigateTo={navigateTo}
             uploadedCVName={uploadedCVName}
             setUploadedCVName={setUploadedCVName}
             showToast={showToast}
@@ -1547,6 +1635,8 @@ return (
                 className="qv-apply"
                 onClick={() => {
                   setQvOpen(false);
+                  setApplyFlowType('job');
+                  setApplyFlowTarget(qvJob);
                   setFormStep(1);
                   navigateTo('form');
                 }}
@@ -1630,6 +1720,32 @@ return (
 
               </div>
 
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}
+              >
+
+                <label>
+                  Contraseña
+                </label>
+
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={e =>
+                    setLoginPassword(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </div>
+
               <div className="modal-actions">
 
                 <button
@@ -1666,11 +1782,15 @@ return (
               <code>
                 admin@fundaqa.org
               </code>
+              {' '}/{' '}
+              <code>
+                12345678
+              </code>
 
               <br />
 
               • Candidato normal:
-              usa cualquier otro correo
+              usa cualquier otro correo y contraseña
 
             </div>
 
@@ -1757,75 +1877,7 @@ return (
       )}
 
       {/* ======================================================
-          CONFIRMAR VOLUNTARIADO
-      ====================================================== */}
-
-      {doubleConfirmSpot && (
-
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setDoubleConfirmSpot(null)
-          }
-        >
-
-          <div
-            className="modal-content"
-            onClick={e =>
-              e.stopPropagation()
-            }
-          >
-
-            <h3>
-              Confirmar Postulación
-            </h3>
-
-            <p>
-              ¿Estás seguro de que deseas postularte como voluntario para la plaza de{' '}
-
-              <strong>
-                {doubleConfirmSpot.title}
-              </strong>{' '}
-
-              en{' '}
-
-              <strong>
-                {doubleConfirmSpot.org}
-              </strong>?
-            </p>
-
-            <div className="modal-actions">
-
-              <button
-                className="modal-btn-confirm"
-                onClick={
-                  handleConfirmVolunteerApply
-                }
-              >
-                Sí, postularme
-              </button>
-
-              <button
-                className="modal-btn-cancel"
-                onClick={() =>
-                  setDoubleConfirmSpot(
-                    null
-                  )
-                }
-              >
-                Cancelar
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* ======================================================
-          VOLUNTARIADO EXITOSO
+          POSTULACIÓN EXITOSA (voluntariado / estudiante)
       ====================================================== */}
 
       {volSuccessContact && (
@@ -1864,7 +1916,7 @@ return (
             </h3>
 
             <p>
-              Tu solicitud para participar como voluntario en{' '}
+              Tu solicitud para participar en{' '}
 
               <strong>
                 {volSuccessContact.title}

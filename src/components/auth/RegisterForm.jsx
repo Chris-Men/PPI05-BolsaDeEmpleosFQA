@@ -120,7 +120,7 @@ export default function RegisterForm({
         setLoading(false);
 
         // Ir al perfil
-        navigateTo("profile");
+        navigateTo("home");
     };
 
     return (
