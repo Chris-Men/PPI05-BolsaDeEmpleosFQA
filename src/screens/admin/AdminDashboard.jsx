@@ -3,39 +3,55 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import AdminTopbar from "../../components/admin/AdminTopbar";
 
-import "../../styles/admin/dashboard.css";
 import "../../styles/admin/admin-layout.css";
-import "../../styles/admin/admin-topbar.css";
 import "../../styles/admin/admin-sidebar.css";
+import "../../styles/admin/admin-topbar.css";
+import "../../styles/admin/dashboard.css";
+
+import NuevaPostulacion from "./NuevaPostulacion";
+import AdministrarPostulaciones from "./AdministrarPostulaciones";
+import CVRecibidos from "./CVRecibidos";
+import Organizaciones from "./Organizaciones";
+import Categorias from "./Categorias";
+import Estadisticas from "./Estadisticas";
+import Users from "./Users";
+import Configuracion from "./Configuracion";
 
 function AdminDashboard({
     currentUser,
     handleLogout,
-    adminTab,
-    setAdminTab,
-    jobs,
-    setJobs,
-    newJobForm,
-    setNewJobForm,
-    handleCreateJob,
-    handleAdminDeleteJob,
-    applications,
-    handleUpdateAppStatus
-}) {
 
-    // =====================================================
-    // ESTADOS LOCALES
-    // =====================================================
+    jobs = [],
+
+    newJobForm = {},
+    setNewJobForm,
+
+    handleCreateJob,
+    handleUpdateJob,
+    handleSaveDraft,
+
+    applications = [],
+    handleUpdateAppStatus,
+
+    configuration,
+    setConfiguration,
+    updateConfiguration,
+    updateConfigurations,
+    resetConfiguration,
+}) {
+    // =========================================================
+    // ESTADOS
+    // =========================================================
+
+    const [activeMenu, setActiveMenu] = useState("Dashboard");
+
+    const [menuHistory, setMenuHistory] = useState([]);
 
     const [search, setSearch] = useState("");
 
-    const [selectedRow, setSelectedRow] = useState(null);
-
     const [notifications, setNotifications] = useState(false);
 
-    // =====================================================
-    // ESTADÍSTICAS
-    // =====================================================
+    const [editingJobId, setEditingJobId] = useState(null);
 
     const [stats, setStats] = useState({
         vacantes: 0,
@@ -44,50 +60,25 @@ function AdminDashboard({
         usuarios: 0,
     });
 
-    // =====================================================
-    // POSTULACIONES
-    // =====================================================
-
-    const postulaciones = [
-        {
-            id: 1,
-            puesto: "Diseñador Gráfico",
-            empresa: "FQA",
-            estado: "Activa",
-            fecha: "Hoy",
-        },
-        {
-            id: 2,
-            puesto: "Programador Laravel",
-            empresa: "ULS",
-            estado: "Activa",
-            fecha: "Ayer",
-        },
-    ];
-
-    // =====================================================
-    // ANIMACIÓN DE CONTADORES
-    // =====================================================
+    // =========================================================
+    // ESTADÍSTICAS
+    // =========================================================
 
     useEffect(() => {
-
         const objetivos = {
-            vacantes: 28,
-            cvs: 135,
+            vacantes: jobs.length,
+            cvs: applications.length,
             empresas: 18,
             usuarios: 4,
         };
 
         const duration = 1000;
-
         const startTime = Date.now();
 
         let animationFrame;
 
         const animate = () => {
-
-            const elapsed =
-                Date.now() - startTime;
+            const elapsed = Date.now() - startTime;
 
             const progress = Math.min(
                 elapsed / duration,
@@ -95,7 +86,6 @@ function AdminDashboard({
             );
 
             setStats({
-
                 vacantes: Math.floor(
                     objetivos.vacantes * progress
                 ),
@@ -111,361 +101,913 @@ function AdminDashboard({
                 usuarios: Math.floor(
                     objetivos.usuarios * progress
                 ),
-
             });
 
             if (progress < 1) {
-
                 animationFrame =
-                    requestAnimationFrame(
-                        animate
-                    );
-
+                    requestAnimationFrame(animate);
             }
-
         };
 
         animate();
 
         return () => {
-
-            cancelAnimationFrame(
-                animationFrame
-            );
-
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
         };
+    }, [jobs, applications]);
 
-    }, []);
+    // =========================================================
+    // NAVEGACIÓN
+    // =========================================================
 
-    // =====================================================
-    // CAMBIAR MENÚ ADMINISTRATIVO
-    // =====================================================
+    const navegarA = (nombre) => {
+        if (!nombre) {
+            return;
+        }
 
-    const handleMenuClick = (name) => {
+        if (nombre === activeMenu) {
+            return;
+        }
 
-        setAdminTab(name);
+        setMenuHistory((historialAnterior) => [
+            ...historialAnterior,
+            activeMenu,
+        ]);
 
-        setSelectedRow(null);
+        setActiveMenu(nombre);
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-
+        setSearch("");
     };
 
-    // =====================================================
+    const handleMenuClick = (name) => {
+        navegarA(name);
+    };
+
+    // =========================================================
+    // REGRESAR
+    // =========================================================
+
+    const handleBack = () => {
+        if (menuHistory.length === 0) {
+            setActiveMenu("Dashboard");
+            setEditingJobId(null);
+            setSearch("");
+
+            return;
+        }
+
+        const historialAnterior = [
+            ...menuHistory,
+        ];
+
+        const previousScreen =
+            historialAnterior.pop();
+
+        setMenuHistory(historialAnterior);
+
+        setActiveMenu(previousScreen);
+
+        setSearch("");
+
+        setEditingJobId(null);
+    };
+
+    const handleBackFromNewJob = () => {
+        setEditingJobId(null);
+
+        handleBack();
+    };
+
+    // =========================================================
+    // GUARDAR BORRADOR
+    // =========================================================
+
+    const handleDraft = () => {
+        if (!newJobForm?.title?.trim()) {
+            return;
+        }
+
+        if (
+            typeof handleSaveDraft ===
+            "function"
+        ) {
+            handleSaveDraft();
+        }
+    };
+
+    // =========================================================
+    // EDITAR VACANTE
+    // =========================================================
+
+    const handleEditJob = (job) => {
+        if (!job) {
+            return;
+        }
+
+        setEditingJobId(job.id);
+
+        if (
+            typeof setNewJobForm ===
+            "function"
+        ) {
+            setNewJobForm({
+                title: job.title || "",
+
+                org: job.org || "",
+
+                location:
+                    job.location || "",
+
+                area:
+                    job.area ||
+                    "Educación",
+
+                type:
+                    job.type ||
+                    "Tiempo completo",
+
+                salary:
+                    job.salary || "",
+
+                deadline:
+                    job.deadline ||
+                    job.closing ||
+                    "",
+
+                desc:
+                    job.desc || "",
+
+                responsibilities:
+                    Array.isArray(
+                        job.responsibilities
+                    )
+                        ? job.responsibilities.join(
+                              ", "
+                          )
+                        : job.responsibilities ||
+                          "",
+
+                requirements:
+                    Array.isArray(
+                        job.requirements
+                    )
+                        ? job.requirements.join(
+                              ", "
+                          )
+                        : job.requirements ||
+                          "",
+
+                offers:
+                    Array.isArray(
+                        job.offers
+                    )
+                        ? job.offers.join(
+                              ", "
+                          )
+                        : job.offers ||
+                          "",
+            });
+        }
+
+        setMenuHistory(
+            (previous) => [
+                ...previous,
+                "Administrar Postulaciones",
+            ]
+        );
+
+        setActiveMenu(
+            "Nueva Postulación"
+        );
+
+        setSearch("");
+    };
+
+    // =========================================================
+    // CREAR / ACTUALIZAR VACANTE
+    // =========================================================
+
+    const handleSubmitJob = (event) => {
+        if (editingJobId !== null) {
+            if (
+                typeof handleUpdateJob ===
+                "function"
+            ) {
+                handleUpdateJob(
+                    editingJobId,
+                    newJobForm,
+                    event
+                );
+
+                setEditingJobId(null);
+            }
+
+            return;
+        }
+
+        if (
+            typeof handleCreateJob ===
+            "function"
+        ) {
+            handleCreateJob(event);
+        }
+    };
+
+    // =========================================================
     // NOTIFICACIONES
-    // =====================================================
+    // =========================================================
 
     const handleNotifications = () => {
-
         setNotifications(true);
 
         setTimeout(() => {
-
             setNotifications(false);
-
         }, 3000);
-
     };
 
-    // =====================================================
-    // FILTRO DE POSTULACIONES
-    // =====================================================
+    // =========================================================
+    // DASHBOARD
+    // =========================================================
 
-    const filteredPostulaciones =
-        postulaciones.filter((item) => {
+    const renderDashboard = () => {
+        const vacantesActividad =
+            jobs
+                .slice(0, 10)
+                .map((job) => ({
+                    id: job.id,
 
-            const texto = `
-                ${item.puesto}
-                ${item.empresa}
-                ${item.estado}
-                ${item.fecha}
-            `.toLowerCase();
+                    puesto:
+                        job.title ||
+                        "Sin título",
 
-            return texto.includes(
-                search.toLowerCase()
+                    empresa:
+                        job.org ||
+                        "Sin organización",
+
+                    estado:
+                        job.status ||
+                        "Activa",
+
+                    candidatos:
+                        job.views || 0,
+                }));
+
+        const filteredVacantes =
+            vacantesActividad.filter(
+                (item) =>
+                    `${item.puesto} ${item.empresa} ${item.estado} ${item.candidatos}`
+                        .toLowerCase()
+                        .includes(
+                            search.toLowerCase()
+                        )
             );
 
-        });
-
-    // =====================================================
-    // RENDER
-    // =====================================================
-
-    return (
-
-        <div className="admin-container">
-
-            {/* =================================================
-                SIDEBAR
-            ================================================= */}
-
-            <AdminSidebar
-                activeMenu={adminTab}
-                onMenuClick={handleMenuClick}
-            />
-
-            {/* =================================================
-                MAIN
-            ================================================= */}
-
-            <main className="admin-main">
-
+        return (
+            <>
                 {/* =================================================
-                    TOPBAR
+                    TARJETAS
                 ================================================= */}
 
-                <AdminTopbar
-                    activeMenu={adminTab}
-                    search={search}
-                    setSearch={setSearch}
-                    onNotifications={handleNotifications}
-                />
+                <div className="cards">
 
-                {/* =================================================
-                    CONTENIDO DEL DASHBOARD
-                ================================================= */}
+                    <div className="card">
+                        <span>
+                            Vacantes
+                        </span>
 
-                <section className="content">
+                        <h2>
+                            {stats.vacantes}
+                        </h2>
 
-                    {/* =================================================
-                        CARDS
-                    ================================================= */}
-
-                    <div className="cards">
-
-                        {/* VACANTES */}
-
-                        <div className="card">
-
-                            <span>
-                                Vacantes Activas
-                            </span>
-
-                            <h2>
-                                {stats.vacantes}
-                            </h2>
-
-                        </div>
-
-                        {/* CV */}
-
-                        <div className="card">
-
-                            <span>
-                                CV Recibidos
-                            </span>
-
-                            <h2>
-                                {stats.cvs}
-                            </h2>
-
-                        </div>
-
-                        {/* EMPRESAS */}
-
-                        <div className="card">
-
-                            <span>
-                                Empresas
-                            </span>
-
-                            <h2>
-                                {stats.empresas}
-                            </h2>
-
-                        </div>
-
-                        {/* USUARIOS */}
-
-                        <div className="card">
-
-                            <span>
-                                Usuarios
-                            </span>
-
-                            <h2>
-                                {stats.usuarios}
-                            </h2>
-
-                        </div>
-
+                        <span className="card-detail">
+                            Vacantes registradas
+                        </span>
                     </div>
 
+
+                    <div className="card">
+                        <span>
+                            CV recibidos
+                        </span>
+
+                        <h2>
+                            {stats.cvs}
+                        </h2>
+
+                        <span className="card-detail">
+                            Postulaciones recibidas
+                        </span>
+                    </div>
+
+
+                    <div className="card">
+                        <span>
+                            Organizaciones
+                        </span>
+
+                        <h2>
+                            {stats.empresas}
+                        </h2>
+
+                        <span className="card-detail">
+                            Organizaciones registradas
+                        </span>
+                    </div>
+
+
+                    <div className="card">
+                        <span>
+                            Usuarios
+                        </span>
+
+                        <h2>
+                            {stats.usuarios}
+                        </h2>
+
+                        <span className="card-detail">
+                            Usuarios registrados
+                        </span>
+                    </div>
+
+                </div>
+
+
+                {/* =================================================
+                    COLUMNAS DEL DASHBOARD
+                ================================================= */}
+
+                <div className="dashboard-grid">
+
                     {/* =================================================
-                        ÚLTIMAS POSTULACIONES
+                        VACANTES RECIENTES
                     ================================================= */}
 
                     <div className="table-box">
 
-                        {/* HEADER */}
-
                         <div className="table-header">
 
-                            <h3>
-                                Últimas Postulaciones
-                            </h3>
+                            <div>
+
+                                <h3>
+                                    Vacantes recientes
+                                </h3>
+
+                                <span className="section-description">
+                                    Últimas oportunidades
+                                    registradas.
+                                </span>
+
+                            </div>
+
+
+                            {/* BOTÓN VER TODAS */}
 
                             <button
                                 type="button"
                                 onClick={() =>
-                                    setAdminTab(
-                                        "Postulaciones"
+                                    navegarA(
+                                        "Administrar Postulaciones"
                                     )
                                 }
                             >
-                                Ver Todas
+                                Ver todas
                             </button>
 
                         </div>
 
-                        {/* TABLA */}
 
-                        <table>
+                        <div className="table-responsive">
 
-                            <thead>
+                            {filteredVacantes.length ===
+                            0 ? (
 
-                                <tr>
+                                <div className="empty">
+                                    No hay vacantes
+                                    registradas.
+                                </div>
 
-                                    <th>
-                                        Puesto
-                                    </th>
+                            ) : (
 
-                                    <th>
-                                        Empresa
-                                    </th>
+                                <table>
 
-                                    <th>
-                                        Estado
-                                    </th>
+                                    <thead>
 
-                                    <th>
-                                        Fecha
-                                    </th>
+                                        <tr>
 
-                                    <th>
-                                    </th>
+                                            <th>
+                                                Puesto
+                                            </th>
 
-                                </tr>
+                                            <th>
+                                                Organización
+                                            </th>
 
-                            </thead>
+                                            <th>
+                                                Estado
+                                            </th>
 
-                            <tbody>
-
-                                {filteredPostulaciones.map(
-                                    (item) => (
-
-                                        <tr
-                                            key={item.id}
-
-                                            className={
-                                                selectedRow ===
-                                                item.id
-                                                    ? "selected"
-                                                    : ""
-                                            }
-
-                                            onClick={() =>
-                                                setSelectedRow(
-                                                    item.id
-                                                )
-                                            }
-                                        >
-
-                                            <td>
-                                                {item.puesto}
-                                            </td>
-
-                                            <td>
-                                                {item.empresa}
-                                            </td>
-
-                                            <td>
-
-                                                <span className="status">
-                                                    {item.estado}
-                                                </span>
-
-                                            </td>
-
-                                            <td>
-                                                {item.fecha}
-                                            </td>
-
-                                            <td>
-
-                                                <button
-                                                    type="button"
-                                                    className="edit-button"
-
-                                                    onClick={(e) => {
-
-                                                        e.stopPropagation();
-
-                                                        alert(
-                                                            `Editando: ${item.puesto}`
-                                                        );
-
-                                                    }}
-                                                >
-                                                    Editar
-                                                </button>
-
-                                            </td>
+                                            <th>
+                                                Candidatos
+                                            </th>
 
                                         </tr>
 
-                                    )
-                                )}
+                                    </thead>
 
-                                {/* SIN RESULTADOS */}
 
-                                {filteredPostulaciones.length === 0 && (
+                                    <tbody>
 
-                                    <tr>
+                                        {filteredVacantes.map(
+                                            (item) => (
 
-                                        <td
-                                            colSpan="5"
-                                            className="empty"
-                                        >
-                                            No se encontraron
-                                            postulaciones.
-                                        </td>
+                                                <tr
+                                                    key={
+                                                        item.id
+                                                    }
+                                                >
 
-                                    </tr>
+                                                    <td>
+                                                        {
+                                                            item.puesto
+                                                        }
+                                                    </td>
 
-                                )}
+                                                    <td>
+                                                        {
+                                                            item.empresa
+                                                        }
+                                                    </td>
 
-                            </tbody>
+                                                    <td>
 
-                        </table>
+                                                        <span className="status">
+                                                            {
+                                                                item.estado
+                                                            }
+                                                        </span>
+
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            item.candidatos
+                                                        }
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )}
+
+                                    </tbody>
+
+                                </table>
+
+                            )}
+
+                        </div>
 
                     </div>
+
+
+                    {/* =================================================
+                        ATENCIÓN REQUERIDA
+                    ================================================= */}
+
+                    <div className="attention-box">
+
+                        <div className="attention-header">
+
+                            <div>
+
+                                <h3>
+                                    Atención requerida
+                                </h3>
+
+                                <span>
+                                    Resumen administrativo
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="attention-list">
+
+                            {/* POSTULACIONES */}
+
+                            <button
+                                type="button"
+                                className="attention-item"
+                                onClick={() =>
+                                    navegarA(
+                                        "Administrar Postulaciones"
+                                    )
+                                }
+                            >
+
+                                <div className="attention-number">
+                                    {
+                                        applications.length
+                                    }
+                                </div>
+
+                                <div className="attention-content">
+
+                                    <strong>
+                                        Postulaciones
+                                    </strong>
+
+                                    <span>
+                                        Revisar postulaciones
+                                        recibidas.
+                                    </span>
+
+                                </div>
+
+                                <div className="attention-arrow">
+                                    →
+                                </div>
+
+                            </button>
+
+
+                            {/* CV RECIBIDOS */}
+
+                            <button
+                                type="button"
+                                className="attention-item"
+                                onClick={() =>
+                                    navegarA(
+                                        "CV Recibidos"
+                                    )
+                                }
+                            >
+
+                                <div className="attention-number">
+                                    {
+                                        applications.length
+                                    }
+                                </div>
+
+                                <div className="attention-content">
+
+                                    <strong>
+                                        CV recibidos
+                                    </strong>
+
+                                    <span>
+                                        Revisar currículums
+                                        enviados.
+                                    </span>
+
+                                </div>
+
+                                <div className="attention-arrow">
+                                    →
+                                </div>
+
+                            </button>
+
+
+                            {/* NUEVA POSTULACIÓN */}
+
+                            <button
+                                type="button"
+                                className="attention-item"
+                                onClick={() =>
+                                    navegarA(
+                                        "Nueva Postulación"
+                                    )
+                                }
+                            >
+
+                                <div className="attention-number">
+                                    +
+                                </div>
+
+                                <div className="attention-content">
+
+                                    <strong>
+                                        Nueva Postulación
+                                    </strong>
+
+                                    <span>
+                                        Registrar una nueva
+                                        oportunidad laboral.
+                                    </span>
+
+                                </div>
+
+                                <div className="attention-arrow">
+                                    →
+                                </div>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </>
+        );
+    };
+
+    // =========================================================
+    // CONTENIDO SEGÚN MENÚ
+    // =========================================================
+
+    const renderContent = () => {
+        switch (activeMenu) {
+
+            case "Dashboard":
+
+                return renderDashboard();
+
+
+            case "Nueva Postulación":
+
+                return (
+                    <NuevaPostulacion
+                        newJobForm={
+                            newJobForm
+                        }
+
+                        setNewJobForm={
+                            setNewJobForm
+                        }
+
+                        onPublish={
+                            handleSubmitJob
+                        }
+
+                        onSaveDraft={
+                            handleDraft
+                        }
+
+                        onBack={
+                            handleBackFromNewJob
+                        }
+                    />
+                );
+
+
+            case "Administrar Postulaciones":
+
+                return (
+                    <AdministrarPostulaciones
+                        jobs={jobs}
+
+                        applications={
+                            applications
+                        }
+
+                        onEditJob={
+                            handleEditJob
+                        }
+
+                        onDeleteJob={
+                            undefined
+                        }
+
+                        onUpdateAppStatus={
+                            handleUpdateAppStatus
+                        }
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "CV Recibidos":
+
+                return (
+                    <CVRecibidos
+                        applications={
+                            applications
+                        }
+
+                        jobs={jobs}
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "Organizaciones":
+
+                return (
+                    <Organizaciones
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "Categorías":
+
+                return (
+                    <Categorias
+                        search={
+                            search
+                        }
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "Estadísticas":
+
+                return (
+                    <Estadisticas
+                        jobs={
+                            jobs
+                        }
+
+                        applications={
+                            applications
+                        }
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "Usuarios":
+
+                return (
+                    <Users
+                        search={
+                            search
+                        }
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            case "Configuración":
+
+                return (
+                    <Configuracion
+                        configuration={
+                            configuration
+                        }
+
+                        setConfiguration={
+                            setConfiguration
+                        }
+
+                        updateConfiguration={
+                            updateConfiguration
+                        }
+
+                        updateConfigurations={
+                            updateConfigurations
+                        }
+
+                        resetConfiguration={
+                            resetConfiguration
+                        }
+
+                        adminTab={
+                            activeMenu
+                        }
+
+                        setAdminTab={
+                            setActiveMenu
+                        }
+                    />
+                );
+
+
+            default:
+
+                return (
+                    <div className="empty">
+
+                        Sección no encontrada:
+
+                        {" "}
+
+                        {activeMenu}
+
+                    </div>
+                );
+        }
+    };
+
+    // =========================================================
+    // RENDER PRINCIPAL
+    // =========================================================
+
+    return (
+        <div className="admin-container">
+
+            {/* SIDEBAR */}
+
+            <AdminSidebar
+                activeMenu={
+                    activeMenu
+                }
+
+                onMenuClick={
+                    handleMenuClick
+                }
+            />
+
+
+            {/* ÁREA PRINCIPAL */}
+
+            <main className="admin-main">
+
+                {/* TOPBAR */}
+
+                <AdminTopbar
+                    activeMenu={
+                        activeMenu
+                    }
+
+                    search={
+                        search
+                    }
+
+                    setSearch={
+                        setSearch
+                    }
+
+                    onNotifications={
+                        handleNotifications
+                    }
+                />
+
+
+                {/* CONTENIDO */}
+
+                <section className="content">
+
+                    {renderContent()}
 
                 </section>
 
             </main>
 
-            {/* =================================================
-                TOAST
-            ================================================= */}
+
+            {/* TOAST */}
 
             {notifications && (
 
                 <div className="toast show">
 
-                    No hay nuevas notificaciones.
+                    No hay nuevas
+                    notificaciones.
 
                 </div>
 
             )}
 
         </div>
-
     );
-
 }
 
 export default AdminDashboard;

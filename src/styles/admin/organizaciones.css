@@ -1,0 +1,1187 @@
+/* =====================================================
+   FQA EMPLEOS
+   PANEL ADMINISTRATIVO
+   ORGANIZACIONES
+===================================================== */
+
+
+/* =====================================================
+   SCREEN
+===================================================== */
+
+.organizaciones-screen {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+    padding: 0;
+
+    min-width: 0;
+
+    overflow: visible;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.organizaciones-screen .screen-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 25px;
+
+    min-width: 0;
+}
+
+.organizaciones-screen .screen-header>div {
+    min-width: 0;
+}
+
+.organizaciones-screen .screen-header h2 {
+    margin: 0;
+
+    color: var(--dark);
+
+    font-size: 28px;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.organizaciones-screen .screen-header p {
+    margin: 7px 0 0;
+
+    color: #777;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   BOTÓN NUEVA ORGANIZACIÓN
+===================================================== */
+
+.organizaciones-screen .primary-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    min-width: 180px;
+    min-height: 46px;
+
+    padding: 0 25px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 10px;
+
+    background: var(--primary);
+
+    color: var(--white);
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s,
+        transform 0.25s,
+        box-shadow 0.25s;
+}
+
+.organizaciones-screen .primary-button:hover {
+    background: var(--primary-dark);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 16px rgba(91, 162, 34, 0.25);
+}
+
+.organizaciones-screen .primary-button:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+.organizaciones-screen .primary-button:focus-visible {
+    outline: 2px solid var(--primary);
+
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   TOOLBAR
+===================================================== */
+
+.organizaciones-screen .admin-toolbar {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   BUSCADOR
+===================================================== */
+
+.organizaciones-screen .admin-toolbar input {
+    width: 100%;
+
+    min-width: 0;
+    min-height: 44px;
+
+    padding: 0 15px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.25s,
+        box-shadow 0.25s;
+}
+
+.organizaciones-screen .admin-toolbar input::placeholder {
+    color: #9CA3AF;
+}
+
+.organizaciones-screen .admin-toolbar input:focus {
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 2px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   TABLA
+===================================================== */
+
+.organizaciones-screen .admin-table-box {
+    width: 100%;
+
+    background: var(--white);
+
+    border-radius: 18px;
+
+    box-shadow: var(--shadow);
+
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.organizaciones-screen .admin-table-box table {
+    width: 100%;
+
+    min-width: 850px;
+
+    border-collapse: collapse;
+
+    border-spacing: 0;
+}
+
+
+/* =====================================================
+   ENCABEZADO
+===================================================== */
+
+.organizaciones-screen .admin-table-box thead {
+    background: #F8FAFC;
+}
+
+.organizaciones-screen .admin-table-box th {
+    height: 54px;
+
+    padding: 0 18px;
+
+    color: #667085;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-align: left;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.04em;
+
+    white-space: nowrap;
+
+    border-bottom: 1px solid #E5E7EB;
+}
+
+
+/* =====================================================
+   CELDAS
+===================================================== */
+
+.organizaciones-screen .admin-table-box td {
+    height: 68px;
+
+    padding: 12px 18px;
+
+    color: var(--text);
+
+    font-size: 13px;
+
+    vertical-align: middle;
+
+    border-bottom: 1px solid #F0F1F3;
+
+    white-space: nowrap;
+}
+
+.organizaciones-screen .admin-table-box tbody tr {
+    transition: background 0.2s ease;
+}
+
+.organizaciones-screen .admin-table-box tbody tr:hover {
+    background: #FAFCF7;
+}
+
+.organizaciones-screen .admin-table-box tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   NOMBRE
+===================================================== */
+
+.organizaciones-screen .admin-table-box td strong {
+    color: var(--dark);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   ESTADO
+===================================================== */
+
+.organizaciones-screen .status {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 27px;
+
+    padding: 0 11px;
+
+    border-radius: 20px;
+
+    background: #EAF6DC;
+
+    color: #4E8B1B;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+
+.organizaciones-screen .table-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    white-space: nowrap;
+}
+
+.organizaciones-screen .table-actions .edit-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 58px;
+    min-height: 32px;
+
+    padding: 0 11px;
+
+    border: 1px solid #DDE2E7;
+
+    border-radius: 7px;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.organizaciones-screen .table-actions .edit-button:hover {
+    background: #F5F9EF;
+
+    border-color: var(--primary);
+
+    color: var(--primary-dark);
+
+    transform: translateY(-1px);
+}
+
+.organizaciones-screen .table-actions .edit-button:active {
+    transform: translateY(0);
+}
+
+.organizaciones-screen .table-actions .edit-button:focus-visible {
+    outline: 2px solid var(--primary);
+
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   SCROLLBAR TABLA
+===================================================== */
+
+.organizaciones-screen .admin-table-box::-webkit-scrollbar {
+    height: 8px;
+}
+
+.organizaciones-screen .admin-table-box::-webkit-scrollbar-track {
+    background: #F4F5F6;
+
+    border-radius: 10px;
+}
+
+.organizaciones-screen .admin-table-box::-webkit-scrollbar-thumb {
+    background: #D2D8CC;
+
+    border-radius: 10px;
+}
+
+.organizaciones-screen .admin-table-box::-webkit-scrollbar-thumb:hover {
+    background: #B8C2B0;
+}
+
+
+/* =====================================================
+   TABLET GRANDE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .organizaciones-screen .screen-header {
+        gap: 20px;
+    }
+
+    .organizaciones-screen .screen-header h2 {
+        font-size: 26px;
+    }
+
+    .organizaciones-screen .admin-table-box th {
+        padding: 0 15px;
+    }
+
+    .organizaciones-screen .admin-table-box td {
+        padding: 11px 15px;
+    }
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .organizaciones-screen .screen-header {
+        align-items: flex-start;
+    }
+
+    .organizaciones-screen .screen-header h2 {
+        font-size: 24px;
+    }
+
+    .organizaciones-screen .screen-header p {
+        font-size: 12px;
+    }
+
+    .organizaciones-screen .admin-table-box {
+        border-radius: 15px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .organizaciones-screen {
+        width: 100%;
+    }
+
+    .organizaciones-screen .screen-header {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 15px;
+
+        margin-bottom: 20px;
+    }
+
+    .organizaciones-screen .screen-header h2 {
+        font-size: 22px;
+    }
+
+    .organizaciones-screen .screen-header p {
+        margin-top: 5px;
+
+        font-size: 11px;
+    }
+
+    .organizaciones-screen .primary-button {
+        width: 100%;
+
+        min-width: 0;
+
+        min-height: 44px;
+    }
+
+    .organizaciones-screen .admin-toolbar {
+        margin-bottom: 15px;
+    }
+
+    .organizaciones-screen .admin-toolbar input {
+        width: 100%;
+
+        min-height: 44px;
+    }
+
+    .organizaciones-screen .admin-table-box {
+        border-radius: 14px;
+
+        overflow-x: auto;
+    }
+
+    .organizaciones-screen .admin-table-box table {
+        min-width: 850px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 450px) {
+
+    .organizaciones-screen .screen-header h2 {
+        font-size: 20px;
+    }
+
+    .organizaciones-screen .screen-header p {
+        font-size: 11px;
+    }
+
+    .organizaciones-screen .primary-button {
+        font-size: 12px;
+    }
+
+    .organizaciones-screen .admin-toolbar input {
+        min-height: 42px;
+
+        padding-left: 12px;
+        padding-right: 12px;
+
+        font-size: 12px;
+    }
+
+    .organizaciones-screen .admin-table-box {
+        border-radius: 12px;
+    }
+}
+
+
+/* =====================================================
+   TOOLBAR - FILTROS
+===================================================== */
+
+.organizaciones-screen .admin-toolbar {
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) 220px;
+
+    gap: 12px;
+
+    width: 100%;
+
+    margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   BUSCADOR Y SELECT
+===================================================== */
+
+.organizaciones-screen .admin-toolbar input,
+.organizaciones-screen .admin-toolbar select {
+
+    width: 100%;
+
+    height: 46px;
+
+    min-width: 0;
+
+    padding: 0 15px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        background 0.25s ease;
+
+}
+
+
+/* =====================================================
+   SELECT
+===================================================== */
+
+.organizaciones-screen .admin-toolbar select {
+
+    cursor: pointer;
+
+    appearance: auto;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.organizaciones-screen .admin-toolbar input::placeholder {
+    color: #9CA3AF;
+}
+
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.organizaciones-screen .admin-toolbar input:focus,
+.organizaciones-screen .admin-toolbar select:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px rgba(130, 186, 46, 0.12);
+
+    background: var(--white);
+}
+
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.organizaciones-screen .admin-toolbar input:hover,
+.organizaciones-screen .admin-toolbar select:hover {
+
+    border-color: #C8D0C4;
+}
+
+
+/* =====================================================
+   ESTADO PENDIENTE
+===================================================== */
+
+.organizaciones-screen .status-pending {
+
+    background: #FFF4D6;
+
+    color: #A66A00;
+}
+
+
+/* =====================================================
+   TABLA VACÍA
+===================================================== */
+
+.organizaciones-screen .organizaciones-empty {
+
+    text-align: center;
+
+    padding: 45px 20px !important;
+
+    color: #999;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   MODAL OVERLAY
+===================================================== */
+
+.organizaciones-modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 25px;
+
+    background:
+        rgba(13, 27, 4, 0.55);
+
+    backdrop-filter:
+        blur(3px);
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.organizaciones-modal {
+
+    width: 100%;
+
+    max-width: 620px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: var(--white);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.25);
+
+    animation:
+        organizacionesModalIn 0.2s ease;
+}
+
+
+@keyframes organizacionesModalIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(15px) scale(0.98);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0) scale(1);
+
+    }
+
+}
+
+
+/* =====================================================
+   MODAL HEADER
+===================================================== */
+
+.organizaciones-modal-header {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 25px 28px;
+
+    border-bottom:
+        1px solid #EEF0EC;
+}
+
+
+.organizaciones-modal-header span {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--primary-dark);
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+
+.organizaciones-modal-header h2 {
+
+    margin: 0;
+
+    color: var(--dark);
+
+    font-size: 22px;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   CERRAR MODAL
+===================================================== */
+
+.organizaciones-modal-close {
+
+    width: 36px;
+
+    height: 36px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #F3F4F6;
+
+    color: #555;
+
+    font-family: inherit;
+
+    font-size: 24px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.organizaciones-modal-close:hover {
+
+    background: var(--primary);
+
+    color: white;
+
+    transform: rotate(3deg);
+}
+
+
+/* =====================================================
+   MODAL BODY
+===================================================== */
+
+.organizaciones-modal-body {
+
+    padding: 28px;
+}
+
+
+/* =====================================================
+   DETALLES
+===================================================== */
+
+.organizaciones-detail {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    padding: 15px 0;
+
+    border-bottom:
+        1px solid #F0F1F3;
+}
+
+
+.organizaciones-detail:first-child {
+
+    padding-top: 0;
+}
+
+
+.organizaciones-detail:last-child {
+
+    border-bottom: none;
+
+    padding-bottom: 0;
+}
+
+
+.organizaciones-detail span {
+
+    color: #888;
+
+    font-size: 11px;
+
+    font-weight: 500;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.03em;
+}
+
+
+.organizaciones-detail strong {
+
+    color: var(--dark);
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   FORMULARIO MODAL
+===================================================== */
+
+.organizaciones-form-field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    margin-bottom: 18px;
+}
+
+
+.organizaciones-form-field label {
+
+    color: var(--dark);
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.organizaciones-form-field input,
+.organizaciones-form-field select {
+
+    width: 100%;
+
+    min-height: 44px;
+
+    padding: 0 13px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: white;
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.organizaciones-form-field input:focus,
+.organizaciones-form-field select:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   FORM GRID
+===================================================== */
+
+.organizaciones-form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 15px;
+}
+
+
+/* =====================================================
+   MODAL FOOTER
+===================================================== */
+
+.organizaciones-modal-footer {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 20px 28px;
+
+    border-top:
+        1px solid #EEF0EC;
+}
+
+
+/* =====================================================
+   BOTONES MODAL
+===================================================== */
+
+.modal-secondary-button,
+.modal-primary-button {
+
+    min-height: 42px;
+
+    padding: 0 18px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.modal-secondary-button {
+
+    border: 1px solid #DDE2E7;
+
+    background: white;
+
+    color: var(--text);
+}
+
+
+.modal-secondary-button:hover {
+
+    background: #F5F6F4;
+
+    border-color: #C8CEC5;
+}
+
+
+.modal-primary-button {
+
+    border: 1px solid var(--primary);
+
+    background: var(--primary);
+
+    color: white;
+}
+
+
+.modal-primary-button:hover {
+
+    background: var(--primary-dark);
+
+    border-color: var(--primary-dark);
+
+    transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   RESPONSIVE TOOLBAR
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .organizaciones-screen .admin-toolbar {
+
+        grid-template-columns: 1fr;
+
+        gap: 10px;
+
+    }
+
+    .organizaciones-screen .admin-toolbar input,
+    .organizaciones-screen .admin-toolbar select {
+
+        min-height: 44px;
+
+    }
+
+
+    .organizaciones-modal-overlay {
+
+        padding: 15px;
+
+    }
+
+
+    .organizaciones-modal {
+
+        max-height: 94vh;
+
+        border-radius: 15px;
+
+    }
+
+
+    .organizaciones-modal-header {
+
+        padding: 20px;
+
+    }
+
+
+    .organizaciones-modal-header h2 {
+
+        font-size: 19px;
+
+    }
+
+
+    .organizaciones-modal-body {
+
+        padding: 20px;
+
+    }
+
+
+    .organizaciones-form-grid {
+
+        grid-template-columns: 1fr;
+
+        gap: 0;
+
+    }
+
+
+    .organizaciones-modal-footer {
+
+        padding: 16px 20px;
+
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+
+    }
+
+
+    .modal-secondary-button,
+    .modal-primary-button {
+
+        width: 100%;
+
+    }
+
+}

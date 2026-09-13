@@ -1397,20 +1397,19 @@ return (
 
 
     {/* ========================================================
-        ADMINISTRAR POSTULACIONES
-    ======================================================== */}
+    ADMINISTRAR POSTULACIONES
+======================================================== */}
 
-    {adminTab === 'Administrar Postulaciones' && (
-      <AdministrarPostulaciones
-        currentUser={currentUser}
-        handleLogout={handleLogout}
-        adminTab={adminTab}
-        setAdminTab={handleAdminNavigation}
-
-        applications={applications}
-        handleUpdateAppStatus={handleUpdateAppStatus}
-      />
-    )}
+{adminTab === 'Administrar Postulaciones' && (
+  <AdministrarPostulaciones
+    currentUser={currentUser}
+    handleLogout={handleLogout}
+    adminTab={adminTab}
+    setAdminTab={handleAdminNavigation}
+    applications={applications}
+    handleUpdateAppStatus={handleUpdateAppStatus}
+  />
+)}
 
 
     {/* ========================================================

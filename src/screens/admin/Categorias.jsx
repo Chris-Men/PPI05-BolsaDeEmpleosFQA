@@ -1,113 +1,495 @@
 import { useState } from "react";
 
-import AdminSidebar from "../../components/admin/AdminSidebar";
-import AdminTopbar from "../../components/admin/AdminTopbar";
+import "../../styles/admin/categorias.css";
 
-import "../../styles/admin/admin-layout.css";
-import "../../styles/admin/admin-sidebar.css";
-import "../../styles/admin/admin-topbar.css";
+function Categorias() {
+    // =====================================================
+    // DATOS INICIALES
+    // =====================================================
 
-function Categorias({
-    currentUser,
-    handleLogout,
-    adminTab,
-    setAdminTab
-}) {
+    const [categorias, setCategorias] = useState([
+        {
+            id: 1,
+            nombre: "Tecnología",
+            descripcion:
+                "Desarrollo, informática y soporte tecnológico.",
+            oportunidades: 12,
+        },
+        {
+            id: 2,
+            nombre: "Administración",
+            descripcion:
+                "Gestión administrativa y organizacional.",
+            oportunidades: 8,
+        },
+        {
+            id: 3,
+            nombre: "Diseño",
+            descripcion:
+                "Diseño gráfico, audiovisual y comunicación visual.",
+            oportunidades: 5,
+        },
+        {
+            id: 4,
+            nombre: "Educación",
+            descripcion:
+                "Docencia, formación y apoyo educativo.",
+            oportunidades: 4,
+        },
+        {
+            id: 5,
+            nombre: "Trabajo Social",
+            descripcion:
+                "Intervención y desarrollo comunitario.",
+            oportunidades: 7,
+        },
+    ]);
 
-    const [search, setSearch] = useState("");
+    // =====================================================
+    // ESTADOS
+    // =====================================================
 
-    const handleMenuClick = (name) => {
-        setAdminTab(name);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    const [modoModal, setModoModal] = useState("crear");
+
+    const [categoriaSeleccionada, setCategoriaSeleccionada] =
+        useState(null);
+
+    const [formulario, setFormulario] = useState({
+        nombre: "",
+        descripcion: "",
+    });
+
+    // =====================================================
+    // ABRIR MODAL NUEVA CATEGORÍA
+    // =====================================================
+
+    const abrirNuevaCategoria = () => {
+        setModoModal("crear");
+
+        setCategoriaSeleccionada(null);
+
+        setFormulario({
+            nombre: "",
+            descripcion: "",
+        });
+
+        setModalOpen(true);
     };
 
-    const handleNotifications = () => {
-        // Aquí irán las notificaciones
+    // =====================================================
+    // ABRIR MODAL EDITAR
+    // =====================================================
+
+    const abrirEditarCategoria = (categoria) => {
+        setModoModal("editar");
+
+        setCategoriaSeleccionada(categoria);
+
+        setFormulario({
+            nombre: categoria.nombre,
+            descripcion: categoria.descripcion,
+        });
+
+        setModalOpen(true);
     };
+
+    // =====================================================
+    // CERRAR MODAL
+    // =====================================================
+
+    const cerrarModal = () => {
+        setModalOpen(false);
+
+        setCategoriaSeleccionada(null);
+
+        setFormulario({
+            nombre: "",
+            descripcion: "",
+        });
+    };
+
+    // =====================================================
+    // ACTUALIZAR FORMULARIO
+    // =====================================================
+
+    const actualizarCampo = (campo, valor) => {
+        setFormulario((prev) => ({
+            ...prev,
+            [campo]: valor,
+        }));
+    };
+
+    // =====================================================
+    // GUARDAR CATEGORÍA
+    // =====================================================
+
+    const guardarCategoria = (e) => {
+        e.preventDefault();
+
+        const nombre = formulario.nombre.trim();
+
+        const descripcion =
+            formulario.descripcion.trim();
+
+        if (!nombre) {
+            return;
+        }
+
+        // =================================================
+        // CREAR
+        // =================================================
+
+        if (modoModal === "crear") {
+            const nuevaCategoria = {
+                id: Date.now(),
+                nombre,
+                descripcion:
+                    descripcion ||
+                    "Sin descripción.",
+                oportunidades: 0,
+            };
+
+            setCategorias((prev) => [
+                ...prev,
+                nuevaCategoria,
+            ]);
+        }
+
+        // =================================================
+        // EDITAR
+        // =================================================
+
+        else if (categoriaSeleccionada) {
+            setCategorias((prev) =>
+                prev.map((categoria) =>
+                    categoria.id ===
+                    categoriaSeleccionada.id
+                        ? {
+                              ...categoria,
+                              nombre,
+                              descripcion:
+                                  descripcion ||
+                                  "Sin descripción.",
+                          }
+                        : categoria
+                )
+            );
+        }
+
+        cerrarModal();
+    };
+
+    // =====================================================
+    // ELIMINAR CATEGORÍA
+    // =====================================================
+
+    const eliminarCategoria = (categoria) => {
+        const confirmar = window.confirm(
+            `¿Desea eliminar la categoría "${categoria.nombre}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        setCategorias((prev) =>
+            prev.filter(
+                (item) =>
+                    item.id !== categoria.id
+            )
+        );
+    };
+
+    // =====================================================
+    // RENDER
+    // =====================================================
 
     return (
-        <div className="admin-container">
+        <section className="admin-screen categorias-screen">
 
-            {/* SIDEBAR */}
-            <AdminSidebar
-                activeMenu="Categorías"
-                onMenuClick={handleMenuClick}
-            />
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
-            {/* CONTENIDO PRINCIPAL */}
-            <main className="admin-main">
+            <div className="screen-header">
 
-                {/* TOPBAR */}
-                <AdminTopbar
-                    activeMenu="Categorías"
-                    search={search}
-                    setSearch={setSearch}
-                    onNotifications={handleNotifications}
-                />
+                <div>
+                    <h2>
+                        Categorías
+                    </h2>
 
-                {/* CONTENIDO */}
-                <section className="content">
+                    <p>
+                        Organice las oportunidades según
+                        su área profesional.
+                    </p>
+                </div>
 
-                    <div className="content-header">
+                <button
+                    type="button"
+                    className="primary-button"
+                    onClick={abrirNuevaCategoria}
+                >
+                    + Nueva categoría
+                </button>
 
-                        <div>
-                            <h1>Categorías</h1>
+            </div>
 
-                            <p>
-                                Administra las categorías y áreas
-                                disponibles en la plataforma.
-                            </p>
+            {/* =================================================
+                GRID DE CATEGORÍAS
+            ================================================= */}
+
+            <div className="category-grid">
+
+                {categorias.length > 0 ? (
+
+                    categorias.map((categoria) => (
+
+                        <div
+                            className="category-card"
+                            key={categoria.id}
+                        >
+
+                            {/* ICONO */}
+
+                            <div className="category-icon">
+                                {categoria.nombre
+                                    .charAt(0)
+                                    .toUpperCase()}
+                            </div>
+
+                            {/* CONTENIDO */}
+
+                            <div className="category-content">
+
+                                <h3>
+                                    {categoria.nombre}
+                                </h3>
+
+                                <p>
+                                    {categoria.descripcion}
+                                </p>
+
+                                <span>
+                                    {categoria.oportunidades}{" "}
+                                    {categoria.oportunidades === 1
+                                        ? "oportunidad"
+                                        : "oportunidades"}
+                                </span>
+
+                            </div>
+
+                            {/* ACCIONES */}
+
+                            <div className="category-actions">
+
+                                <button
+                                    type="button"
+                                    className="edit-button"
+                                    onClick={() =>
+                                        abrirEditarCategoria(
+                                            categoria
+                                        )
+                                    }
+                                >
+                                    Editar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="delete-button"
+                                    onClick={() =>
+                                        eliminarCategoria(
+                                            categoria
+                                        )
+                                    }
+                                >
+                                    Eliminar
+                                </button>
+
+                            </div>
+
                         </div>
+
+                    ))
+
+                ) : (
+
+                    <div className="categories-empty">
+
+                        <strong>
+                            No hay categorías registradas.
+                        </strong>
+
+                        <span>
+                            Cree una nueva categoría
+                            para comenzar.
+                        </span>
+
+                        <button
+                            type="button"
+                            className="primary-button"
+                            onClick={
+                                abrirNuevaCategoria
+                            }
+                        >
+                            + Nueva categoría
+                        </button>
 
                     </div>
 
-                    <div className="admin-card">
+                )}
 
-                        <div className="admin-card-header">
+            </div>
+
+            {/* =================================================
+                MODAL
+            ================================================= */}
+
+            {modalOpen && (
+
+                <div
+                    className="categoria-modal-overlay"
+                    onMouseDown={(e) => {
+
+                        if (
+                            e.target.classList.contains(
+                                "categoria-modal-overlay"
+                            )
+                        ) {
+                            cerrarModal();
+                        }
+
+                    }}
+                >
+
+                    <div className="categoria-modal">
+
+                        {/* =================================================
+                            HEADER MODAL
+                        ================================================= */}
+
+                        <div className="categoria-modal-header">
 
                             <div>
+
+                                <span>
+                                    {modoModal === "crear"
+                                        ? "NUEVA CATEGORÍA"
+                                        : "EDITAR CATEGORÍA"}
+                                </span>
+
                                 <h2>
-                                    Categorías disponibles
+                                    {modoModal === "crear"
+                                        ? "Crear categoría"
+                                        : "Editar categoría"}
                                 </h2>
 
-                                <p>
-                                    Aquí podrás administrar las
-                                    categorías de las vacantes.
-                                </p>
                             </div>
 
                             <button
                                 type="button"
-                                className="admin-btn-primary"
+                                className="categoria-modal-close"
+                                onClick={cerrarModal}
+                                aria-label="Cerrar"
                             >
-                                + Nueva categoría
+                                ×
                             </button>
 
                         </div>
 
-                        <div className="admin-empty-state">
+                        {/* =================================================
+                            FORMULARIO
+                        ================================================= */}
 
-                            <div className="admin-empty-icon">
-                                🗂️
+                        <form
+                            className="categoria-form"
+                            onSubmit={guardarCategoria}
+                        >
+
+                            <div className="categoria-field">
+
+                                <label htmlFor="categoria-nombre">
+                                    Nombre de la categoría
+                                </label>
+
+                                <input
+                                    id="categoria-nombre"
+                                    type="text"
+                                    value={
+                                        formulario.nombre
+                                    }
+                                    onChange={(e) =>
+                                        actualizarCampo(
+                                            "nombre",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Ej. Tecnología"
+                                    autoFocus
+                                    required
+                                />
+
                             </div>
 
-                            <h3>
-                                No hay categorías registradas
-                            </h3>
+                            <div className="categoria-field">
 
-                            <p>
-                                Las categorías que agregues aparecerán
-                                en esta sección.
-                            </p>
+                                <label htmlFor="categoria-descripcion">
+                                    Descripción
+                                </label>
 
-                        </div>
+                                <textarea
+                                    id="categoria-descripcion"
+                                    value={
+                                        formulario.descripcion
+                                    }
+                                    onChange={(e) =>
+                                        actualizarCampo(
+                                            "descripcion",
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Describe el área profesional..."
+                                    rows="4"
+                                />
+
+                            </div>
+
+                            {/* =================================================
+                                ACCIONES MODAL
+                            ================================================= */}
+
+                            <div className="categoria-modal-actions">
+
+                                <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={cerrarModal}
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="primary-button"
+                                >
+                                    {modoModal === "crear"
+                                        ? "Crear categoría"
+                                        : "Guardar cambios"}
+                                </button>
+
+                            </div>
+
+                        </form>
 
                     </div>
 
-                </section>
+                </div>
 
-            </main>
+            )}
 
-        </div>
+        </section>
     );
 }
 
