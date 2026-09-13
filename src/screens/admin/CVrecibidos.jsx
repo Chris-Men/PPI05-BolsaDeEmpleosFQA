@@ -603,7 +603,7 @@ function CVRecibidos({
                     HEADER
                 ================================================= */}
 
-                <div className="cv-recibidos-header">
+                <div className="screen-header">
 
                     <div>
 

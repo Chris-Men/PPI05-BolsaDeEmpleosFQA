@@ -213,13 +213,13 @@ function AdministrarPostulaciones({
                 ENCABEZADO
             ================================================= */}
 
-            <div className="content-header">
+            <div className="screen-header">
 
                 <div>
 
-                    <h1>
+                    <h2>
                         Administrar Postulaciones
-                    </h1>
+                    </h2>
 
                     <p>
                         Consulte y gestione las vacantes
