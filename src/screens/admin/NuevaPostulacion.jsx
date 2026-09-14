@@ -153,7 +153,7 @@ function NuevaPostulacion({
                 HEADER
             ================================================= */}
 
-            
+
 
             {/* =================================================
                 FORMULARIO
@@ -349,13 +349,24 @@ function NuevaPostulacion({
                                 id="nv-salary"
                                 type="text"
                                 value={newJobForm.salary || ""}
-                                onChange={(event) =>
-                                    updateField(
-                                        "salary",
-                                        event.target.value
-                                    )
-                                }
+                                onChange={(event) => {
+                                    let value = event.target.value;
+
+                                    // Si empieza con un número, agregar $ automáticamente
+                                    if (
+                                        value &&
+                                        !value.startsWith("$") &&
+                                        /^\d/.test(value)
+                                    ) {
+                                        value = "$" + value;
+                                    }
+
+                                    updateField("salary", value);
+                                }}
                                 placeholder="Ej. $600-$800/mes"
+                                pattern="(\$?[0-9]+.*)"
+                                title="Ingresa un salario que comience con un número, por ejemplo: $600 o $600-$800/mes."
+                                required
                             />
                         </div>
 
@@ -472,6 +483,7 @@ function NuevaPostulacion({
                                     )
                                 }
                                 placeholder="Ej. Coordinar proyectos, elaborar informes, supervisar personal"
+                                required
                             />
 
                         </div>
@@ -516,6 +528,7 @@ function NuevaPostulacion({
                                     )
                                 }
                                 placeholder="Ej. Licenciatura, 2 años de experiencia, disponibilidad de campo"
+                                required
                             />
 
                         </div>
