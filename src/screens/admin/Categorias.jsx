@@ -215,16 +215,7 @@ function Categorias() {
 
             <div className="screen-header">
 
-                <div>
-                    <h2>
-                        Categorías
-                    </h2>
-
-                    <p>
-                        Organice las oportunidades según
-                        su área profesional.
-                    </p>
-                </div>
+            
 
                 <button
                     type="button"

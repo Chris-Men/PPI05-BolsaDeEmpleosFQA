@@ -414,19 +414,6 @@ function Usuarios() {
 
             <div className="screen-header">
 
-                <div>
-
-                    <h2>
-                        Usuarios
-                    </h2>
-
-                    <p>
-                        Administre las cuentas con acceso
-                        al panel administrativo.
-                    </p>
-
-                </div>
-
                 <button
                     type="button"
                     className="primary-button"

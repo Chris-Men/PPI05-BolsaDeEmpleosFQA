@@ -1,5 +1,8 @@
 import React from "react";
 
+import logoCompleto from "../../components/imagenes/logo/logo 2.png";
+import logoIcono from "../../components/imagenes/logo/logo 3.png";
+
 function AdminSidebar({
     activeMenu,
     onMenuClick
@@ -47,29 +50,41 @@ function AdminSidebar({
     return (
         <aside className="sidebar">
 
-            {/* LOGO */}
-            <div className="logo">
+            {/* =====================================================
+                LOGO
+            ===================================================== */}
 
-                <div className="logo-icon">
-                    FQA
-                </div>
+            <button
+                type="button"
+                className="logo"
+                onClick={() => onMenuClick("Dashboard")}
+                title="Ir al Dashboard"
+            >
 
-                <div className="logo-text">
+                <picture>
 
-                    <h2>
-                        FQA Empleos
-                    </h2>
+                    {/* Logo pequeño para tablet y móvil */}
+                    <source
+                        media="(max-width: 900px)"
+                        srcSet={logoIcono}
+                    />
 
-                    <span>
-                        Panel Administrativo
-                    </span>
+                    {/* Logo completo para escritorio */}
+                    <img
+                        src={logoCompleto}
+                        alt="Fundación Quintanilla Amaya"
+                        className="logo-image"
+                    />
 
-                </div>
+                </picture>
 
-            </div>
+            </button>
 
 
-            {/* MENÚ */}
+            {/* =====================================================
+                MENÚ
+            ===================================================== */}
+
             <nav className="menu">
 
                 {menuItems.map((item) => (
@@ -82,9 +97,7 @@ function AdminSidebar({
                                 ? "active"
                                 : ""
                         }`}
-                        onClick={() => {
-                            onMenuClick(item.name);
-                        }}
+                        onClick={() => onMenuClick(item.name)}
                     >
 
                         <i>
@@ -102,7 +115,10 @@ function AdminSidebar({
             </nav>
 
 
-            {/* ADMINISTRADOR */}
+            {/* =====================================================
+                ADMINISTRADOR
+            ===================================================== */}
+
             <div className="sidebar-footer">
 
                 <div className="admin-photo">

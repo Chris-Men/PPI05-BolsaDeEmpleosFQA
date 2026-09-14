@@ -213,23 +213,7 @@ function AdministrarPostulaciones({
                 ENCABEZADO
             ================================================= */}
 
-            <div className="screen-header">
-
-                <div>
-
-                    <h2>
-                        Administrar Postulaciones
-                    </h2>
-
-                    <p>
-                        Consulte y gestione las vacantes
-                        publicadas en FQA Empleos.
-                    </p>
-
-                </div>
-
-            </div>
-
+        
 
             {/* =================================================
                 FILTROS

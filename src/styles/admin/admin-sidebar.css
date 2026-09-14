@@ -19,11 +19,12 @@
 
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 
     box-shadow: 6px 0 25px rgba(0, 0, 0, 0.12);
 
     overflow-y: auto;
+
+    box-sizing: border-box;
 }
 
 
@@ -32,60 +33,69 @@
 ===================================================== */
 
 .logo {
+    width: 100%;
+
+    min-height: 120px;
+
+    padding: 25px 20px;
+
     display: flex;
     align-items: center;
-
-    gap: 15px;
-
-    padding: 30px;
-}
-
-
-.logo-icon {
-    width: 55px;
-    height: 55px;
-
-    min-width: 55px;
-
-    border-radius: 15px;
-
-    background: var(--primary);
-
-    display: flex;
     justify-content: center;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+
+    flex-shrink: 0;
+}
+
+
+/* Contenedor del logo */
+
+.logo picture {
+    display: flex;
+
+    width: 100%;
+
     align-items: center;
-
-    font-weight: 700;
-    color: white;
-    font-size: 18px;
+    justify-content: center;
 }
 
 
-.logo-text {
-    min-width: 0;
-}
+/* Imagen */
 
-
-.logo-text h2 {
-    font-size: 18px;
-    font-weight: 700;
-
-    color: white;
-
-    white-space: nowrap;
-}
-
-
-.logo-text span {
+.logo-image {
     display: block;
 
-    font-size: 12px;
+    width: 215px;
+    height: auto;
 
-    opacity: 0.7;
+    max-width: 100%;
+    max-height: 80px;
 
-    color: white;
+    object-fit: contain;
 
-    white-space: nowrap;
+    transition: transform 0.25s ease;
+}
+
+
+/* Efecto al pasar el mouse */
+
+.logo:hover .logo-image {
+    transform: scale(1.03);
+}
+
+
+/* Quitar borde del botón al hacer focus */
+
+.logo:focus {
+    outline: none;
 }
 
 
@@ -102,6 +112,8 @@
     padding: 0 20px;
 
     flex: 1;
+
+    box-sizing: border-box;
 }
 
 
@@ -129,6 +141,7 @@
     transition: var(--transition);
 
     font-family: inherit;
+
     font-size: 14px;
     font-weight: 500;
 
@@ -139,6 +152,8 @@
     background: transparent;
 
     position: relative;
+
+    box-sizing: border-box;
 }
 
 
@@ -154,6 +169,8 @@
 }
 
 
+/* Iconos */
+
 .menu-item i {
     width: 22px;
     min-width: 22px;
@@ -167,6 +184,8 @@
     justify-content: center;
 }
 
+
+/* Texto */
 
 .menu-item span {
     white-space: nowrap;
@@ -188,8 +207,12 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 
     flex-shrink: 0;
+
+    box-sizing: border-box;
 }
 
+
+/* Foto / inicial administrador */
 
 .admin-photo {
     width: 50px;
@@ -211,6 +234,8 @@
 }
 
 
+/* Nombre */
+
 .sidebar-footer strong {
     display: block;
 
@@ -219,6 +244,8 @@
     color: white;
 }
 
+
+/* Correo */
 
 .sidebar-footer small {
     display: block;
@@ -232,7 +259,8 @@
 
 
 /* =====================================================
-   RESPONSIVE - TABLET
+   RESPONSIVE
+   TABLET
 ===================================================== */
 
 @media (max-width: 900px) {
@@ -243,17 +271,35 @@
     }
 
 
+    /* Logo pequeño */
+
     .logo {
+        min-height: 90px;
+
+        padding: 18px 10px;
+
         justify-content: center;
-
-        padding: 20px 10px;
     }
 
 
-    .logo-text {
-        display: none;
+    .logo picture {
+        width: 55px;
+        height: 55px;
     }
 
+
+    .logo-image {
+        width: 55px;
+        height: 55px;
+
+        max-width: 55px;
+        max-height: 55px;
+
+        object-fit: contain;
+    }
+
+
+    /* Menú */
 
     .menu {
         padding: 0 10px;
@@ -272,6 +318,13 @@
     }
 
 
+    .menu-item i {
+        font-size: 18px;
+    }
+
+
+    /* Footer */
+
     .sidebar-footer {
         justify-content: center;
 
@@ -287,7 +340,8 @@
 
 
 /* =====================================================
-   RESPONSIVE - MOBILE
+   RESPONSIVE
+   MOBILE
 ===================================================== */
 
 @media (max-width: 700px) {
@@ -298,15 +352,31 @@
     }
 
 
-    .logo-icon {
+    /* Logo */
+
+    .logo {
+        min-height: 75px;
+
+        padding: 15px 8px;
+    }
+
+
+    .logo picture {
+        width: 45px;
+        height: 45px;
+    }
+
+
+    .logo-image {
         width: 45px;
         height: 45px;
 
-        min-width: 45px;
-
-        font-size: 14px;
+        max-width: 45px;
+        max-height: 45px;
     }
 
+
+    /* Iconos */
 
     .menu-item i {
         font-size: 17px;

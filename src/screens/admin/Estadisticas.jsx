@@ -407,17 +407,6 @@ function Estadisticas({
 
             <div className="screen-header">
 
-                <div>
-                    <h2>
-                        Estadísticas
-                    </h2>
-
-                    <p>
-                        Resumen general de actividad
-                        de FQA Empleos.
-                    </p>
-                </div>
-
                 <div className="statistics-header-actions">
 
                     <select

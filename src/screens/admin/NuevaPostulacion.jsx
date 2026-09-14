@@ -153,16 +153,7 @@ function NuevaPostulacion({
                 HEADER
             ================================================= */}
 
-            <header className="nv-header">
-                <div>
-                    <h2>Nueva Vacante</h2>
-
-                    <p>
-                        Registra y publica una nueva oportunidad
-                        laboral en FQA Empleos.
-                    </p>
-                </div>
-            </header>
+            
 
             {/* =================================================
                 FORMULARIO

@@ -223,16 +223,6 @@ function Organizaciones({
 
             <div className="screen-header">
 
-                <div>
-                    <h2>
-                        Organizaciones
-                    </h2>
-
-                    <p>
-                        Administre las organizaciones
-                        participantes en FQA Empleos.
-                    </p>
-                </div>
 
                 <button
                     type="button"

@@ -603,23 +603,7 @@ function CVRecibidos({
                     HEADER
                 ================================================= */}
 
-                <div className="screen-header">
-
-                    <div>
-
-                        <h2>
-                            CV recibidos
-                        </h2>
-
-                        <p>
-                            Consulte los perfiles
-                            de los postulantes
-                            y su historial.
-                        </p>
-
-                    </div>
-
-                </div>
+            
 
 
                 {/* =================================================

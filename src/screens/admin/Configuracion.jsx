@@ -260,22 +260,7 @@ function Configuracion({
                 HEADER
             ================================================= */}
 
-            <div className="screen-header">
-
-                <div>
-
-                    <h2>
-                        Configuración
-                    </h2>
-
-                    <p>
-                        Configure la información general y el
-                        comportamiento de FQA Empleos.
-                    </p>
-
-                </div>
-
-            </div>
+            
 
             {/* =================================================
                 FORMULARIO

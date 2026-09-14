@@ -15,8 +15,7 @@ import Organizaciones from "./Organizaciones";
 import Categorias from "./Categorias";
 import Estadisticas from "./Estadisticas";
 import Users from "./Users";
-import Configuracion from "./Configuracion";
-
+import Configuracion from "./configuracion";
 function AdminDashboard({
     currentUser,
     handleLogout,
