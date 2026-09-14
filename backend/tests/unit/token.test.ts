@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import jwt from 'jsonwebtoken';
 import { env } from '../../src/config/env.js';
 import { tokenService } from '../../src/services/token.service.js';
+import { AppError } from '../../src/utils/app-error.js';
 
 describe('JWT de registro', () => {
   it('firma con HS256, identidad y rol, con vigencia de una hora', () => {
@@ -33,5 +34,32 @@ describe('JWT de registro', () => {
       () => jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS384'] }),
       jwt.JsonWebTokenError,
     );
+  });
+});
+
+describe('Verificación de acceso', () => {
+  it('devuelve la identidad numérica sin usar el claim de rol como autorización', () => {
+    assert.equal(tokenService.verifyAccessToken(tokenService.createAccessToken('123', 'SUPER_ADMIN')), 123);
+  });
+
+  it('rechaza firmas, algoritmos, vencimientos y sujetos inválidos', () => {
+    const valid = tokenService.createAccessToken('123', 'CANDIDATE');
+    const parts = valid.split('.');
+    const invalidTokens = [
+      'malformed',
+      parts[0] + '.' + parts[1] + '.invalid-signature',
+      jwt.sign({}, 'another-signing-key', { subject: '123', expiresIn: 60 }),
+      jwt.sign({}, env.JWT_SECRET, { subject: '123', expiresIn: 60, algorithm: 'HS384' }),
+      jwt.sign({}, env.JWT_SECRET, { subject: '123', expiresIn: -1 }),
+      jwt.sign({}, env.JWT_SECRET, { subject: '123' }),
+      jwt.sign({}, env.JWT_SECRET, { expiresIn: 60 }),
+      ...['0', '-1', '1.5', '01', 'candidate-id', '2147483648', '9007199254740992'].map(
+        (subject) => jwt.sign({}, env.JWT_SECRET, { subject, expiresIn: 60 }),
+      ),
+    ];
+    for (const token of invalidTokens) {
+      assert.throws(() => tokenService.verifyAccessToken(token), (error: unknown) =>
+        error instanceof AppError && error.statusCode === 401);
+    }
   });
 });

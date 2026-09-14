@@ -11,6 +11,7 @@ import type { RegistrationResponse } from '../types/auth.types.js';
 import { AppError } from '../utils/app-error.js';
 import type { RegisterCandidateDTO } from '../validation/auth.schema.js';
 import { tokenService } from './token.service.js';
+import { ROLE_NAMES } from '../constants/authorization.constants.js';
 
 /** Creates a candidate and profile atomically, committing only after JWT signing. */
 export const registerCandidate = async (
@@ -30,7 +31,7 @@ export const registerCandidate = async (
           status: { connect: { name: 'Activo' } },
           profile: { create: { firstName, lastName } },
           userRoles: {
-            create: { roles: { connect: { name: 'Candidato' } } },
+            create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } },
           },
         },
         select: {

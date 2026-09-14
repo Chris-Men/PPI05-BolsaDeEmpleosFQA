@@ -66,7 +66,7 @@ describe('Registro contra PostgreSQL', () => {
     assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), beforeRoles);
     assert.deepEqual(await prisma.userStatus.findMany({ orderBy: { name: 'asc' } }), beforeStatuses);
     assert.deepEqual(beforeRoles.map((role) => role.name), [
-      'Administrador', 'Candidato', 'Organización',
+      'Administrador', 'Candidato', 'Super Admin',
     ]);
     assert.deepEqual(beforeStatuses.map((status) => status.name), ['Activo']);
   });
@@ -108,7 +108,7 @@ describe('Registro contra PostgreSQL', () => {
 
     const claims = jwt.verify(body.accessToken, env.JWT_SECRET, { algorithms: ['HS256'] });
     assert.ok(typeof claims === 'object');
-    assert.equal(claims.sub, account.id);
+    assert.equal(claims.sub, String(account.id));
     assert.equal(claims.role, 'CANDIDATE');
     assert.equal(claims.exp! - claims.iat!, 3600);
     assert.deepEqual(Object.keys(claims).sort(), ['exp', 'iat', 'role', 'sub']);
