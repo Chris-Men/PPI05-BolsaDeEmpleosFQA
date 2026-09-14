@@ -1,4 +1,4 @@
-﻿-- CreateSchema
+-- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateTable
@@ -713,4 +713,3 @@ ALTER TABLE "volunteer_registrations" ADD CONSTRAINT "fk_vol_reg_user" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "work_experiences" ADD CONSTRAINT "fk_work_experiences_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
-

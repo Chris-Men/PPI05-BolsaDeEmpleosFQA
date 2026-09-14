@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register } from '../controllers/auth.controller.js';
+import { getCurrentAccess, register } from '../controllers/auth.controller.js';
+import { authenticate } from '../middleware/authorization.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { registerCandidateSchema } from '../validation/auth.schema.js';
 
@@ -7,3 +8,4 @@ import { registerCandidateSchema } from '../validation/auth.schema.js';
 export const authRouter = Router();
 
 authRouter.post('/register', validateBody(registerCandidateSchema), register);
+authRouter.get('/me', authenticate, getCurrentAccess);

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { randomBytes } from 'node:crypto';
+import { readdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { requireTestDatabaseUrl } from './test-database.js';
 
@@ -37,8 +38,10 @@ const main = async (): Promise<void> => {
 
   await run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'], environment);
   await run(['--import', 'tsx', 'prisma/seed.ts'], environment);
+  const testFiles = (await readdir('tests/integration')).filter((name) => name.endsWith('.test.ts'))
+    .sort().map((name) => `tests/integration/${name}`);
   await run(
-    ['--import', 'tsx', '--test', 'tests/integration/registration.test.ts'],
+    ['--import', 'tsx', '--test', '--test-concurrency=1', ...testFiles],
     environment,
   );
 };
