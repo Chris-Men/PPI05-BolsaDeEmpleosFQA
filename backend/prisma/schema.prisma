@@ -9,48 +9,476 @@ datasource db {
 
 /// Authentication account with one role and one lifecycle state.
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  passwordHash String       @map("password_hash")
-  roleId       String       @map("role_id")
-  statusId     String       @map("status_id")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-  role         Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  status       UserStatus   @relation(fields: [statusId], references: [id], onDelete: Restrict)
-  profile      UserProfile?
+  id                       Int                        @id @default(autoincrement())
+  email                    String                     @unique @db.VarChar(255)
+  passwordHash             String                     @map("password_hash") @db.VarChar(255)
+  statusId                 Int                        @map("status_id")
+  createdAt                DateTime?                  @default(now()) @map("created_at") @db.Timestamp(6)
+  applicationStatusHistory ApplicationStatusHistory[]
+  applications             Applications[]
+  auditLogs                AuditLogs[]
+  educations               Educations[]
+  files                    Files[]
+  interviews               Interviews[]
+  jobRevisions             JobRevisions[]
+  notifications            Notifications[]
+  organizationUsers        OrganizationUsers[]
+  savedJobs                SavedJobs[]
+  profile                  UserProfile?
+  userRoles                UserRoles[]
+  userSkills               UserSkills[]
+  status                   UserStatus                 @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_status")
+  volunteerRegistrations   VolunteerRegistrations[]
+  workExperiences          WorkExperiences[]
 
-  @@index([roleId])
-  @@index([statusId])
+  @@index([statusId], map: "ix_users_status_id")
   @@map("users")
 }
 
 /// Registration creates this profile atomically with its account.
 model UserProfile {
-  id       String @id @default(cuid())
-  userId   String @unique @map("user_id")
-  fullName String @map("full_name") @db.VarChar(150)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  userId    Int     @unique @map("user_id")
+  firstName String  @map("first_name") @db.VarChar(100)
+  lastName  String  @map("last_name") @db.VarChar(100)
+  phone     String? @db.VarChar(30)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_profiles_user")
 
   @@map("user_profiles")
 }
 
 /// Assignable roles identified by stable machine-readable codes.
 model Role {
-  id    String @id @default(cuid())
-  code  String @unique
-  name  String
-  users User[]
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(50)
+  rolePermissions RolePermissions[]
+  userRoles       UserRoles[]
 
   @@map("roles")
 }
 
 /// Account lifecycle states identified by stable machine-readable codes.
 model UserStatus {
-  id    String @id @default(cuid())
-  code  String @unique
-  name  String
+  id    Int    @id @default(autoincrement())
+  name  String @unique @db.VarChar(50)
   users User[]
 
   @@map("user_statuses")
+}
+
+model ApplicationFiles {
+  id            Int          @id @default(autoincrement())
+  applicationId Int          @map("application_id")
+  fileId        Int          @map("file_id")
+  applications  Applications @relation(fields: [applicationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_app_files_application")
+  files         Files        @relation(fields: [fileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_app_files_file")
+
+  @@index([applicationId], map: "ix_application_files_application_id")
+  @@index([fileId], map: "ix_application_files_file_id")
+  @@map("application_files")
+}
+
+model ApplicationStatusHistory {
+  id            Int          @id @default(autoincrement())
+  applicationId Int          @map("application_id")
+  changedBy     Int          @map("changed_by")
+  oldStatusId   Int?         @map("old_status_id")
+  newStatusId   Int          @map("new_status_id")
+  createdAt     DateTime?    @default(now()) @map("created_at") @db.Timestamp(6)
+  applications  Applications @relation(fields: [applicationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_app_status_hist_app")
+  users         User         @relation(fields: [changedBy], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_app_status_hist_user")
+
+  @@index([applicationId, createdAt], map: "ix_app_status_history_app_created")
+  @@index([changedBy], map: "ix_app_status_history_changed_by")
+  @@map("application_status_history")
+}
+
+model ApplicationStatuses {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique @db.VarChar(50)
+  applications Applications[]
+  interviews   Interviews[]
+
+  @@map("application_statuses")
+}
+
+model Applications {
+  id                       Int                        @id @default(autoincrement())
+  jobId                    Int                        @map("job_id")
+  userId                   Int                        @map("user_id")
+  statusId                 Int                        @map("status_id")
+  resumeId                 Int?                       @map("resume_id")
+  referenceNumber          String                     @unique @map("reference_number") @db.VarChar(64)
+  createdAt                DateTime?                  @default(now()) @map("created_at") @db.Timestamp(6)
+  applicationFiles         ApplicationFiles[]
+  applicationStatusHistory ApplicationStatusHistory[]
+  jobs                     Jobs                       @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_applications_job")
+  files                    Files?                     @relation(fields: [resumeId], references: [id], onUpdate: NoAction, map: "fk_applications_resume")
+  applicationStatuses      ApplicationStatuses        @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_applications_status")
+  users                    User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_applications_user")
+  interviews               Interviews[]
+
+  @@unique([jobId, userId], map: "ux_applications_job_user")
+  @@index([resumeId], map: "ix_applications_resume_id")
+  @@index([statusId], map: "ix_applications_status_id")
+  @@index([userId], map: "ix_applications_user_id")
+  @@map("applications")
+}
+
+model AuditLogs {
+  id         Int       @id @default(autoincrement())
+  userId     Int?      @map("user_id")
+  entityType String    @map("entity_type") @db.VarChar(100)
+  entityId   Int       @map("entity_id")
+  action     String    @db.VarChar(50)
+  changes    Json?
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  users      User?     @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "fk_audit_logs_user")
+
+  @@index([entityType, entityId], map: "ix_audit_logs_entity")
+  @@index([userId, createdAt], map: "ix_audit_logs_user_created")
+  @@map("audit_logs")
+}
+
+model Educations {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  institution String    @db.VarChar(150)
+  degree      String    @db.VarChar(150)
+  startDate   DateTime  @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  users       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_educations_user")
+
+  @@index([userId], map: "ix_educations_user_id")
+  @@map("educations")
+}
+
+model EmploymentTypes {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  jobs Jobs[]
+
+  @@map("employment_types")
+}
+
+model ExperienceLevels {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  jobs Jobs[]
+
+  @@map("experience_levels")
+}
+
+model Files {
+  id               Int                @id @default(autoincrement())
+  userId           Int?               @map("user_id")
+  organizationId   Int?               @map("organization_id")
+  filePath         String             @map("file_path") @db.VarChar(255)
+  fileType         String             @map("file_type") @db.VarChar(50)
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  applicationFiles ApplicationFiles[]
+  applications     Applications[]
+  organizations    Organizations?     @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_files_organization")
+  users            User?              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_files_user")
+
+  @@index([organizationId], map: "ix_files_organization_id")
+  @@index([userId], map: "ix_files_user_id")
+  @@map("files")
+}
+
+model Interviews {
+  id                  Int                 @id @default(autoincrement())
+  applicationId       Int                 @map("application_id")
+  statusId            Int                 @map("status_id")
+  createdBy           Int                 @map("created_by")
+  scheduledAt         DateTime            @map("scheduled_at") @db.Timestamp(6)
+  notes               String?
+  applications        Applications        @relation(fields: [applicationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_interviews_application")
+  users               User                @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_interviews_creator")
+  applicationStatuses ApplicationStatuses @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_interviews_status")
+
+  @@index([applicationId], map: "ix_interviews_application_id")
+  @@index([createdBy], map: "ix_interviews_created_by")
+  @@index([scheduledAt], map: "ix_interviews_scheduled_at")
+  @@index([statusId], map: "ix_interviews_status_id")
+  @@map("interviews")
+}
+
+model JobCategories {
+  id                     Int                      @id @default(autoincrement())
+  name                   String                   @unique @db.VarChar(100)
+  slug                   String                   @unique @db.VarChar(120)
+  parentId               Int?                     @map("parent_id")
+  jobCategories          JobCategories?           @relation("job_categoriesTojob_categories", fields: [parentId], references: [id], onUpdate: NoAction, map: "fk_job_categories_parent")
+  otherJobCategories     JobCategories[]          @relation("job_categoriesTojob_categories")
+  jobs                   Jobs[]
+  volunteerOpportunities VolunteerOpportunities[]
+
+  @@index([parentId], map: "ix_job_categories_parent_id")
+  @@map("job_categories")
+}
+
+model JobRevisions {
+  id             Int       @id @default(autoincrement())
+  jobId          Int       @map("job_id")
+  revisionNumber Int       @map("revision_number")
+  changedBy      Int       @map("changed_by")
+  title          String    @db.VarChar(150)
+  description    String
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  jobs           Jobs      @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_job_revisions_job")
+  users          User      @relation(fields: [changedBy], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_job_revisions_user")
+
+  @@unique([jobId, revisionNumber], map: "ux_job_revisions_job_revision")
+  @@index([changedBy], map: "ix_job_revisions_changed_by")
+  @@map("job_revisions")
+}
+
+model JobSkills {
+  id      Int    @id @default(autoincrement())
+  jobId   Int    @map("job_id")
+  skillId Int    @map("skill_id")
+  jobs    Jobs   @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_job_skills_job")
+  skills  Skills @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_job_skills_skill")
+
+  @@unique([jobId, skillId], map: "ux_job_skills_job_skill")
+  @@index([skillId], map: "ix_job_skills_skill_id")
+  @@map("job_skills")
+}
+
+model JobStatuses {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  jobs Jobs[]
+
+  @@map("job_statuses")
+}
+
+model Jobs {
+  id                Int              @id @default(autoincrement())
+  organizationId    Int              @map("organization_id")
+  categoryId        Int              @map("category_id")
+  employmentTypeId  Int              @map("employment_type_id")
+  experienceLevelId Int              @map("experience_level_id")
+  locationId        Int              @map("location_id")
+  statusId          Int              @map("status_id")
+  title             String           @db.VarChar(150)
+  slug              String           @unique @db.VarChar(180)
+  description       String
+  publishedAt       DateTime?        @map("published_at") @db.Timestamp(6)
+  expiresAt         DateTime?        @map("expires_at") @db.Timestamp(6)
+  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
+  applications      Applications[]
+  jobRevisions      JobRevisions[]
+  jobSkills         JobSkills[]
+  jobCategories     JobCategories    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_category")
+  employmentTypes   EmploymentTypes  @relation(fields: [employmentTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_employment_type")
+  experienceLevels  ExperienceLevels @relation(fields: [experienceLevelId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_experience_level")
+  locations         Locations        @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_location")
+  organizations     Organizations    @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_jobs_organization")
+  jobStatuses       JobStatuses      @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_status")
+  savedJobs         SavedJobs[]
+
+  @@index([categoryId], map: "ix_jobs_category_id")
+  @@index([employmentTypeId], map: "ix_jobs_employment_type_id")
+  @@index([experienceLevelId], map: "ix_jobs_experience_level_id")
+  @@index([expiresAt], map: "ix_jobs_expires_at")
+  @@index([locationId], map: "ix_jobs_location_id")
+  @@index([organizationId], map: "ix_jobs_organization_id")
+  @@index([publishedAt], map: "ix_jobs_published_at")
+  @@index([statusId], map: "ix_jobs_status_id")
+  @@map("jobs")
+}
+
+model Locations {
+  id                     Int                      @id @default(autoincrement())
+  department             String                   @db.VarChar(100)
+  municipality           String                   @db.VarChar(100)
+  jobs                   Jobs[]
+  volunteerOpportunities VolunteerOpportunities[]
+
+  @@index([department, municipality], map: "ix_locations_dept_municip")
+  @@map("locations")
+}
+
+model Notifications {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  title     String    @db.VarChar(150)
+  message   String
+  readAt    DateTime? @map("read_at") @db.Timestamp(6)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  users     User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_user")
+
+  @@index([userId, readAt], map: "ix_notifications_user_read")
+  @@map("notifications")
+}
+
+model OrganizationStatuses {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique @db.VarChar(50)
+  organizations Organizations[]
+
+  @@map("organization_statuses")
+}
+
+model OrganizationUsers {
+  id             Int           @id @default(autoincrement())
+  organizationId Int           @map("organization_id")
+  userId         Int           @map("user_id")
+  organizations  Organizations @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_org_users_organization")
+  users          User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_org_users_user")
+
+  @@unique([organizationId, userId], map: "ux_organization_users_org_user")
+  @@index([userId], map: "ix_organization_users_user_id")
+  @@map("organization_users")
+}
+
+model Organizations {
+  id                     Int                      @id @default(autoincrement())
+  name                   String                   @unique @db.VarChar(150)
+  description            String?
+  statusId               Int                      @map("status_id")
+  createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamp(6)
+  files                  Files[]
+  jobs                   Jobs[]
+  organizationUsers      OrganizationUsers[]
+  organizationStatuses   OrganizationStatuses     @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_organizations_status")
+  volunteerOpportunities VolunteerOpportunities[]
+
+  @@index([statusId], map: "ix_organizations_status_id")
+  @@map("organizations")
+}
+
+model Permissions {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(100)
+  rolePermissions RolePermissions[]
+
+  @@map("permissions")
+}
+
+model RolePermissions {
+  roleId       Int         @map("role_id")
+  permissionId Int         @map("permission_id")
+  permissions  Permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role_permissions_permission")
+  roles        Role        @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_role_permissions_role")
+
+  @@id([roleId, permissionId])
+  @@index([permissionId], map: "ix_role_permissions_permission_id")
+  @@map("role_permissions")
+}
+
+model SavedJobs {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  jobId     Int       @map("job_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  jobs      Jobs      @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_saved_jobs_job")
+  users     User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_saved_jobs_user")
+
+  @@unique([userId, jobId], map: "ux_saved_jobs_user_job")
+  @@index([jobId], map: "ix_saved_jobs_job_id")
+  @@map("saved_jobs")
+}
+
+model Skills {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique @db.VarChar(100)
+  slug       String       @unique @db.VarChar(120)
+  jobSkills  JobSkills[]
+  userSkills UserSkills[]
+
+  @@map("skills")
+}
+
+model SystemSettings {
+  id           Int       @id @default(autoincrement())
+  settingKey   String    @unique @map("setting_key") @db.VarChar(100)
+  settingValue String    @map("setting_value")
+  updatedAt    DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("system_settings")
+}
+
+model UserRoles {
+  id     Int  @id @default(autoincrement())
+  userId Int  @map("user_id")
+  roleId Int  @map("role_id")
+  roles  Role @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_roles_role")
+  users  User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_roles_user")
+
+  @@unique([userId, roleId], map: "ux_user_roles_user_role")
+  @@index([roleId], map: "ix_user_roles_role_id")
+  @@map("user_roles")
+}
+
+model UserSkills {
+  id      Int    @id @default(autoincrement())
+  userId  Int    @map("user_id")
+  skillId Int    @map("skill_id")
+  skills  Skills @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_skills_skill")
+  users   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_skills_user")
+
+  @@unique([userId, skillId], map: "ux_user_skills_user_skill")
+  @@index([skillId], map: "ix_user_skills_skill_id")
+  @@map("user_skills")
+}
+
+model VolunteerOpportunities {
+  id                     Int                      @id @default(autoincrement())
+  organizationId         Int                      @map("organization_id")
+  categoryId             Int                      @map("category_id")
+  locationId             Int                      @map("location_id")
+  statusId               Int                      @map("status_id")
+  title                  String                   @db.VarChar(150)
+  slug                   String                   @unique @db.VarChar(180)
+  description            String
+  createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamp(6)
+  jobCategories          JobCategories            @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_category")
+  locations              Locations                @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_location")
+  organizations          Organizations            @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vol_opp_organization")
+  volunteerStatuses      VolunteerStatuses        @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_status")
+  volunteerRegistrations VolunteerRegistrations[]
+
+  @@index([categoryId], map: "ix_volunteer_opportunities_category_id")
+  @@index([locationId], map: "ix_volunteer_opportunities_location_id")
+  @@index([organizationId], map: "ix_volunteer_opportunities_organization_id")
+  @@index([statusId], map: "ix_volunteer_opportunities_status_id")
+  @@map("volunteer_opportunities")
+}
+
+model VolunteerRegistrations {
+  id                     Int                    @id @default(autoincrement())
+  volunteerOpportunityId Int                    @map("volunteer_opportunity_id")
+  userId                 Int                    @map("user_id")
+  createdAt              DateTime?              @default(now()) @map("created_at") @db.Timestamp(6)
+  volunteerOpportunities VolunteerOpportunities @relation(fields: [volunteerOpportunityId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vol_reg_opp")
+  users                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vol_reg_user")
+
+  @@unique([volunteerOpportunityId, userId], map: "ux_volunteer_registrations_opp_user")
+  @@index([userId], map: "ix_volunteer_registrations_user_id")
+  @@map("volunteer_registrations")
+}
+
+model VolunteerStatuses {
+  id                     Int                      @id @default(autoincrement())
+  name                   String                   @unique @db.VarChar(50)
+  volunteerOpportunities VolunteerOpportunities[]
+
+  @@map("volunteer_statuses")
+}
+
+model WorkExperiences {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  companyName String    @map("company_name") @db.VarChar(150)
+  position    String    @db.VarChar(100)
+  startDate   DateTime  @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  description String?
+  users       User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_work_experiences_user")
+
+  @@index([userId], map: "ix_work_experiences_user_id")
+  @@map("work_experiences")
 }

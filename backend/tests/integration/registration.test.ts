@@ -59,16 +59,16 @@ describe('Registro contra PostgreSQL', () => {
     });
 
   it('la carga repetida de catálogos conserva los mismos identificadores', async () => {
-    const beforeRoles = await prisma.role.findMany({ orderBy: { code: 'asc' } });
-    const beforeStatuses = await prisma.userStatus.findMany({ orderBy: { code: 'asc' } });
+    const beforeRoles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
+    const beforeStatuses = await prisma.userStatus.findMany({ orderBy: { name: 'asc' } });
     await seedAccountCatalogs(prisma);
     await seedAccountCatalogs(prisma);
-    assert.deepEqual(await prisma.role.findMany({ orderBy: { code: 'asc' } }), beforeRoles);
-    assert.deepEqual(await prisma.userStatus.findMany({ orderBy: { code: 'asc' } }), beforeStatuses);
-    assert.deepEqual(beforeRoles.map((role) => role.code), [
-      'ADMINISTRATOR', 'CANDIDATE', 'ORGANIZATION',
+    assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), beforeRoles);
+    assert.deepEqual(await prisma.userStatus.findMany({ orderBy: { name: 'asc' } }), beforeStatuses);
+    assert.deepEqual(beforeRoles.map((role) => role.name), [
+      'Administrador', 'Candidato', 'Organización',
     ]);
-    assert.deepEqual(beforeStatuses.map((status) => status.code), ['ACTIVE']);
+    assert.deepEqual(beforeStatuses.map((status) => status.name), ['Activo']);
   });
 
   it('crea cuenta y perfil normalizados, hash bcrypt y JWT válido', async () => {
@@ -94,12 +94,12 @@ describe('Registro contra PostgreSQL', () => {
 
     const account = await prisma.user.findUniqueOrThrow({
       where: { id: body.user.id },
-      include: { profile: true, role: true, status: true },
+      include: { profile: true, status: true, userRoles: { include: { roles: true } } },
     });
-    assert.equal(account.profile?.fullName, 'Ana Rivera');
-    assert.equal(account.role.code, 'CANDIDATE');
-    assert.equal(account.status.code, 'ACTIVE');
-    assert.equal(account.createdAt.toISOString(), body.user.createdAt);
+    assert.equal(`${account.profile?.firstName} ${account.profile?.lastName}`, 'Ana Rivera');
+    assert.equal(account.userRoles[0]?.roles.name, 'Candidato');
+    assert.equal(account.status.name, 'Activo');
+    assert.equal(account.createdAt?.toISOString(), body.user.createdAt);
     assert.notEqual(account.passwordHash, password);
     assert.equal(bcrypt.getRounds(account.passwordHash), 12);
     assert.equal(await bcrypt.compare(password, account.passwordHash), true);
