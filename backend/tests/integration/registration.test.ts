@@ -120,6 +120,44 @@ describe('Registro contra PostgreSQL', () => {
     );
   });
 
+  it('guarda nombres de una palabra sin duplicarlos y normaliza los espacios internos', async () => {
+    for (const [input, expected, firstName, lastName] of [
+      ['  Ana  ', 'Ana', 'Ana', ''],
+      ['  Ana   María  Rivera  ', 'Ana María Rivera', 'Ana María', 'Rivera'],
+      ['a'.repeat(100) + ' ' + 'b'.repeat(49), 'a'.repeat(100) + ' ' + 'b'.repeat(49), 'a'.repeat(100), 'b'.repeat(49)],
+      ['Ana ' + 'b'.repeat(100), 'Ana ' + 'b'.repeat(100), 'Ana', 'b'.repeat(100)],
+    ]) {
+      const email = emailFor(randomUUID());
+      const response = await register({ fullName: input, email, password });
+      assert.equal(response.status, 201);
+      const body = await response.json() as RegistrationResponse;
+      assert.equal(body.user.fullName, expected);
+      const profile = await prisma.userProfile.findUniqueOrThrow({ where: { userId: body.user.id } });
+      assert.equal(profile.firstName, firstName);
+      assert.equal(profile.lastName, lastName);
+    }
+  });
+
+  it('rechaza excesos de columna con 400 antes de crear la cuenta o su perfil', async () => {
+    const longEmail = 'a'.repeat(64) + '@' +
+      ['b'.repeat(63), 'c'.repeat(63), 'd'.repeat(63)].join('.');
+    for (const extra of [
+      { fullName: 'a'.repeat(101) },
+      { fullName: 'a'.repeat(101) + ' Rivera' },
+      { fullName: 'Ana ' + 'b'.repeat(101) },
+      { email: longEmail },
+    ]) {
+      const input = { fullName: 'Ana Rivera', email: emailFor(randomUUID()), password, ...extra };
+      emails.add(input.email);
+      const response = await register(input);
+      assert.equal(response.status, 400);
+      const body = await response.json() as { errors: { field: string; message: string }[] };
+      assert.ok(body.errors.some(({ field }) => field === ('email' in extra ? 'email' : 'fullName')));
+      assert.equal(await prisma.user.count({ where: { email: input.email } }), 0);
+      assert.equal(await prisma.userProfile.count({ where: { user: { email: input.email } } }), 0);
+    }
+  });
+
   it('rechaza correos repetidos aunque cambien mayúsculas y espacios', async () => {
     const email = emailFor('duplicate');
     assert.equal((await register({ fullName: 'Ana Rivera', email, password })).status, 201);
