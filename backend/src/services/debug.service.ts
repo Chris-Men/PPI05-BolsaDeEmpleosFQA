@@ -6,10 +6,9 @@ const debugUserSelect = {
   id: true,
   email: true,
   createdAt: true,
-  updatedAt: true,
-  profile: { select: { fullName: true } },
-  role: { select: { code: true, name: true } },
-  status: { select: { code: true, name: true } },
+  profile: { select: { firstName: true, lastName: true } },
+  userRoles: { select: { roles: { select: { name: true } } } },
+  status: { select: { name: true } },
 } satisfies Prisma.UserSelect;
 
 /** Lists every account without selecting password hashes or credentials. */

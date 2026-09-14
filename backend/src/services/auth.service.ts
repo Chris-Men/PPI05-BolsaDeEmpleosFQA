@@ -16,8 +16,10 @@ import { tokenService } from './token.service.js';
 export const registerCandidate = async (
   payload: RegisterCandidateDTO,
 ): Promise<RegistrationResponse> => {
-  // Expensive hashing happens before opening a database transaction.
   const passwordHash = await bcrypt.hash(payload.password, PASSWORD_HASH_ROUNDS);
+  const nameParts = payload.fullName.trim().split(/\s+/);
+  const lastName = nameParts.pop() ?? payload.fullName;
+  const firstName = nameParts.join(' ') || lastName;
 
   try {
     return await prisma.$transaction(async (transaction) => {
@@ -25,34 +27,40 @@ export const registerCandidate = async (
         data: {
           email: payload.email,
           passwordHash,
-          role: { connect: { code: CANDIDATE_ROLE_CODE } },
-          status: { connect: { code: ACTIVE_USER_STATUS_CODE } },
-          profile: { create: { fullName: payload.fullName } },
+          status: { connect: { name: 'Activo' } },
+          profile: { create: { firstName, lastName } },
+          userRoles: {
+            create: { roles: { connect: { name: 'Candidato' } } },
+          },
         },
         select: {
           id: true,
           email: true,
           createdAt: true,
-          role: { select: { code: true } },
-          status: { select: { code: true } },
-          profile: { select: { fullName: true } },
+          userRoles: { select: { roles: { select: { name: true } } } },
+          status: { select: { name: true } },
+          profile: { select: { firstName: true, lastName: true } },
         },
       });
 
-      if (!account.profile) {
+      const role = account.userRoles[0]?.roles;
+      if (!account.profile || !role) {
         throw new Error('No se pudo crear el perfil del candidato.');
       }
 
-      const accessToken = tokenService.createAccessToken(account.id, account.role.code);
+      const accessToken = tokenService.createAccessToken(
+        account.id.toString(),
+        CANDIDATE_ROLE_CODE,
+      );
 
       return {
         user: {
           id: account.id,
-          fullName: account.profile.fullName,
+          fullName: `${account.profile.firstName} ${account.profile.lastName}`,
           email: account.email,
-          role: account.role.code,
-          status: account.status.code,
-          createdAt: account.createdAt.toISOString(),
+          role: CANDIDATE_ROLE_CODE,
+          status: ACTIVE_USER_STATUS_CODE,
+          createdAt: account.createdAt?.toISOString() ?? new Date().toISOString(),
         },
         accessToken,
         tokenType: 'Bearer',

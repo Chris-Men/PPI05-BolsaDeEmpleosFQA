@@ -1,6 +1,6 @@
 /** Public account information returned after registration, without credentials. */
 export interface RegisteredUser {
-  id: string;
+  id: number;
   fullName: string;
   email: string;
   role: string;
