@@ -12,15 +12,14 @@ import { AppError } from '../utils/app-error.js';
 import type { RegisterCandidateDTO } from '../validation/auth.schema.js';
 import { tokenService } from './token.service.js';
 import { ROLE_NAMES } from '../constants/authorization.constants.js';
+import { splitProfileName } from '../utils/profile-name.js';
 
 /** Creates a candidate and profile atomically, committing only after JWT signing. */
 export const registerCandidate = async (
   payload: RegisterCandidateDTO,
 ): Promise<RegistrationResponse> => {
   const passwordHash = await bcrypt.hash(payload.password, PASSWORD_HASH_ROUNDS);
-  const nameParts = payload.fullName.trim().split(/\s+/);
-  const lastName = nameParts.pop() ?? payload.fullName;
-  const firstName = nameParts.join(' ') || lastName;
+  const { firstName, lastName } = splitProfileName(payload.fullName);
 
   try {
     return await prisma.$transaction(async (transaction) => {
@@ -57,7 +56,7 @@ export const registerCandidate = async (
       return {
         user: {
           id: account.id,
-          fullName: `${account.profile.firstName} ${account.profile.lastName}`,
+          fullName: [account.profile.firstName, account.profile.lastName].filter(Boolean).join(' '),
           email: account.email,
           role: CANDIDATE_ROLE_CODE,
           status: ACTIVE_USER_STATUS_CODE,
