@@ -17,7 +17,7 @@ export class ApiError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env?.VITE_API_URL ?? 'http://localhost:3000/api').replace(
+const apiBaseUrl = (import.meta.env?.VITE_API_URL ?? '/api').replace(
   /\/$/,
   '',
 );

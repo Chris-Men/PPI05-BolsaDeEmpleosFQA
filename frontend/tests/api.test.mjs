@@ -12,6 +12,22 @@ const withMockFetch = async (mockFetch, callback) => {
   }
 };
 
+test('usa /api como ruta predeterminada para el build de producción', async () => {
+  await withMockFetch(
+    async (input) => {
+      assert.equal(input, '/api/health');
+      return new Response(JSON.stringify({ status: 'ok' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+    async () => {
+      const response = await apiRequest('/health');
+      assert.deepEqual(response, { status: 'ok' });
+    },
+  );
+});
+
 test('muestra un error en español cuando la API no está disponible', async () => {
   await withMockFetch(
     async () => {
