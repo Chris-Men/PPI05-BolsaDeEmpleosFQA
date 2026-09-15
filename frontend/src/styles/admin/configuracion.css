@@ -1,0 +1,696 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMINISTRACIÓN
+   CONFIGURACIÓN
+   ESTILOS DE SCREEN
+===================================================== */
+
+
+/* =====================================================
+   SCREEN
+===================================================== */
+
+.admin-screen {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.admin-screen .screen-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 25px;
+}
+
+.admin-screen .screen-header>div {
+    min-width: 0;
+}
+
+.admin-screen .screen-header h2 {
+    margin: 0;
+
+    color: #193007;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.admin-screen .screen-header p {
+    margin: 7px 0 0;
+
+    color: #777777;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   GRID DE CONFIGURACIÓN
+===================================================== */
+
+.settings-grid {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1fr);
+
+    gap: 25px;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   TARJETAS
+===================================================== */
+
+.settings-card {
+    width: 100%;
+    min-width: 0;
+
+    padding: 28px;
+
+    background: #FFFFFF;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.08);
+
+    border: 1px solid #EEF0EC;
+}
+
+
+/* =====================================================
+   TÍTULO DE SECCIÓN
+===================================================== */
+
+.settings-card .form-section-title {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-bottom: 25px;
+
+    padding-bottom: 16px;
+
+    border-bottom: 1px solid #E8ECE5;
+}
+
+.settings-card .form-section-title h3 {
+    margin: 0;
+
+    color: #193007;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    line-height: 1.3;
+}
+
+.settings-card .form-section-title span {
+    color: #7A8178;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   GRUPOS DE FORMULARIO
+===================================================== */
+
+.settings-card .form-group {
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    margin-bottom: 20px;
+}
+
+.settings-card .form-group:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.settings-card .form-group label {
+    color: #374151;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.settings-card .form-group input[type="text"],
+.settings-card .form-group input[type="email"],
+.settings-card .form-group textarea {
+    width: 100%;
+
+    min-width: 0;
+
+    padding: 13px 14px;
+
+    border: 1px solid #DDE2E7;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: #FFFFFF;
+
+    color: #374151;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.settings-card .form-group input:hover,
+.settings-card .form-group textarea:hover {
+    border-color: #CBD5C4;
+}
+
+.settings-card .form-group input:focus,
+.settings-card .form-group textarea:focus {
+    border-color: #82BA2E;
+
+    background: #FFFFFF;
+
+    box-shadow:
+        0 0 0 3px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+.settings-card .form-group textarea {
+    min-height: 110px;
+
+    resize: vertical;
+}
+
+
+/* =====================================================
+   SWITCH ROW
+===================================================== */
+
+.settings-card .switch-row {
+    width: 100%;
+
+    min-height: 70px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 14px 15px;
+
+    margin-bottom: 12px;
+
+    border: 1px solid #E5E9E2;
+
+    border-radius: 10px;
+
+    background: #FAFBF9;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.settings-card .switch-row:last-child {
+    margin-bottom: 0;
+}
+
+.settings-card .switch-row:hover {
+    background: #F7FAF3;
+
+    border-color: #D7E5CB;
+}
+
+
+/* =====================================================
+   SWITCH TEXTO
+===================================================== */
+
+.settings-card .switch-row>div {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.settings-card .switch-row strong {
+    color: #374151;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    line-height: 1.4;
+}
+
+.settings-card .switch-row small {
+    color: #7A8178;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   CHECKBOX
+===================================================== */
+
+.settings-card .switch-row input[type="checkbox"] {
+    position: relative;
+
+    flex-shrink: 0;
+
+    width: 42px;
+    height: 23px;
+
+    appearance: none;
+
+    border: none;
+
+    border-radius: 20px;
+
+    outline: none;
+
+    background: #D6DAD3;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease;
+}
+
+.settings-card .switch-row input[type="checkbox"]::before {
+    content: "";
+
+    position: absolute;
+
+    top: 3px;
+    left: 3px;
+
+    width: 17px;
+    height: 17px;
+
+    border-radius: 50%;
+
+    background: #FFFFFF;
+
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.18);
+
+    transition:
+        transform 0.25s ease;
+}
+
+.settings-card .switch-row input[type="checkbox"]:checked {
+    background: #82BA2E;
+}
+
+.settings-card .switch-row input[type="checkbox"]:checked::before {
+    transform: translateX(19px);
+}
+
+.settings-card .switch-row input[type="checkbox"]:focus-visible {
+    box-shadow:
+        0 0 0 3px rgba(130, 186, 46, 0.18);
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+
+.admin-screen .form-actions {
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 0;
+
+    margin: 0;
+}
+
+
+/* =====================================================
+   BOTÓN PRINCIPAL
+===================================================== */
+
+.admin-screen .form-actions .primary-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 200px;
+    min-height: 46px;
+
+    padding: 0 22px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: #82BA2E;
+
+    color: #FFFFFF;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.admin-screen .form-actions .primary-button:hover {
+    background: #5BA222;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 16px rgba(91, 162, 34, 0.25);
+}
+
+.admin-screen .form-actions .primary-button:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+.admin-screen .form-actions .primary-button:focus-visible {
+    outline: 2px solid #82BA2E;
+
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+.admin-screen .toast {
+    position: fixed;
+
+    right: 30px;
+    bottom: 30px;
+
+    z-index: 9999;
+
+    padding: 16px 24px;
+
+    border-left: 5px solid #82BA2E;
+
+    border-radius: 10px;
+
+    background: #193007;
+
+    color: #FFFFFF;
+
+    font-size: 13px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.15);
+
+    opacity: 0;
+
+    transform: translateY(40px);
+
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+}
+
+.admin-screen .toast.show {
+    opacity: 1;
+
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   TABLET GRANDE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .settings-grid {
+        gap: 20px;
+    }
+
+    .settings-card {
+        padding: 25px;
+    }
+
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .admin-screen .screen-header {
+        margin-bottom: 22px;
+    }
+
+    .admin-screen .screen-header h2 {
+        font-size: 24px;
+    }
+
+    .admin-screen .screen-header p {
+        font-size: 12px;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+
+        gap: 18px;
+    }
+
+    .admin-screen .form-actions {
+        grid-column: auto;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .admin-screen {
+        width: 100%;
+    }
+
+    .admin-screen .screen-header {
+        margin-bottom: 20px;
+    }
+
+    .admin-screen .screen-header h2 {
+        font-size: 22px;
+    }
+
+    .admin-screen .screen-header p {
+        margin-top: 5px;
+
+        font-size: 11px;
+    }
+
+    .settings-grid {
+        gap: 15px;
+    }
+
+    .settings-card {
+        padding: 20px;
+
+        border-radius: 14px;
+    }
+
+    .settings-card .form-section-title {
+        margin-bottom: 20px;
+
+        padding-bottom: 14px;
+    }
+
+    .settings-card .form-section-title h3 {
+        font-size: 16px;
+    }
+
+    .settings-card .form-section-title span {
+        font-size: 11px;
+    }
+
+    .settings-card .switch-row {
+        padding: 12px;
+
+        gap: 12px;
+    }
+
+    .settings-card .switch-row strong {
+        font-size: 12px;
+    }
+
+    .settings-card .switch-row small {
+        font-size: 10px;
+    }
+
+    .admin-screen .form-actions {
+        align-items: stretch;
+
+        justify-content: stretch;
+    }
+
+    .admin-screen .form-actions .primary-button {
+        width: 100%;
+
+        min-width: 0;
+
+        min-height: 46px;
+    }
+
+    .admin-screen .toast {
+        left: 20px;
+        right: 20px;
+
+        bottom: 20px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 450px) {
+
+    .settings-card {
+        padding: 17px;
+    }
+
+    .admin-screen .screen-header h2 {
+        font-size: 20px;
+    }
+
+    .settings-card .form-group input[type="text"],
+    .settings-card .form-group input[type="email"],
+    .settings-card .form-group textarea {
+        padding: 12px;
+    }
+
+    .settings-card .switch-row {
+        min-height: 65px;
+    }
+
+}
+
+.configuracion-screen .secondary-button {
+    min-height: 40px;
+    padding: 0 16px;
+
+    border: 1px solid #DDE2D8;
+    border-radius: 8px;
+
+    background: #FFFFFF;
+    color: #374151;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.configuracion-screen .secondary-button:hover {
+    background: #F5F7F3;
+    border-color: #C8D0C4;
+}
