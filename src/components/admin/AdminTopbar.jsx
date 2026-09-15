@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 
 function AdminTopbar({
     activeMenu,
     search,
     setSearch,
-    onNotifications
+    onNotifications,
+    handleLogout
 }) {
+
+    const [profileOpen, setProfileOpen] = useState(false);
 
     return (
         <header className="topbar">
@@ -27,7 +30,7 @@ function AdminTopbar({
             {/* PARTE DERECHA */}
             <div className="top-right">
 
-                {/* BUSCADOR */}
+                {/* BUSCADOR
                 <div className="search">
 
                     <input
@@ -39,7 +42,7 @@ function AdminTopbar({
                         }
                     />
 
-                </div>
+                </div> */}
 
 
                 {/* NOTIFICACIONES */}
@@ -54,23 +57,67 @@ function AdminTopbar({
 
 
                 {/* PERFIL */}
-                <div className="profile">
+                <div className="profile-container">
 
-                    <div className="avatar">
-                        A
-                    </div>
+                    <button
+                        type="button"
+                        className="profile"
+                        onClick={() => setProfileOpen(!profileOpen)}
+                    >
 
-                    <div>
+                        <div className="avatar">
+                            A
+                        </div>
 
-                        <strong>
-                            Administrador
-                        </strong>
+                        <div className="profile-info">
 
-                        <small>
-                            Super Admin
-                        </small>
+                            <strong>
+                                Administrador
+                            </strong>
 
-                    </div>
+                            <small>
+                                Super Admin
+                            </small>
+
+                        </div>
+
+                        <span className="profile-arrow">
+                            {profileOpen ? "▲" : "▼"}
+                        </span>
+
+                    </button>
+
+
+                    {profileOpen && (
+
+                        <div className="profile-menu">
+
+                            {/* <div className="profile-menu-header">
+
+                                <strong>
+                                    Administrador
+                                </strong>
+
+                                <small>
+                                    Super Admin
+                                </small>
+
+                            </div>
+
+                            <div className="profile-menu-divider"></div> */}
+
+                            <button
+                                type="button"
+                                className="profile-logout"
+                                onClick={handleLogout}
+                            >
+                                Cerrar sesión
+                                <span>↩</span>
+                            </button>
+
+                        </div>
+
+                    )}
 
                 </div>
 

@@ -596,8 +596,9 @@ function CVRecibidos({
     // =====================================================
 
     return (
-        <>
-            <section className="cv-recibidos-screen">
+        <div className="cv-recibidos-screen">
+            
+            <section>
 
                 {/* =================================================
                     HEADER
@@ -1362,7 +1363,7 @@ function CVRecibidos({
                     document.body
                 )}
 
-        </>
+        </div>
     );
 }
 

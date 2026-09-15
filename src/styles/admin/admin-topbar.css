@@ -170,7 +170,7 @@
    PROFILE
 ===================================================== */
 
-.profile {
+/* .profile {
     display: flex;
 
     align-items: center;
@@ -196,8 +196,209 @@
     font-size: 11px;
 
     margin-top: 2px;
+} */
+.profile-container {
+    position: relative;
 }
 
+
+.profile {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 6px 8px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    font-family: inherit;
+
+    text-align: left;
+
+    transition: 0.2s ease;
+}
+
+
+.profile:hover {
+    background: #F5F7F3;
+}
+
+
+.profile strong {
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 14px;
+}
+
+
+.profile small {
+    display: block;
+
+    color: #777;
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+.profile-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.profile-arrow {
+    margin-left: 4px;
+
+    color: #777;
+
+    font-size: 9px;
+}
+
+/* =====================================================
+   MENÚ DEL PERFIL
+===================================================== */
+
+.profile-menu {
+    position: absolute;
+
+    top: calc(100% + 10px);
+
+    right: 0;
+
+    width: 220px;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.12);
+
+    overflow: hidden;
+
+    z-index: 1000;
+
+    animation: profileMenuIn 0.18s ease;
+}
+
+
+@keyframes profileMenuIn {
+
+    from {
+        opacity: 0;
+
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   INFORMACIÓN DEL MENÚ
+===================================================== */
+
+.profile-menu-header {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding: 15px 16px;
+}
+
+
+.profile-menu-header strong {
+    color: var(--dark);
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.profile-menu-header small {
+    color: #777;
+
+    font-size: 11px;
+}
+
+
+.profile-menu-divider {
+    height: 1px;
+
+    background: #E9ECE7;
+}
+
+
+/* =====================================================
+   CERRAR SESIÓN
+===================================================== */
+
+.profile-logout {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px 16px;
+
+    border: none;
+
+    background: transparent;
+
+    color: #B42318;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+
+.profile-logout span {
+    font-size: 17px;
+}
+
+
+.profile-logout:hover {
+    background: #FFF5F4;
+
+    color: #912018;
+}
 
 /* =====================================================
    AVATAR
@@ -261,6 +462,11 @@
 ===================================================== */
 
 @media (max-width: 700px) {
+
+    .profile-info,
+    .profile-arrow {
+        display: none;
+    }
 
     .topbar {
         height: auto;

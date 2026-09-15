@@ -10,7 +10,7 @@ import "../../styles/admin/dashboard.css";
 
 import NuevaPostulacion from "./NuevaPostulacion";
 import AdministrarPostulaciones from "./AdministrarPostulaciones";
-import CVRecibidos from "./CVRecibidos";
+import CVrecibidos from "./CVrecibidos";
 import Organizaciones from "./Organizaciones";
 import Categorias from "./Categorias";
 import Estadisticas from "./Estadisticas";
@@ -243,30 +243,30 @@ function AdminDashboard({
                         job.responsibilities
                     )
                         ? job.responsibilities.join(
-                              ", "
-                          )
+                            ", "
+                        )
                         : job.responsibilities ||
-                          "",
+                        "",
 
                 requirements:
                     Array.isArray(
                         job.requirements
                     )
                         ? job.requirements.join(
-                              ", "
-                          )
+                            ", "
+                        )
                         : job.requirements ||
-                          "",
+                        "",
 
                 offers:
                     Array.isArray(
                         job.offers
                     )
                         ? job.offers.join(
-                              ", "
-                          )
+                            ", "
+                        )
                         : job.offers ||
-                          "",
+                        "",
             });
         }
 
@@ -480,7 +480,7 @@ function AdminDashboard({
                         <div className="table-responsive">
 
                             {filteredVacantes.length ===
-                            0 ? (
+                                0 ? (
 
                                 <div className="empty">
                                     No hay vacantes
@@ -791,7 +791,7 @@ function AdminDashboard({
             case "CV Recibidos":
 
                 return (
-                    <CVRecibidos
+                    <CVrecibidos
                         applications={
                             applications
                         }
@@ -978,6 +978,7 @@ function AdminDashboard({
                     onNotifications={
                         handleNotifications
                     }
+                    handleLogout={handleLogout}
                 />
 
 
