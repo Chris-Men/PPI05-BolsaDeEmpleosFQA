@@ -1,0 +1,576 @@
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.nav {
+    position: relative;
+    width: 100%;
+    height: 78px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 42px;
+
+    background: #ffffff;
+    border-bottom: 1px solid #e8eee2;
+
+    z-index: 1000;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    cursor: pointer;
+}
+
+.nav-logo {
+    display: block;
+
+    width: 185px;
+    height: auto;
+
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   MENÚ DESKTOP
+========================================================= */
+
+.nav-links {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 40px;
+
+    white-space: nowrap;
+}
+
+
+/* BOTONES DEL MENÚ */
+
+.nav-link {
+    position: relative;
+
+    padding: 8px 2px;
+
+    border: none;
+    background: transparent;
+
+    color: #4c5545;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.nav-link:hover {
+    color: #5ba222;
+
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    color: #5ba222;
+
+    font-weight: 600;
+}
+
+
+/* LÍNEA DEL ELEMENTO ACTIVO */
+
+.nav-link.active::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    bottom: -7px;
+
+    height: 2px;
+
+    background: #82ba2e;
+
+    border-radius: 4px;
+}
+
+
+/* =========================================================
+   PARTE DERECHA
+========================================================= */
+
+.nav-right {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   BOTÓN INGRESAR
+========================================================= */
+
+.btn-ghost {
+    padding: 9px 21px;
+
+    border: 1px solid #82ba2e;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #5ba222;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.btn-ghost:hover {
+    background: #82ba2e;
+    color: #ffffff;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 15px rgba(91, 162, 34, 0.18);
+}
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
+.nav-avatar {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #82ba2e;
+
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.nav-avatar:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(91, 162, 34, 0.25);
+}
+
+
+/* =========================================================
+   DROPDOWN USUARIO
+========================================================= */
+
+.nav-user-menu {
+    position: relative;
+}
+
+.nav-user-dropdown {
+    position: absolute;
+
+    top: 52px;
+    right: 0;
+
+    min-width: 185px;
+
+    padding: 6px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5eadf;
+    border-radius: 10px;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.10);
+}
+
+.nav-user-dropdown-item {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #37402f;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.nav-user-dropdown-item:hover {
+    background: #f3f7ed;
+}
+
+.nav-user-dropdown-item.danger {
+    color: #b33a3a;
+}
+
+.nav-user-dropdown-item.danger:hover {
+    background: #fff1f1;
+}
+
+
+/* =========================================================
+   HAMBURGUESA
+========================================================= */
+
+.nav-menu-button {
+    display: none;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border: 1px solid #dfe8d6;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.nav-menu-button:hover {
+    background: #f6f9f1;
+
+    border-color: #82ba2e;
+
+    box-shadow:
+        0 4px 12px rgba(91, 162, 34, 0.12);
+}
+
+.nav-menu-button span {
+    display: block;
+
+    width: 19px;
+    height: 2px;
+
+    border-radius: 3px;
+
+    background: #4f633e;
+
+    transition:
+        transform 0.25s ease,
+        opacity 0.2s ease;
+}
+
+
+/* ANIMACIÓN HAMBURGUESA */
+
+.nav-menu-button.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.nav-menu-button.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-menu-button.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+
+/* =========================================================
+   MENÚ MÓVIL
+========================================================= */
+
+.nav-mobile-menu {
+    display: none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+
+    .nav {
+        padding: 0 28px;
+    }
+
+    .nav-logo {
+        width: 160px;
+    }
+
+    .nav-links {
+        gap: 25px;
+    }
+
+    .nav-link {
+        font-size: 14px;
+    }
+}
+
+
+/* =========================================================
+   MÓVIL
+========================================================= */
+
+@media screen and (max-width: 800px) {
+
+    .nav {
+        height: 72px;
+
+        padding: 0 20px;
+    }
+
+
+    /* LOGO */
+
+    .nav-logo {
+        width: 150px;
+    }
+
+
+    /* OCULTAR MENÚ DESKTOP */
+
+    .nav-links {
+        display: none !important;
+    }
+
+
+    /* DERECHA */
+
+    .nav-right {
+        margin-left: auto;
+
+        gap: 9px;
+    }
+
+
+    /* OCULTAR INGRESAR DESKTOP */
+
+    .nav-right>.btn-ghost {
+        display: none;
+    }
+
+
+    /* MOSTRAR HAMBURGUESA */
+
+    .nav-menu-button {
+        display: flex !important;
+    }
+
+
+    /* =====================================================
+       MENÚ DESPLEGABLE
+    ===================================================== */
+
+    .nav-mobile-menu {
+        position: absolute;
+
+        top: calc(100% + 8px);
+
+        left: 15px;
+        right: 15px;
+
+        display: flex;
+        flex-direction: column;
+
+        padding: 8px;
+
+        background: #ffffff;
+
+        border: 1px solid #e5eadf;
+        border-radius: 14px;
+
+        box-shadow:
+            0 15px 40px rgba(0, 0, 0, 0.12);
+
+        opacity: 0;
+        visibility: hidden;
+
+        transform: translateY(-10px);
+
+        transition:
+            opacity 0.2s ease,
+            visibility 0.2s ease,
+            transform 0.2s ease;
+
+        pointer-events: none;
+    }
+
+
+    /* MENÚ ABIERTO */
+
+    .nav-mobile-menu.show {
+        opacity: 1;
+
+        visibility: visible;
+
+        transform: translateY(0);
+
+        pointer-events: auto;
+    }
+
+
+    /* OPCIONES */
+
+    .mobile-nav-link {
+        width: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 14px 15px;
+
+        border: none;
+        border-radius: 9px;
+
+        background: transparent;
+
+        color: #4c5545;
+
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+
+        text-align: left;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+
+    .mobile-nav-link:hover {
+        background: #f4f8ef;
+
+        color: #5ba222;
+    }
+
+    .mobile-nav-link.active {
+        background: #f1f7e9;
+
+        color: #5ba222;
+
+        font-weight: 600;
+    }
+
+
+    /* BOTÓN LOGIN */
+
+    .mobile-login-button {
+        width: 100%;
+
+        margin-top: 6px;
+
+        padding: 12px 15px;
+
+        border: none;
+        border-radius: 9px;
+
+        background: #82ba2e;
+
+        color: #ffffff;
+
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+    .mobile-login-button:hover {
+        background: #5ba222;
+    }
+}
+
+
+/* =========================================================
+   TELÉFONOS PEQUEÑOS
+========================================================= */
+
+@media screen and (max-width: 420px) {
+
+    .nav {
+        padding: 0 15px;
+    }
+
+    .nav-logo {
+        width: 135px;
+    }
+
+    .nav-menu-button {
+        width: 40px;
+        height: 40px;
+    }
+
+    .nav-mobile-menu {
+        left: 10px;
+        right: 10px;
+    }
+}

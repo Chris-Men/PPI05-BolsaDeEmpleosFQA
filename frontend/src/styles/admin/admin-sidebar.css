@@ -1,0 +1,385 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMIN SIDEBAR
+===================================================== */
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+    width: 270px;
+    min-width: 270px;
+
+    height: 100vh;
+
+    background: var(--dark);
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow: 6px 0 25px rgba(0, 0, 0, 0.12);
+
+    overflow-y: auto;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   LOGO
+===================================================== */
+
+.logo {
+    width: 100%;
+
+    min-height: 120px;
+
+    padding: 25px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    box-sizing: border-box;
+
+    flex-shrink: 0;
+}
+
+
+/* Contenedor del logo */
+
+.logo picture {
+    display: flex;
+
+    width: 100%;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Imagen */
+
+.logo-image {
+    display: block;
+
+    width: 215px;
+    height: auto;
+
+    max-width: 100%;
+    max-height: 80px;
+
+    object-fit: contain;
+
+    transition: transform 0.25s ease;
+}
+
+
+/* Efecto al pasar el mouse */
+
+.logo:hover .logo-image {
+    transform: scale(1.03);
+}
+
+
+/* Quitar borde del botón al hacer focus */
+
+.logo:focus {
+    outline: none;
+}
+
+
+/* =====================================================
+   MENU
+===================================================== */
+
+.menu {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    padding: 0 20px;
+
+    flex: 1;
+
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   MENU ITEM
+===================================================== */
+
+.menu-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 15px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    transition: var(--transition);
+
+    font-family: inherit;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    text-align: left;
+
+    color: white;
+
+    background: transparent;
+
+    position: relative;
+
+    box-sizing: border-box;
+}
+
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+
+.menu-item.active {
+    background: var(--primary);
+
+    color: white;
+}
+
+
+/* Iconos */
+
+.menu-item i {
+    width: 22px;
+    min-width: 22px;
+
+    font-style: normal;
+
+    font-size: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Texto */
+
+.menu-item span {
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   SIDEBAR FOOTER
+===================================================== */
+
+.sidebar-footer {
+    padding: 25px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    flex-shrink: 0;
+
+    box-sizing: border-box;
+}
+
+
+/* Foto / inicial administrador */
+
+.admin-photo {
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+
+    border-radius: 50%;
+
+    background: var(--primary);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 700;
+
+    color: white;
+}
+
+
+/* Nombre */
+
+.sidebar-footer strong {
+    display: block;
+
+    font-size: 14px;
+
+    color: white;
+}
+
+
+/* Correo */
+
+.sidebar-footer small {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.65);
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .sidebar {
+        width: 85px;
+        min-width: 85px;
+    }
+
+
+    /* Logo pequeño */
+
+    .logo {
+        min-height: 90px;
+
+        padding: 18px 10px;
+
+        justify-content: center;
+    }
+
+
+    .logo picture {
+        width: 55px;
+        height: 55px;
+    }
+
+
+    .logo-image {
+        width: 55px;
+        height: 55px;
+
+        max-width: 55px;
+        max-height: 55px;
+
+        object-fit: contain;
+    }
+
+
+    /* Menú */
+
+    .menu {
+        padding: 0 10px;
+    }
+
+
+    .menu-item {
+        justify-content: center;
+
+        padding: 15px 10px;
+    }
+
+
+    .menu-item span {
+        display: none;
+    }
+
+
+    .menu-item i {
+        font-size: 18px;
+    }
+
+
+    /* Footer */
+
+    .sidebar-footer {
+        justify-content: center;
+
+        padding: 20px 10px;
+    }
+
+
+    .sidebar-footer>div:not(.admin-photo) {
+        display: none;
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .sidebar {
+        width: 70px;
+        min-width: 70px;
+    }
+
+
+    /* Logo */
+
+    .logo {
+        min-height: 75px;
+
+        padding: 15px 8px;
+    }
+
+
+    .logo picture {
+        width: 45px;
+        height: 45px;
+    }
+
+
+    .logo-image {
+        width: 45px;
+        height: 45px;
+
+        max-width: 45px;
+        max-height: 45px;
+    }
+
+
+    /* Iconos */
+
+    .menu-item i {
+        font-size: 17px;
+    }
+
+}

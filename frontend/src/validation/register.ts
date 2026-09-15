@@ -1,0 +1,37 @@
+/** Values validated before sending a public candidate registration request. */
+export interface RegistrationFormValues {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+/** Mirrors backend registration constraints and returns the first localized error. */
+export function getRegistrationValidationError(
+  values: RegistrationFormValues,
+): string | null {
+  const fullName = values.name.trim();
+  const email = values.email.trim();
+
+  if (fullName.length < 2) return 'Ingresa un nombre completo válido.';
+  if (fullName.length > 150) {
+    return 'El nombre completo no puede superar los 150 caracteres.';
+  }
+  if (!email) return 'Ingresa tu correo electrónico.';
+  if (email.length > 255) {
+    return 'El correo electrónico no puede superar los 255 caracteres.';
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return 'El correo electrónico no es válido.';
+  }
+  if (Array.from(values.password).length < 12) {
+    return 'La contraseña debe tener al menos 12 caracteres.';
+  }
+  if (new TextEncoder().encode(values.password).length > 72) {
+    return 'La contraseña no puede superar los 72 bytes en UTF-8.';
+  }
+  if (values.password !== values.confirmPassword) {
+    return 'Las contraseñas no coinciden.';
+  }
+  return null;
+}

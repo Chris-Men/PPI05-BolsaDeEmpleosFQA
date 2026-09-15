@@ -1,0 +1,517 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMIN TOPBAR
+===================================================== */
+
+
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+.topbar {
+    width: 100%;
+
+    min-height: 85px;
+    height: 85px;
+
+    background: white;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 0 40px;
+
+    box-shadow: var(--shadow);
+
+    position: sticky;
+    top: 0;
+
+    z-index: 10;
+}
+
+
+/* =====================================================
+   TOP LEFT
+===================================================== */
+
+.top-left {
+    min-width: 0;
+}
+
+
+.top-left h1 {
+    color: var(--dark);
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    margin: 0;
+}
+
+
+.top-left span {
+    display: block;
+
+    color: #777;
+
+    font-size: 13px;
+
+    margin-top: 4px;
+}
+
+
+/* =====================================================
+   TOP RIGHT
+===================================================== */
+
+.top-right {
+    display: flex;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search {
+    display: flex;
+
+    align-items: center;
+}
+
+
+.search input {
+    width: 280px;
+
+    border: none;
+    outline: none;
+
+    background: #F1F5F9;
+
+    padding: 14px 18px;
+
+    border-radius: 10px;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    color: var(--text);
+
+    transition: 0.3s;
+}
+
+
+.search input::placeholder {
+    color: #9CA3AF;
+}
+
+
+.search input:focus {
+    background: white;
+
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+
+/* =====================================================
+   NOTIFICATION
+===================================================== */
+
+.notification {
+    width: 48px;
+    height: 48px;
+
+    min-width: 48px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 50%;
+
+    background: #F3F4F6;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+
+    font-size: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+}
+
+
+.notification:hover {
+    background: var(--primary);
+
+    color: white;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   PROFILE
+===================================================== */
+
+/* .profile {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.profile strong {
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 14px;
+}
+
+
+.profile small {
+    display: block;
+
+    color: #777;
+
+    font-size: 11px;
+
+    margin-top: 2px;
+} */
+.profile-container {
+    position: relative;
+}
+
+
+.profile {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 6px 8px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    font-family: inherit;
+
+    text-align: left;
+
+    transition: 0.2s ease;
+}
+
+
+.profile:hover {
+    background: #F5F7F3;
+}
+
+
+.profile strong {
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 14px;
+}
+
+
+.profile small {
+    display: block;
+
+    color: #777;
+
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+.profile-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.profile-arrow {
+    margin-left: 4px;
+
+    color: #777;
+
+    font-size: 9px;
+}
+
+/* =====================================================
+   MENÚ DEL PERFIL
+===================================================== */
+
+.profile-menu {
+    position: absolute;
+
+    top: calc(100% + 10px);
+
+    right: 0;
+
+    width: 220px;
+
+    background: #FFFFFF;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.12);
+
+    overflow: hidden;
+
+    z-index: 1000;
+
+    animation: profileMenuIn 0.18s ease;
+}
+
+
+@keyframes profileMenuIn {
+
+    from {
+        opacity: 0;
+
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   INFORMACIÓN DEL MENÚ
+===================================================== */
+
+.profile-menu-header {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding: 15px 16px;
+}
+
+
+.profile-menu-header strong {
+    color: var(--dark);
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.profile-menu-header small {
+    color: #777;
+
+    font-size: 11px;
+}
+
+
+.profile-menu-divider {
+    height: 1px;
+
+    background: #E9ECE7;
+}
+
+
+/* =====================================================
+   CERRAR SESIÓN
+===================================================== */
+
+.profile-logout {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px 16px;
+
+    border: none;
+
+    background: transparent;
+
+    color: #B42318;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+
+.profile-logout span {
+    font-size: 17px;
+}
+
+
+.profile-logout:hover {
+    background: #FFF5F4;
+
+    color: #912018;
+}
+
+/* =====================================================
+   AVATAR
+===================================================== */
+
+.avatar {
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+
+    border-radius: 50%;
+
+    background: var(--primary);
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    color: white;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
+===================================================== */
+
+@media (max-width: 1200px) {
+
+    .search input {
+        width: 220px;
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET PEQUEÑA
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .search input {
+        display: none;
+    }
+
+
+    .topbar {
+        padding: 0 25px;
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .profile-info,
+    .profile-arrow {
+        display: none;
+    }
+
+    .topbar {
+        height: auto;
+
+        min-height: 80px;
+
+        padding: 15px 20px;
+
+        gap: 15px;
+    }
+
+
+    .top-left h1 {
+        font-size: 22px;
+    }
+
+
+    .top-left span {
+        font-size: 11px;
+    }
+
+
+    .profile>div:last-child {
+        display: none;
+    }
+
+
+    .avatar {
+        width: 42px;
+        height: 42px;
+
+        min-width: 42px;
+    }
+
+
+    .notification {
+        width: 42px;
+        height: 42px;
+
+        min-width: 42px;
+    }
+
+
+    .top-right {
+        gap: 10px;
+    }
+
+}
