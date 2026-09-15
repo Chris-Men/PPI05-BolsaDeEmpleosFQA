@@ -2,6 +2,11 @@ import React from "react";
 import RegisterForm from "../../components/auth/RegisterForm";
 import "../../styles/auth/auth.css";
 
+import fondoDesktop from "../../components/imagenes/img/FLogin 1.png";
+import fondoMobile from "../../components/imagenes/img/FLogin 2.png";
+import logoFQA from "../../components/imagenes/img/FLogin 3.png";
+import portafolio from "../../components/imagenes/img/FLogin 4.png";
+
 export default function Register({
     navigateTo,
     setCurrentUser,
@@ -9,18 +14,29 @@ export default function Register({
 }) {
 
     return (
-        <main className="auth-page">
+        <main
+            className="auth-page"
+            style={{
+                "--login-bg-desktop": `url("${fondoDesktop}")`,
+                "--login-bg-mobile": `url("${fondoMobile}")`
+            }}
+        >
 
             {/* =====================================================
-                DECORACIONES
+                FONDO
             ===================================================== */}
 
-            <div className="auth-decoration auth-decoration-top"></div>
+            <div className="auth-background"></div>
 
-            <div className="auth-decoration auth-decoration-bottom"></div>
+            <div className="auth-overlay"></div>
 
+
+            {/* =====================================================
+                CONTENEDOR PRINCIPAL
+            ===================================================== */}
 
             <div className="auth-container">
+
 
                 {/* =================================================
                     LADO IZQUIERDO
@@ -28,89 +44,29 @@ export default function Register({
 
                 <section className="auth-brand">
 
+                    <img
+                        src={portafolio}
+                        alt="FQA Empleos"
+                        className="auth-portfolio"
+                    />
+
+
                     <div className="auth-brand-content">
 
-                        {/* LOGO FQA */}
+                        <img
+                            src={logoFQA}
+                            alt="FQA Empleos"
+                            className="fqa-logo-image"
+                        />
 
-                        <div className="fqa-logo">
-
-                            <span className="fqa-logo-main">
-                                FQA
-                            </span>
-
-                            <div className="fqa-logo-person">
-                                <span></span>
-                            </div>
-
-                            <div className="fqa-logo-sub">
-
-                                <span>—</span>
-
-                                <strong>
-                                    Empleos
-                                </strong>
-
-                                <span>—</span>
-
-                            </div>
-
-                        </div>
-
-
-                        {/* DESCRIPCIÓN */}
 
                         <p className="auth-brand-description">
 
-                            Conectamos talento
+                            Conectando talento
                             <br />
-                            con nuevas oportunidades.
+                            con oportunidades.
 
                         </p>
-
-
-                        {/* ILUSTRACIÓN */}
-
-                        <div className="job-illustration">
-
-                            {/* DOCUMENTO */}
-
-                            <div className="illustration-paper">
-
-                                <div className="paper-person"></div>
-
-                                <div className="paper-line"></div>
-
-                                <div className="paper-line short"></div>
-
-                                <div className="paper-line"></div>
-
-                            </div>
-
-
-                            {/* MALETÍN */}
-
-                            <div className="briefcase">
-
-                                <div className="briefcase-handle"></div>
-
-                                <div className="briefcase-body">
-
-                                    <div className="briefcase-lock"></div>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* HOJAS DECORATIVAS */}
-
-                            <div className="illustration-leaf leaf-one"></div>
-
-                            <div className="illustration-leaf leaf-two"></div>
-
-                            <div className="illustration-leaf leaf-three"></div>
-
-                        </div>
 
                     </div>
 
@@ -125,7 +81,10 @@ export default function Register({
 
                     <div className="auth-card-content">
 
-                        {/* ENCABEZADO */}
+
+                        {/* =================================================
+                            ENCABEZADO
+                        ================================================= */}
 
                         <div className="auth-heading">
 
@@ -134,15 +93,11 @@ export default function Register({
                             </h1>
 
                             <p>
-
                                 Regístrate para encontrar nuevas
                                 <br />
-
                                 oportunidades y gestionar tus
                                 <br />
-
                                 postulaciones.
-
                             </p>
 
                         </div>

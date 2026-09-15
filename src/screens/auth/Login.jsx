@@ -2,28 +2,40 @@ import React from "react";
 import LoginForm from "../../components/auth/LoginForm";
 import "../../styles/auth/auth.css";
 
+import fondoDesktop from "../../components/imagenes/img/FLogin 1.png";
+import fondoMobile from "../../components/imagenes/img/FLogin 2.png";
+import logoFQA from "../../components/imagenes/img/FLogin 3.png";
+import portafolio from "../../components/imagenes/img/FLogin 4.png";
+
 export default function Login({
     navigateTo,
     setCurrentUser,
     showToast
 }) {
     return (
-        <main className="auth-page">
+        <main
+            className="auth-page"
+            style={{
+                "--login-bg-desktop": `url("${fondoDesktop}")`,
+                "--login-bg-mobile": `url("${fondoMobile}")`
+            }}
+        >
 
             {/* =====================================================
-                DECORACIONES
+                FONDO / DECORACIONES
             ===================================================== */}
 
-            <div className="auth-decoration auth-decoration-top"></div>
+            <div className="auth-background"></div>
 
-            <div className="auth-decoration auth-decoration-bottom"></div>
+            <div className="auth-overlay"></div>
 
 
             {/* =====================================================
-                CONTENEDOR PRINCIPAL
+                CONTENIDO PRINCIPAL
             ===================================================== */}
 
             <div className="auth-container">
+
 
                 {/* =================================================
                     LADO IZQUIERDO
@@ -31,89 +43,33 @@ export default function Login({
 
                 <section className="auth-brand">
 
+                    {/* Portafolio / ilustración */}
+
+                    <img
+                        src={portafolio}
+                        alt="FQA Empleos"
+                        className="auth-portfolio"
+                    />
+
+
+                    {/* Contenido de marca */}
+
                     <div className="auth-brand-content">
 
                         {/* LOGO */}
 
-                        <div className="fqa-logo">
-
-                            <span className="fqa-logo-main">
-                                FQA
-                            </span>
-
-                            <div className="fqa-logo-person">
-                                <span></span>
-                            </div>
-
-                            <div className="fqa-logo-sub">
-
-                                <span>—</span>
-
-                                <strong>
-                                    Empleos
-                                </strong>
-
-                                <span>—</span>
-
-                            </div>
-
-                        </div>
+                        <img
+                            src={logoFQA}
+                            alt="FQA Empleos"
+                            className="fqa-logo-image"
+                        />
 
 
-                        {/* DESCRIPCIÓN */}
+                        {/* FRASE */}
 
                         <p className="auth-brand-description">
-                            Conectamos talento
-                            <br />
-                            con nuevas oportunidades.
+                            Conectando talento con oportunidades.
                         </p>
-
-
-                        {/* =================================================
-                            ILUSTRACIÓN
-                        ================================================= */}
-
-                        <div className="job-illustration">
-
-                            {/* DOCUMENTO */}
-
-                            <div className="illustration-paper">
-
-                                <div className="paper-person"></div>
-
-                                <div className="paper-line"></div>
-
-                                <div className="paper-line short"></div>
-
-                                <div className="paper-line"></div>
-
-                            </div>
-
-
-                            {/* MALETÍN */}
-
-                            <div className="briefcase">
-
-                                <div className="briefcase-handle"></div>
-
-                                <div className="briefcase-body">
-
-                                    <div className="briefcase-lock"></div>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* ELEMENTOS DECORATIVOS */}
-
-                            <div className="illustration-leaf leaf-one"></div>
-
-                            <div className="illustration-leaf leaf-two"></div>
-
-                            <div className="illustration-leaf leaf-three"></div>
-
-                        </div>
 
                     </div>
 
@@ -127,6 +83,7 @@ export default function Login({
                 <section className="auth-card">
 
                     <div className="auth-card-content">
+
 
                         {/* =================================================
                             ENCABEZADO
@@ -164,6 +121,26 @@ export default function Login({
                 </section>
 
             </div>
+
+
+            {/* =====================================================
+                BOTÓN VOLVER
+            ===================================================== */}
+
+            <button
+                type="button"
+                className="auth-back-button"
+                onClick={() => navigateTo("home")}
+                aria-label="Volver al inicio"
+            >
+                <span className="back-arrow">
+                    ←
+                </span>
+
+                <span>
+                    Volver
+                </span>
+            </button>
 
         </main>
     );

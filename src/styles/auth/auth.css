@@ -1,554 +1,359 @@
-/* =========================================
-   AUTH PAGE
-========================================= */
+/* =========================================================
+   FQA EMPLEOS
+   LOGIN
+========================================================= */
+
+
+/* =========================================================
+   RESET LOCAL
+========================================================= */
+
+.auth-page,
+.auth-page * {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   PÁGINA PRINCIPAL
+========================================================= */
 
 .auth-page {
     min-height: 100vh;
     width: 100%;
 
     position: relative;
-    overflow: hidden;
 
-    background:
-        radial-gradient(circle at 72% 45%,
-            rgba(117, 174, 50, 0.10),
-            transparent 35%),
-        linear-gradient(135deg,
-            #f8fbf3 0%,
-            #f1f7e9 100%);
+    /*
+       IMPORTANTE:
+       Permitimos scroll vertical cuando
+       el contenido supera la altura disponible.
+    */
+    overflow-x: hidden;
+    overflow-y: auto;
 
     font-family:
         "Inter",
         "Segoe UI",
         Arial,
         sans-serif;
+
+    background: #f4f8ef;
 }
 
 
-/* =========================================
-   CONTAINER
-========================================= */
+/* =========================================================
+   FONDO DESKTOP / MOBILE
+========================================================= */
+
+.auth-background {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 0;
+
+    background-image: var(--login-bg-desktop);
+
+    background-repeat: no-repeat;
+
+    background-position: center center;
+
+    background-size: cover;
+}
+
+
+/* =========================================================
+   CAPA SUAVE SOBRE EL FONDO
+========================================================= */
+
+.auth-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(90deg,
+            rgba(255, 255, 255, 0.08) 0%,
+            rgba(255, 255, 255, 0.04) 35%,
+            rgba(255, 255, 255, 0.16) 52%,
+            rgba(255, 255, 255, 0.38) 100%);
+}
+
+
+/* =========================================================
+   CONTENEDOR PRINCIPAL
+========================================================= */
 
 .auth-container {
-    width: min(1180px, 92%);
+    position: relative;
+
+    z-index: 5;
 
     min-height: 100vh;
 
-    margin: auto;
+    width: min(1400px, 94%);
+
+    margin: 0 auto;
 
     display: grid;
 
     grid-template-columns:
-        1fr 1fr;
+        minmax(420px, 1fr) minmax(440px, 540px);
 
     align-items: center;
 
-    gap: 70px;
+    gap: clamp(40px, 6vw, 110px);
+}
+
+
+/* =========================================================
+   LADO IZQUIERDO
+========================================================= */
+
+.auth-brand {
+    min-height: 650px;
 
     position: relative;
 
-    z-index: 2;
-}
-
-
-/* =========================================
-   DECORACIONES
-========================================= */
-
-.auth-decoration {
-    position: absolute;
-
-    pointer-events: none;
-
-    z-index: 0;
-}
-
-.auth-decoration-top {
-    width: 180px;
-    height: 180px;
-
-    background: #79b638;
-
-    border-radius:
-        0 0 100% 0;
-
-    top: 0;
-    left: 0;
-}
-
-.auth-decoration-bottom {
-    width: 420px;
-    height: 220px;
-
-    background: #518f2d;
-
-    border-radius:
-        100% 100% 0 0;
-
-    bottom: -120px;
-    left: -90px;
-
-    transform: rotate(12deg);
-}
-
-
-/* =========================================
-   LEFT SIDE
-========================================= */
-
-.auth-brand {
     display: flex;
 
     align-items: center;
 
     justify-content: center;
 
-    min-height: 700px;
-}
-
-.auth-brand-content {
-    width: 100%;
-
-    max-width: 510px;
-
-    padding-left: 20px;
+    padding:
+        10px 0 100px;
 }
 
 
-/* =========================================
-   FQA LOGO
-========================================= */
+/* =========================================================
+   PORTAFOLIO / FLOGIN 4
+========================================================= */
 
-.fqa-logo {
-    position: relative;
-
-    display: inline-block;
-
-    margin-bottom: 25px;
-}
-
-.fqa-logo-main {
-    display: block;
-
-    font-size: 118px;
-
-    line-height: 0.85;
-
-    font-weight: 900;
-
-    letter-spacing: -8px;
-
-    color: #092b0d;
-}
-
-
-/* Persona dentro de la Q */
-
-.fqa-logo-person {
+.auth-portfolio {
     position: absolute;
 
-    width: 72px;
-    height: 72px;
+    left: 50%;
 
-    border-radius: 50%;
+    bottom: -35px;
 
-    background: #77b832;
+    width: clamp(270px, 32vw, 470px);
 
-    left: 153px;
-    top: 29px;
-}
+    max-width: 48%;
 
-.fqa-logo-person::before {
-    content: "";
+    height: auto;
 
-    position: absolute;
+    transform: translateX(-50%);
 
-    width: 24px;
-    height: 24px;
+    object-fit: contain;
 
-    border-radius: 50%;
-
-    background: #ffffff;
-
-    top: 10px;
-    left: 24px;
-}
-
-.fqa-logo-person span {
-    position: absolute;
-
-    width: 42px;
-    height: 22px;
-
-    background: #ffffff;
-
-    border-radius:
-        30px 30px 0 0;
-
-    bottom: 10px;
-    left: 15px;
-}
-
-
-/* EMPLEOS */
-
-.fqa-logo-sub {
-    display: flex;
-
-    align-items: center;
-
-    gap: 17px;
-
-    margin-top: 12px;
-
-    color: #63a72c;
-}
-
-.fqa-logo-sub strong {
-    font-size: 51px;
-
-    line-height: 1;
-
-    font-weight: 800;
-}
-
-.fqa-logo-sub span {
-    font-size: 35px;
-
-    font-weight: 500;
-}
-
-
-/* =========================================
-   DESCRIPTION
-========================================= */
-
-.auth-brand-description {
-    margin: 25px 0 0;
-
-    font-size: 25px;
-
-    line-height: 1.4;
-
-    color: #4d6e62;
-
-    font-weight: 500;
-}
-
-
-/* =========================================
-   ILLUSTRATION
-========================================= */
-
-.job-illustration {
-    width: 420px;
-
-    height: 260px;
-
-    position: relative;
-
-    margin-top: 45px;
-}
-
-
-/* Sombra */
-
-.job-illustration::after {
-    content: "";
-
-    position: absolute;
-
-    width: 350px;
-    height: 35px;
-
-    background: rgba(113,
-            163,
-            67,
-            0.18);
-
-    border-radius: 50%;
-
-    bottom: 10px;
-    left: 35px;
-
-    filter: blur(4px);
-}
-
-
-/* Documento */
-
-.illustration-paper {
-    position: absolute;
-
-    width: 145px;
-    height: 190px;
-
-    background: #f8fff2;
-
-    border-radius: 8px;
-
-    right: 25px;
-    top: 5px;
-
-    transform: rotate(-10deg);
-
-    box-shadow:
-        0 8px 25px rgba(65, 105, 55, 0.10);
+    object-position: bottom center;
 
     z-index: 1;
-}
 
-.paper-person {
-    width: 38px;
-    height: 38px;
+    pointer-events: none;
 
-    border-radius: 50%;
+    user-select: none;
 
-    background: #37752c;
-
-    margin: 22px auto 12px;
-}
-
-.paper-line {
-    width: 75px;
-    height: 7px;
-
-    background: #b8d39d;
-
-    border-radius: 20px;
-
-    margin: 10px auto;
-}
-
-.paper-line.short {
-    width: 55px;
+    filter:
+        drop-shadow(0 15px 25px rgba(42, 83, 30, 0.10));
 }
 
 
-/* Maletín */
+/* =========================================================
+   CONTENIDO DE MARCA
+========================================================= */
 
-.briefcase {
-    position: absolute;
+.auth-brand-content {
+    position: relative;
 
-    width: 220px;
-    height: 145px;
-
-    left: 75px;
-    bottom: 30px;
-
-    transform: rotate(7deg);
-
-    z-index: 4;
-}
-
-.briefcase-handle {
-    position: absolute;
-
-    width: 85px;
-    height: 45px;
-
-    border:
-        12px solid #185620;
-
-    border-bottom: 0;
-
-    border-radius:
-        50px 50px 0 0;
-
-    left: 68px;
-    top: -22px;
-}
-
-.briefcase-body {
-    position: absolute;
+    z-index: 3;
 
     width: 100%;
-    height: 100%;
 
-    background:
-        linear-gradient(180deg,
-            #4f9429,
-            #17551d);
+    max-width: 560px;
 
-    border-radius:
-        14px 14px 22px 22px;
+    margin-left: 0;
 
-    box-shadow:
-        0 15px 25px rgba(32, 87, 24, 0.22);
-}
+    margin-top: -70px;
 
-.briefcase-body::before {
-    content: "";
+    padding: 30px;
 
-    position: absolute;
-
-    height: 22px;
-
-    left: 0;
-    right: 0;
-
-    top: 48px;
-
-    background: #d6e9b6;
-}
-
-.briefcase-lock {
-    position: absolute;
-
-    width: 42px;
-    height: 38px;
-
-    background: #eef8dc;
-
-    border-radius: 8px;
-
-    left: calc(50% - 21px);
-
-    top: 37px;
-
-    z-index: 2;
+    text-align: center;
 }
 
 
-/* Hojas */
+/* =========================================================
+   LOGO REAL - FLOGIN 3
+========================================================= */
 
-.illustration-leaf {
-    position: absolute;
+.fqa-logo-image {
+    display: block;
 
-    width: 45px;
-    height: 105px;
+    width: clamp(190px, 24vw, 450px);
 
-    background:
-        linear-gradient(135deg,
-            #86bd46,
-            #559c2c);
+    max-width: 100%;
 
-    border-radius:
-        100% 0 100% 0;
+    height: auto;
 
-    z-index: 2;
-}
+    margin:
+        0 auto 22px;
 
-.leaf-one {
-    left: 25px;
-    bottom: 45px;
+    object-fit: contain;
 
-    transform: rotate(-35deg);
-}
-
-.leaf-two {
-    left: 5px;
-    bottom: 105px;
-
-    transform: rotate(-50deg);
-}
-
-.leaf-three {
-    left: 60px;
-    bottom: 130px;
-
-    transform: rotate(-20deg);
-
-    opacity: 0.75;
+    filter:
+        drop-shadow(0 8px 18px rgba(35, 73, 26, 0.08));
 }
 
 
-/* =========================================
-   LOGIN CARD
-========================================= */
+/* =========================================================
+   FRASE CENTRAL
+========================================================= */
+
+.auth-brand-description {
+    margin: 0 auto;
+
+    max-width: 520px;
+
+    color: #214d28;
+
+    font-size: clamp(22px, 2vw, 31px);
+
+    line-height: 1.35;
+
+    font-weight: 600;
+
+    letter-spacing: -0.3px;
+
+    text-shadow:
+        0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+
+/* =========================================================
+   TARJETA DE LOGIN
+========================================================= */
 
 .auth-card {
     width: 100%;
 
-    max-width: 600px;
+    max-width: 540px;
 
     justify-self: end;
 
-    background:
-        rgba(255, 255, 255, 0.94);
+    padding: 55px 60px;
 
-    border-radius: 22px;
+    background:
+        rgba(255, 255, 255, 0.96);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.85);
+
+    border-radius: 26px;
 
     box-shadow:
-        0 20px 60px rgba(44, 91, 40, 0.10);
+        0 25px 70px rgba(35, 75, 30, 0.16);
 
-    padding: 65px 75px;
+    backdrop-filter: blur(10px);
 
-    box-sizing: border-box;
+    -webkit-backdrop-filter: blur(10px);
 }
+
 
 .auth-card-content {
     width: 100%;
 }
 
 
-/* =========================================
-   HEADING
-========================================= */
+/* =========================================================
+   ENCABEZADO
+========================================================= */
+
+.auth-heading {
+    text-align: left;
+}
+
 
 .auth-heading h1 {
     margin: 0;
 
-    font-size: 45px;
+    color: #173d1c;
+
+    font-size: clamp(34px, 3vw, 46px);
 
     line-height: 1.1;
 
-    color: #123e18;
-
     font-weight: 800;
 
-    letter-spacing: -1px;
+    letter-spacing: -1.2px;
 }
 
-.auth-heading p {
-    margin: 23px 0 38px;
 
-    font-size: 21px;
+.auth-heading p {
+    margin:
+        18px 0 34px;
+
+    color: #607367;
+
+    font-size: 18px;
 
     line-height: 1.55;
-
-    color: #597269;
 
     font-weight: 400;
 }
 
 
-/* =========================================
-   FORM
-========================================= */
+/* =========================================================
+   FORMULARIO
+========================================================= */
 
 .login-form {
     width: 100%;
 }
 
+
+/* =========================================================
+   GRUPO DEL FORMULARIO
+========================================================= */
+
 .form-group {
-    margin-bottom: 29px;
+    margin-bottom: 24px;
 }
 
-.input-wrapper {
-    height: 72px;
 
+/* =========================================================
+   INPUT
+========================================================= */
+
+.input-wrapper {
     width: 100%;
+
+    height: 64px;
+
+    position: relative;
 
     display: flex;
 
     align-items: center;
 
-    position: relative;
-
-    box-sizing: border-box;
-
     border:
-        2px solid #cbdcc0;
+        1.5px solid #cbdcc2;
 
-    border-radius: 15px;
+    border-radius: 13px;
 
     background: #ffffff;
 
     transition:
         border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
 }
+
 
 .input-wrapper:focus-within {
     border-color: #65a934;
@@ -557,18 +362,31 @@
         0 0 0 4px rgba(101, 169, 52, 0.10);
 }
 
+
+/* =========================================================
+   ICONO INPUT
+========================================================= */
+
 .input-icon {
-    color: #2e6b24;
-
-    margin-left: 24px;
-
     flex-shrink: 0;
+
+    margin-left: 20px;
+
+    color: #377c2d;
 }
+
+
+/* =========================================================
+   INPUT
+========================================================= */
 
 .input-wrapper input {
     width: 100%;
 
     height: 100%;
+
+    padding:
+        0 18px;
 
     border: none;
 
@@ -576,114 +394,140 @@
 
     background: transparent;
 
-    padding:
-        0 22px;
-
-    font-size: 18px;
-
     color: #274a31;
 
     font-family: inherit;
+
+    font-size: 17px;
 }
+
 
 .input-wrapper input::placeholder {
-    color: #9ba6a4;
+    color: #9ba7a0;
 }
 
 
-/* =========================================
+/* =========================================================
    PASSWORD
-========================================= */
+========================================================= */
 
 .password-toggle {
+    flex-shrink: 0;
+
+    padding:
+        10px 18px;
+
     border: none;
 
     background: transparent;
 
-    cursor: pointer;
-
     color: #628174;
 
-    padding: 10px 22px;
+    cursor: pointer;
 
     display: flex;
 
     align-items: center;
 
     justify-content: center;
+
+    transition:
+        color 0.2s ease;
 }
 
 
-/* =========================================
+.password-toggle:hover {
+    color: #377c2d;
+}
+
+
+/* =========================================================
    ERROR
-========================================= */
+========================================================= */
 
 .auth-error {
-    padding: 12px 15px;
-
     margin:
-        -10px 0 20px;
+        -5px 0 18px;
 
-    border-radius: 10px;
+    padding:
+        11px 14px;
+
+    border-radius: 9px;
 
     background: #fff0f0;
 
     color: #a52828;
 
     font-size: 14px;
+
+    line-height: 1.4;
 }
 
 
-/* =========================================
-   FORGOT PASSWORD
-========================================= */
+/* =========================================================
+   OLVIDÉ MI CONTRASEÑA
+========================================================= */
 
 .forgot-password {
     display: flex;
 
     justify-content: flex-end;
 
-    margin-top: -10px;
+    margin-top: -4px;
 
-    margin-bottom: 37px;
+    margin-bottom: 27px;
 }
 
+
 .forgot-password button {
+    padding: 0;
+
     border: none;
 
     background: transparent;
 
     color: #4f9225;
 
+    font-size: 15px;
+
     text-decoration: underline;
 
-    font-size: 16px;
-
     cursor: pointer;
+
+    transition:
+        color 0.2s ease;
 }
 
 
-/* =========================================
-   LOGIN BUTTON
-========================================= */
+.forgot-password button:hover {
+    color: #326d1d;
+}
+
+
+/* =========================================================
+   BOTÓN INICIAR SESIÓN
+========================================================= */
 
 .login-button {
     width: 100%;
 
-    height: 68px;
+    min-height: 62px;
+
+    padding:
+        12px 20px;
 
     border: none;
 
-    border-radius: 15px;
+    border-radius: 13px;
 
     background:
         linear-gradient(90deg,
             #579d27,
             #4b8f20);
 
-    color: white;
+    color: #ffffff;
 
-    font-size: 20px;
+    font-size: 18px;
 
     font-weight: 700;
 
@@ -695,7 +539,7 @@
 
     justify-content: center;
 
-    gap: 18px;
+    gap: 14px;
 
     box-shadow:
         0 8px 18px rgba(75, 143, 32, 0.18);
@@ -705,12 +549,19 @@
         box-shadow 0.2s ease;
 }
 
+
 .login-button:hover {
     transform: translateY(-2px);
 
     box-shadow:
-        0 12px 24px rgba(75, 143, 32, 0.25);
+        0 12px 25px rgba(75, 143, 32, 0.25);
 }
+
+
+.login-button:active {
+    transform: translateY(0);
+}
+
 
 .login-button:disabled {
     opacity: 0.7;
@@ -721,56 +572,62 @@
 }
 
 
-/* =========================================
-   DIVIDER
-========================================= */
+/* =========================================================
+   DIVISOR
+========================================================= */
 
 .auth-divider {
     display: flex;
 
     align-items: center;
 
-    gap: 18px;
+    gap: 15px;
 
-    margin: 35px 0;
+    margin:
+        28px 0;
 }
+
 
 .auth-divider span {
+    flex: 1;
+
     height: 1px;
 
-    background: #cbdcc0;
-
-    flex: 1;
+    background: #d0ddc8;
 }
+
 
 .auth-divider strong {
     color: #719168;
 
-    font-size: 17px;
+    font-size: 14px;
 
     font-weight: 600;
 }
 
 
-/* =========================================
-   REGISTER BUTTON
-========================================= */
+/* =========================================================
+   BOTÓN REGISTRARSE
+========================================================= */
 
 .register-button {
     width: 100%;
 
-    height: 67px;
+    min-height: 61px;
+
+    padding:
+        12px 20px;
 
     border:
-        2px solid #4f8f25;
+        1.5px solid #4f8f25;
 
-    border-radius: 15px;
+    border-radius: 13px;
 
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.92);
 
     color: #2f6622;
 
-    font-size: 20px;
+    font-size: 18px;
 
     font-weight: 700;
 
@@ -782,173 +639,709 @@
 
     justify-content: center;
 
-    gap: 15px;
+    gap: 13px;
 
     transition:
         background 0.2s ease,
-        color 0.2s ease;
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
+
 
 .register-button:hover {
     background: #f2f9eb;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 18px rgba(75, 143, 32, 0.10);
 }
 
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+/* =========================================================
+   BOTÓN VOLVER
+========================================================= */
 
-@media (max-width: 1050px) {
+.auth-back-button {
+    position: fixed;
+
+    right: 25px;
+
+    top: 25px;
+
+    left: auto;
+
+    z-index: 20;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding:
+        10px 17px;
+
+    border:
+        1px solid #4f8f25;
+
+    border-radius: 50px;
+
+    background:
+        rgba(79, 143, 37, 0.95);
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 18px rgba(75, 143, 32, 0.20);
+
+    backdrop-filter: blur(8px);
+
+    -webkit-backdrop-filter: blur(8px);
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.auth-back-button:hover {
+    transform: translateY(-2px);
+
+    background: #3f7d1f;
+
+    box-shadow:
+        0 9px 24px rgba(75, 143, 32, 0.28);
+}
+
+
+.back-arrow {
+    font-size: 18px;
+
+    line-height: 1;
+}
+
+
+/* =========================================================
+   TABLETS / LAPTOPS PEQUEÑAS
+========================================================= */
+
+@media (max-width: 1100px) {
 
     .auth-container {
-        gap: 30px;
+        width: 94%;
+
+        grid-template-columns:
+            minmax(350px, 1fr) minmax(400px, 500px);
+
+        gap: 35px;
     }
 
-    .auth-card {
-        padding: 50px 45px;
+
+    .auth-brand {
+        padding:
+            10px 0 80px;
     }
+
 
     .auth-brand-content {
-        padding-left: 0;
+        margin-left: 0;
+
+        margin-top: -50px;
     }
 
-    .fqa-logo-main {
-        font-size: 95px;
+
+    .auth-portfolio {
+        left: 50%;
+
+        bottom: -35px;
+
+        width: 330px;
+
+        transform: translateX(-50%);
     }
 
-    .fqa-logo-person {
-        left: 123px;
-        width: 60px;
-        height: 60px;
+
+    .auth-card {
+        padding:
+            45px 42px;
     }
 
-    .fqa-logo-sub strong {
-        font-size: 43px;
-    }
 
     .auth-heading h1 {
         font-size: 38px;
     }
 
+
     .auth-heading p {
-        font-size: 18px;
+        font-size: 17px;
     }
 }
 
 
-@media (max-width: 800px) {
+/* =========================================================
+   TABLETAS
+========================================================= */
+
+@media (max-width: 850px) {
+
+    .auth-page {
+        overflow-x: hidden;
+
+        overflow-y: auto;
+    }
+
 
     .auth-container {
         grid-template-columns: 1fr;
 
-        width: 90%;
+        width: min(650px, 92%);
 
-        padding: 40px 0;
+        min-height: 100dvh;
 
-        gap: 30px;
+        height: auto;
+
+        padding:
+            60px 0 55px;
+
+        gap: 20px;
     }
+
 
     .auth-brand {
         min-height: auto;
 
-        text-align: center;
+        padding:
+            10px 0 65px;
     }
+
 
     .auth-brand-content {
-        display: flex;
+        margin-left: 0;
 
-        flex-direction: column;
+        margin-top: -25px;
 
-        align-items: center;
+        padding: 15px;
     }
+
+
+    /* ---------------------------------------------
+       PORTAFOLIO TABLET
+    --------------------------------------------- */
+
+    .auth-portfolio {
+        left: 50%;
+
+        bottom: -35px;
+
+        width: 300px;
+
+        transform: translateX(-50%);
+
+        opacity: 0.75;
+    }
+
+
+    .fqa-logo-image {
+        width: 220px;
+
+        margin-bottom: 16px;
+    }
+
 
     .auth-brand-description {
-        font-size: 21px;
+        font-size: 23px;
+
+        max-width: 400px;
     }
+
 
     .auth-card {
         justify-self: center;
 
         max-width: 600px;
 
-        padding: 45px 35px;
+        padding:
+            42px 38px;
     }
 
-    .job-illustration {
-        transform: scale(0.85);
 
-        margin-top: 20px;
+    .auth-heading {
+        text-align: center;
     }
-
 }
 
 
-@media (max-width: 500px) {
+/* =========================================================
+   MÓVILES
+========================================================= */
+
+@media (max-width: 600px) {
+
+    /*
+       IMPORTANTE:
+       El scroll pertenece a la página.
+       No bloqueamos la altura del contenido.
+    */
+    .auth-page {
+        min-height: 100dvh;
+
+        height: auto;
+
+        overflow-x: hidden;
+
+        overflow-y: auto;
+
+        /*
+           Evita comportamientos raros
+           al desplazarse en algunos móviles.
+        */
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* ---------------------------------------------
+       FONDO MOBILE
+    --------------------------------------------- */
+
+    .auth-background {
+        position: fixed;
+
+        inset: 0;
+
+        background-image: var(--login-bg-mobile);
+
+        background-position:
+            center center;
+
+        background-size: cover;
+
+        background-repeat: no-repeat;
+    }
+
+
+    /* ---------------------------------------------
+       OVERLAY MOBILE
+    --------------------------------------------- */
+
+    .auth-overlay {
+        position: fixed;
+
+        inset: 0;
+
+        background:
+            linear-gradient(180deg,
+                rgba(255, 255, 255, 0.18) 0%,
+                rgba(255, 255, 255, 0.08) 35%,
+                rgba(247, 251, 242, 0.78) 65%,
+                rgba(247, 251, 242, 0.94) 100%);
+    }
+
+
+    /* ---------------------------------------------
+       CONTENEDOR
+    --------------------------------------------- */
 
     .auth-container {
-        width: 94%;
+        position: relative;
+
+        width: 92%;
+
+        /*
+           No usamos height: 100%.
+           El contenido puede crecer libremente.
+        */
+        min-height: 100dvh;
+
+        height: auto;
+
+        padding:
+            55px 0 70px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: flex-start;
+
+        /*
+           Menos espacio entre marca
+           y formulario.
+        */
+        gap: 10px;
     }
+
+
+    /* ---------------------------------------------
+       MARCA
+    --------------------------------------------- */
+
+    .auth-brand {
+        width: 100%;
+
+        min-height: auto;
+
+        padding:
+            0 0 45px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+    }
+
+
+    .auth-brand-content {
+        width: 100%;
+
+        max-width: 360px;
+
+        padding: 0;
+
+        margin: 0;
+
+        /*
+           Subimos el logo y el texto.
+        */
+        transform: translateY(-15px);
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+    }
+
+
+    /* ---------------------------------------------
+       PORTAFOLIO MOBILE
+    --------------------------------------------- */
+
+    .auth-portfolio {
+        position: absolute;
+
+        left: -55px;
+
+        bottom: -30px;
+
+        width: 220px;
+
+        max-width: none;
+
+        opacity: 0.30;
+
+        z-index: 1;
+
+        transform: none;
+    }
+
+
+    /* ---------------------------------------------
+       LOGO MOBILE
+    --------------------------------------------- */
+
+    .fqa-logo-image {
+        width: min(210px, 58vw);
+
+        margin:
+            0 auto 11px;
+    }
+
+
+    /* ---------------------------------------------
+       FRASE MOBILE
+    --------------------------------------------- */
+
+    .auth-brand-description {
+        max-width: 310px;
+
+        font-size: 20px;
+
+        line-height: 1.3;
+
+        font-weight: 600;
+    }
+
+
+    /* ---------------------------------------------
+       CARD MOBILE
+    --------------------------------------------- */
 
     .auth-card {
-        padding: 35px 22px;
+        width: 100%;
 
-        border-radius: 18px;
+        max-width: 430px;
+
+        margin:
+            0 auto;
+
+        padding:
+            30px 22px;
+
+        border-radius: 20px;
+
+        box-shadow:
+            0 15px 45px rgba(35, 75, 30, 0.14);
     }
+
+
+    /* ---------------------------------------------
+       HEADING
+    --------------------------------------------- */
 
     .auth-heading h1 {
-        font-size: 32px;
+        font-size: 30px;
+
+        letter-spacing: -0.7px;
     }
 
+
     .auth-heading p {
-        font-size: 17px;
+        margin:
+            13px 0 27px;
+
+        font-size: 15px;
+
+        line-height: 1.45;
     }
+
 
     .auth-heading p br {
         display: none;
     }
 
-    .input-wrapper {
-        height: 62px;
+
+    /* ---------------------------------------------
+       INPUTS
+    --------------------------------------------- */
+
+    .form-group {
+        margin-bottom: 19px;
     }
+
+
+    .input-wrapper {
+        height: 58px;
+
+        border-radius: 11px;
+    }
+
+
+    .input-icon {
+        margin-left: 16px;
+    }
+
+
+    .input-wrapper input {
+        padding:
+            0 14px;
+
+        font-size: 16px;
+    }
+
+
+    .password-toggle {
+        padding:
+            8px 14px;
+    }
+
+
+    /* ---------------------------------------------
+       FORGOT
+    --------------------------------------------- */
+
+    .forgot-password {
+        margin-bottom: 22px;
+    }
+
+
+    .forgot-password button {
+        font-size: 14px;
+    }
+
+
+    /* ---------------------------------------------
+       BOTONES
+    --------------------------------------------- */
 
     .login-button,
     .register-button {
-        height: 60px;
+        min-height: 56px;
 
-        font-size: 17px;
+        border-radius: 11px;
+
+        font-size: 16px;
     }
 
-    .job-illustration {
-        transform: scale(0.65);
 
-        margin-top: -5px;
-
-        margin-bottom: -50px;
+    .auth-divider {
+        margin:
+            23px 0;
     }
 
-    .fqa-logo-main {
-        font-size: 80px;
+
+    /* ---------------------------------------------
+       VOLVER MOBILE
+    --------------------------------------------- */
+
+    .auth-back-button {
+        top: 16px;
+
+        right: 16px;
+
+        left: auto;
+
+        padding:
+            8px 13px;
+
+        font-size: 13px;
+    }
+}
+
+
+/* =========================================================
+   MÓVILES PEQUEÑOS
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .auth-container {
+        width: 94%;
+
+        min-height: 100dvh;
+
+        height: auto;
+
+        padding-top: 50px;
+
+        padding-bottom: 65px;
+
+        gap: 8px;
     }
 
-    .fqa-logo-person {
-        left: 104px;
-        top: 23px;
 
-        width: 50px;
-        height: 50px;
+    .auth-brand {
+        padding-bottom: 40px;
     }
 
-    .fqa-logo-sub strong {
-        font-size: 35px;
+
+    .fqa-logo-image {
+        width: 175px;
     }
 
-    .fqa-logo-sub span {
-        font-size: 25px;
+
+    .auth-brand-description {
+        font-size: 18px;
     }
 
-    .auth-decoration-top {
-        width: 110px;
-        height: 110px;
+
+    .auth-card {
+        padding:
+            25px 17px;
     }
 
+
+    .auth-heading h1 {
+        font-size: 27px;
+    }
+
+
+    .auth-heading p {
+        font-size: 14px;
+
+        margin-bottom: 22px;
+    }
+
+
+    .input-wrapper {
+        height: 54px;
+    }
+
+
+    .login-button,
+    .register-button {
+        min-height: 53px;
+
+        font-size: 15px;
+    }
+
+
+    /* ---------------------------------------------
+       PORTAFOLIO MOBILE PEQUEÑO
+    --------------------------------------------- */
+
+    .auth-portfolio {
+        width: 180px;
+
+        left: -50px;
+
+        bottom: -30px;
+    }
+}
+
+
+/* =========================================================
+   PANTALLAS MUY ALTAS EN MÓVIL
+========================================================= */
+
+@media (max-width: 600px) and (min-height: 800px) {
+
+    /*
+       IMPORTANTE:
+       No volvemos a utilizar 75px ni 25px
+       porque eso hacía que el formulario
+       bajara demasiado.
+    */
+
+    .auth-container {
+        padding-top: 55px;
+
+        padding-bottom: 70px;
+
+        gap: 10px;
+    }
+
+
+    .auth-brand-content {
+        transform: translateY(-20px);
+    }
+
+
+    .auth-brand-description {
+        font-size: 21px;
+    }
+
+
+    .auth-card {
+        padding:
+            34px 24px;
+    }
+}
+
+
+/* =========================================================
+   REDUCCIÓN DE ANIMACIONES
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .auth-card *,
+    .auth-back-button,
+    .login-button,
+    .register-button,
+    .input-wrapper {
+        transition: none !important;
+    }
 }
