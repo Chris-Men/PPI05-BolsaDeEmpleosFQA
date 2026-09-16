@@ -1,3 +1,5 @@
+import { canManageUsers } from '../../utils/userManagement';
+import { useAuth } from '../../hooks/useAuth';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
 import type { AdminMenuName } from '../../types/admin';
@@ -24,6 +26,7 @@ export default function AdminSidebar({
   activeMenu,
   onMenuClick,
 }: AdminSidebarProps) {
+  const { session } = useAuth();
   return (
     <aside className="sidebar">
       <button
@@ -42,9 +45,10 @@ export default function AdminSidebar({
         </picture>
       </button>
       <nav className="menu">
-        {menuItems.map((item) => (
+        {menuItems.filter((item) => item.name !== 'Usuarios' || canManageUsers(session)).map((item) => (
           <button
             key={item.name}
+            aria-label={item.name}
             type="button"
             className={`menu-item ${activeMenu === item.name ? 'active' : ''}`}
             onClick={() => onMenuClick(item.name)}
@@ -55,10 +59,10 @@ export default function AdminSidebar({
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="admin-photo">A</div>
+        <div className="admin-photo">{session?.user.fullName.charAt(0).toUpperCase()}</div>
         <div>
-          <strong>Administrador</strong>
-          <small>admin@fqa.org</small>
+          <strong>{session?.user.fullName}</strong>
+          <small>{session?.user.email}</small>
         </div>
       </div>
     </aside>

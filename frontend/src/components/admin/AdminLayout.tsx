@@ -14,7 +14,7 @@ interface AdminLayoutProps {
   handleLogout: () => void;
 }
 
-/** Shared layout for administrative screens once authentication is available. */
+/** Shared layout for authenticated administrative screens. */
 export default function AdminLayout({
   activeMenu,
   onMenuClick,

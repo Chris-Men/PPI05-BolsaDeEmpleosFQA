@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { PermissionCode, RoleCode } from '../constants/authorization.constants.js';
 import { assertPermission, authorizationService } from '../services/authorization.service.js';
+import { requireActiveSession } from '../services/session.service.js';
 import { tokenService } from '../services/token.service.js';
 import { AppError } from '../utils/app-error.js';
 
@@ -10,7 +11,8 @@ export const authenticate: RequestHandler = async (request, response, next): Pro
   try {
     const match = /^Bearer ([^\s]+)$/i.exec(request.get('authorization') ?? '');
     if (!match) throw new AppError(401, 'Debes iniciar sesión para realizar esta acción.');
-    const userId = tokenService.verifyAccessToken(match[1]);
+    const { userId, sessionId } = tokenService.verifyAccessToken(match[1]);
+    request.session = { id: sessionId, expiresAt: await requireActiveSession(sessionId, userId) };
     request.user = await authorizationService.getAccessContext(userId);
     next();
   } catch (error: unknown) {

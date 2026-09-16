@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
+import { adminUserRouter } from './routes/admin-user.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
@@ -10,10 +11,11 @@ import { healthRouter } from './routes/health.routes.js';
 export const createApp = (): express.Express => {
   const app = express();
 
-  app.use(cors({ origin: env.CORS_ORIGIN }));
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use('/api', healthRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/admin/users', adminUserRouter);
   // Temporary local diagnostics must never be mounted in production.
   if (env.NODE_ENV === 'development') {
     app.use('/api/debug', debugRouter);

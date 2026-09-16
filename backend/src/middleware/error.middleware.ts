@@ -16,7 +16,7 @@ export const errorHandler = (
 
   if (error instanceof ZodError) {
     response.status(400).json({
-      message: 'Los datos de registro no son válidos.',
+      message: 'Los datos de la solicitud no son válidos.',
       errors: error.issues.map((issue) => ({
         field: issue.path.join('.'),
         message: issue.message,

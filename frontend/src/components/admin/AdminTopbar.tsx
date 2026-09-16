@@ -1,3 +1,4 @@
+import { SessionControls } from '../auth/SessionControls';
 import { useState } from 'react';
 import type { AdminIdentity, AdminMenuName } from '../../types/admin';
 
@@ -7,11 +8,10 @@ interface AdminTopbarProps {
   handleLogout: () => void;
 }
 
-/** Header for the preserved administrative interface. */
+/** Header with the authenticated identity and server-backed session controls. */
 export default function AdminTopbar({
   activeMenu,
   currentUser,
-  handleLogout,
 }: AdminTopbarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const name = currentUser?.name ?? 'Administrador';
@@ -39,13 +39,7 @@ export default function AdminTopbar({
           </button>
           {profileOpen && (
             <div className="profile-menu">
-              <button
-                type="button"
-                className="profile-logout"
-                onClick={handleLogout}
-              >
-                Cerrar sesión <span>↩</span>
-              </button>
+              <SessionControls />
             </div>
           )}
         </div>

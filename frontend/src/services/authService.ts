@@ -1,35 +1,27 @@
 import { apiRequest } from './api';
+import type { AuthenticationResponse, CurrentAccess, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
-/** Payload accepted by the public candidate registration endpoint. */
-export interface RegisterCandidateRequest {
-  fullName: string;
-  email: string;
-  password: string;
-}
+/** Registers a candidate; the refresh credential is handled only by the browser. */
+export const registerCandidate = (payload: RegisterCandidateRequest): Promise<AuthenticationResponse> =>
+  apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(payload) });
 
-/** Public account information returned after candidate registration. */
-export interface RegisteredUser {
-  id: number;
-  fullName: string;
-  email: string;
-  role: string;
-  status: string;
-  createdAt: string;
-}
+/** Authenticates without storing passwords or tokens in Web Storage. */
+export const loginAccount = (payload: LoginRequest): Promise<AuthenticationResponse> =>
+  apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(payload) });
 
-/** Response returned after a candidate account is created. */
-export interface RegistrationResponse {
-  user: RegisteredUser;
-  accessToken: string;
-  tokenType: 'Bearer';
-  expiresIn: number;
-}
+/** Refreshes the HttpOnly session credential. */
+export const refreshAccount = (): Promise<AuthenticationResponse> =>
+  apiRequest('/auth/refresh', { method: 'POST' });
 
-/** Registers a candidate without accepting role or privilege fields. */
-export const registerCandidate = (
-  payload: RegisterCandidateRequest,
-): Promise<RegistrationResponse> =>
-  apiRequest<RegistrationResponse>('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+/** Loads the current server-side identity and permissions. */
+export const getCurrentAccess = (): Promise<CurrentAccess> =>
+  apiRequest('/auth/me', { authenticated: true });
+
+/** Revokes the current browser session or all account sessions. */
+export const logoutAccount = (all: boolean): Promise<void> =>
+  apiRequest(all ? '/auth/logout-all' : '/auth/logout', { method: 'POST', authenticated: all, retryAuthentication: false });
+
+/** Deletes the authenticated account under the session lock without recursive token renewal. */
+export const deleteOwnAccount = (): Promise<void> =>
+  apiRequest('/auth/me', { method: 'DELETE', authenticated: true, retryAuthentication: false,
+    body: JSON.stringify({ confirmDeletion: true }) });

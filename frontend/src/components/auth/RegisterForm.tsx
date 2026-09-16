@@ -1,7 +1,6 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   ArrowRight,
-  CheckCircle2,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -10,7 +9,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { ApiError } from '../../services/api';
-import { registerCandidate } from '../../services/authService';
+import { useAuth } from '../../hooks/useAuth';
 import {
   getRegistrationValidationError,
   type RegistrationFormValues,
@@ -28,6 +27,8 @@ export default function RegisterForm({
   navigateTo,
   showToast,
 }: RegisterFormProps) {
+  const { register } = useAuth();
+  const submitting = useRef(false);
   const [formData, setFormData] = useState<RegistrationFormValues>({
     name: '',
     email: '',
@@ -37,7 +38,6 @@ export default function RegisterForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [registeredName, setRegisteredName] = useState('');
   const [error, setError] = useState('');
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +48,7 @@ export default function RegisterForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting.current) return;
     setError('');
 
     const validationMessage = getRegistrationValidationError(formData);
@@ -56,14 +57,15 @@ export default function RegisterForm({
       return;
     }
 
+    submitting.current = true;
     setLoading(true);
     try {
-      const result = await registerCandidate({
+      await register({
         fullName: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
-      setRegisteredName(result.user.fullName);
+      navigateTo('home');
       showToast('Cuenta de candidato creada correctamente.');
     } catch (requestError: unknown) {
       if (requestError instanceof ApiError) {
@@ -72,26 +74,10 @@ export default function RegisterForm({
         setError('No fue posible crear la cuenta. Inténtalo de nuevo.');
       }
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
-
-  if (registeredName) {
-    return (
-      <div className="login-form auth-success" role="status">
-        <CheckCircle2 size={52} aria-hidden="true" />
-        <h2>Cuenta creada correctamente</h2>
-        <p>
-          Gracias, {registeredName}. Tu cuenta de candidato ya está registrada.
-          Podrás iniciar sesión cuando el acceso esté habilitado.
-        </p>
-        <button type="button" className="login-button" onClick={() => navigateTo('home')}>
-          <span>Volver al inicio</span>
-          <ArrowRight size={28} />
-        </button>
-      </div>
-    );
-  }
 
   return (
     <form className="login-form" onSubmit={handleSubmit} noValidate>

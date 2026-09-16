@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma.js';
 import {
   isPermissionCode, PERMISSIONS, roleCodeFor, SUPER_ADMIN_PERMISSIONS,
@@ -9,11 +10,12 @@ import { AppError } from '../utils/app-error.js';
 /** Resolves authorization from persisted assignments; JWT role claims are not trusted. */
 export const authorizationService = {
   /** Rejects deleted/inactive accounts and exposes no passwords or profile details. */
-  async getAccessContext(userId: number): Promise<AccessContext> {
-    const user = await prisma.user.findUnique({
+  async getAccessContext(userId: number, database: Prisma.TransactionClient = prisma): Promise<AccessContext> {
+    const user = await database.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
+        deletedAt: true,
         status: { select: { name: true } },
         userRoles: {
           select: {
@@ -27,7 +29,7 @@ export const authorizationService = {
         },
       },
     });
-    if (!user || user.status.name !== 'Activo') {
+    if (!user || user.deletedAt !== null || user.status.name !== 'Activo') {
       throw new AppError(401, 'La sesión no es válida. Inicia sesión nuevamente.');
     }
 

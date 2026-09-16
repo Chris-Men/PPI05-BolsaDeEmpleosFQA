@@ -45,7 +45,7 @@ import Categorias from "./Categorias";
 import Estadisticas from "./Estadisticas";
 import Users from "./Users";
 import Configuracion from "./Configuracion";
-/** Preserved administrative dashboard, unavailable until real login exists. */
+/** Administrative prototype reached through the authenticated role guard. */
 function AdminDashboard({
     currentUser,
     handleLogout,
