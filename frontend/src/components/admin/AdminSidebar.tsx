@@ -1,3 +1,4 @@
+import { canManageUsers } from '../../utils/userManagement';
 import { useAuth } from '../../hooks/useAuth';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
@@ -44,9 +45,10 @@ export default function AdminSidebar({
         </picture>
       </button>
       <nav className="menu">
-        {menuItems.map((item) => (
+        {menuItems.filter((item) => item.name !== 'Usuarios' || canManageUsers(session)).map((item) => (
           <button
             key={item.name}
+            aria-label={item.name}
             type="button"
             className={`menu-item ${activeMenu === item.name ? 'active' : ''}`}
             onClick={() => onMenuClick(item.name)}

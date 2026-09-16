@@ -1,3 +1,4 @@
+import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import type { PrismaClient } from '@prisma/client';
 import {
   PERMISSIONS, ROLE_NAMES, ROLE_PERMISSIONS, type RoleCode,
@@ -31,10 +32,8 @@ export const seedAccountCatalogs = async (database: PrismaClient): Promise<void>
     // Retires only the login role and cascading grants, never users or organizations.
     await transaction.role.deleteMany({ where: { name: 'Organización' } });
 
-    await transaction.userStatus.upsert({
-      where: { name: 'Activo' },
-      update: { name: 'Activo' },
-      create: { name: 'Activo' },
-    });
+    for (const name of Object.values(USER_STATUS_NAMES)) {
+      await transaction.userStatus.upsert({ where: { name }, update: { name }, create: { name } });
+    }
   });
 };

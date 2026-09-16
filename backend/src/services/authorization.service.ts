@@ -15,6 +15,7 @@ export const authorizationService = {
       where: { id: userId },
       select: {
         id: true,
+        deletedAt: true,
         status: { select: { name: true } },
         userRoles: {
           select: {
@@ -28,7 +29,7 @@ export const authorizationService = {
         },
       },
     });
-    if (!user || user.status.name !== 'Activo') {
+    if (!user || user.deletedAt !== null || user.status.name !== 'Activo') {
       throw new AppError(401, 'La sesión no es válida. Inicia sesión nuevamente.');
     }
 

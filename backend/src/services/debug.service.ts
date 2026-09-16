@@ -15,6 +15,7 @@ const debugUserSelect = {
 export const listDebugUsers = (): Promise<
   Prisma.UserGetPayload<{ select: typeof debugUserSelect }>[]
 > => prisma.user.findMany({
+  where: { deletedAt: null },
   select: debugUserSelect,
   orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
 });

@@ -19,14 +19,14 @@ El registro, JWT, permisos y la base visual de login ya existían. Se reutilizan
 - Los correos se normalizan; las contraseñas se comparan literalmente con bcrypt. Login acepta contraseñas históricas sin aplicar el mínimo del registro, con un límite de 72 bytes UTF-8.
 - Cada autenticación crea una sesión con vencimiento absoluto a los 30 días. La renovación no extiende ese límite.
 - El JWT HS256 dura hasta una hora y contiene `sub`, `sid`, `role`, `iat` y `exp`. El rol del JWT no autoriza acciones.
-- Cada petición autenticada verifica sesión, pertenencia, vencimiento, revocación y estado de cuenta. Los permisos se consultan en PostgreSQL.
+- Cada petición autenticada verifica sesión, pertenencia, vencimiento, revocación y estado de cuenta. Una cuenta deshabilitada o con deleted_at informado no puede iniciar, renovar ni utilizar sesiones. Los permisos se consultan en PostgreSQL.
 - El JWT permanece en memoria. La cookie `fqa_refresh` es HttpOnly, SameSite=Lax, Path=/api/auth, con vencimiento persistente y Secure en producción. No se guardan credenciales en localStorage/sessionStorage.
 - La base almacena únicamente hashes SHA-256 de refresh tokens aleatorios de 48 bytes. La renovación consume y reemplaza la credencial en una transacción.
 - Reutilizar una credencial consumida revoca la sesión completa, incluidos JWT ya emitidos. Si se pierde la respuesta de una renovación y el navegador conserva la credencial anterior, será necesario iniciar sesión nuevamente.
 - Web Locks serializa mutaciones de cookies entre pestañas; BroadcastChannel sincroniza acceso y cierre sin persistir tokens. Se requiere un navegador actualizado en HTTPS o localhost.
 - El frontend verifica la cuenta al recuperar el foco y renueva antes del vencimiento. Un fallo de red permite reintentar; un 401 definitivo elimina la sesión.
 - Cerrar sesión revoca antes de mostrar éxito. Una revocación externa se detecta en la siguiente petición o comprobación de foco; no se usa WebSocket.
-- Los datos de oportunidades y módulos administrativos siguen siendo prototipos locales. Esta feature conecta la identidad y el acceso, no implementa sus CRUD.
+- Los datos de oportunidades y los demás módulos administrativos siguen siendo prototipos locales. El módulo Usuarios se conecta a PostgreSQL en la ampliación documentada en [gestión de usuarios](USER_MANAGEMENT.md).
 
 ## API
 

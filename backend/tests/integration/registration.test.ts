@@ -68,7 +68,7 @@ describe('Registro contra PostgreSQL', () => {
     assert.deepEqual(beforeRoles.map((role) => role.name), [
       'Administrador', 'Candidato', 'Super Admin',
     ]);
-    assert.deepEqual(beforeStatuses.map((status) => status.name), ['Activo']);
+    assert.deepEqual(beforeStatuses.map((status) => status.name), ['Activo', 'Deshabilitado']);
   });
 
   it('crea cuenta y perfil normalizados, hash bcrypt y JWT válido', async () => {

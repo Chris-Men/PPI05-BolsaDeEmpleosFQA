@@ -41,11 +41,11 @@ export const registerCandidate = async (payload: RegisterCandidateDTO): Promise<
 export const loginAccount = async (payload: LoginDTO): Promise<SessionResult> => {
   const user = await prisma.user.findUnique({
     where: { email: payload.email },
-    select: { id: true, passwordHash: true, status: { select: { name: true } } },
+    select: { id: true, passwordHash: true, deletedAt: true, status: { select: { name: true } } },
   });
   const valid = await bcrypt.compare(payload.password, user?.passwordHash ?? await dummyHash);
   const failure = (): AppError => new AppError(401, 'Correo o contraseña incorrectos.');
-  if (!user || !valid || user.status.name !== 'Activo') throw failure();
+  if (!user || !valid || user.deletedAt !== null || user.status.name !== 'Activo') throw failure();
   try {
     return await prisma.$transaction((database) => createSession(database, user.id));
   } catch (error: unknown) {

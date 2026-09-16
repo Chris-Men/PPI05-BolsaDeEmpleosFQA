@@ -26,6 +26,8 @@ export const PERMISSIONS = {
   ORGANIZATION_CREATE: 'organizations.create',
   ADMINISTRATOR_CREATE: 'administrators.create',
   ADMINISTRATOR_DELETE: 'administrators.delete',
+  USERS_READ: 'users.read',
+  USERS_UPDATE: 'users.update',
   SESSION_REVOKE_ANY: 'sessions.revoke.any',
   DATABASE_BACKUP: 'database.backup',
   DATABASE_RESTORE: 'database.restore',
@@ -50,6 +52,8 @@ const administratorPermissions: readonly PermissionCode[] = [
 export const SUPER_ADMIN_PERMISSIONS: readonly PermissionCode[] = [
   PERMISSIONS.ADMINISTRATOR_CREATE,
   PERMISSIONS.ADMINISTRATOR_DELETE,
+  PERMISSIONS.USERS_READ,
+  PERMISSIONS.USERS_UPDATE,
   PERMISSIONS.SESSION_REVOKE_ANY,
   PERMISSIONS.DATABASE_BACKUP,
   PERMISSIONS.DATABASE_RESTORE,

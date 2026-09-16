@@ -10,6 +10,7 @@ datasource db {
 /// Authentication account with one role and one lifecycle state.
 model User {
   sessions AuthSession[]
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
   id                       Int                        @id @default(autoincrement())
   email                    String                     @unique @db.VarChar(255)
   passwordHash             String                     @map("password_hash") @db.VarChar(255)

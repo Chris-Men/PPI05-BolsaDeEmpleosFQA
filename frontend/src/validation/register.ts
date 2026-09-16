@@ -6,12 +6,10 @@ export interface RegistrationFormValues {
   confirmPassword: string;
 }
 
-/** Mirrors backend registration constraints and returns the first localized error. */
-export function getRegistrationValidationError(
-  values: RegistrationFormValues,
-): string | null {
-  const fullName = values.name.trim();
-  const email = values.email.trim();
+/** Shared identity constraints for registration and administrative profile editing. */
+export function getAccountIdentityValidationError(name: string, address: string): string | null {
+  const fullName = name.trim();
+  const email = address.trim();
 
   if (fullName.length < 2) return 'Ingresa un nombre completo válido.';
   if (fullName.length > 150) {
@@ -24,6 +22,13 @@ export function getRegistrationValidationError(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return 'El correo electrónico no es válido.';
   }
+  return null;
+}
+
+/** Mirrors backend registration constraints and returns the first localized error. */
+export function getRegistrationValidationError(values: RegistrationFormValues): string | null {
+  const identityError = getAccountIdentityValidationError(values.name, values.email);
+  if (identityError) return identityError;
   if (Array.from(values.password).length < 12) {
     return 'La contraseña debe tener al menos 12 caracteres.';
   }

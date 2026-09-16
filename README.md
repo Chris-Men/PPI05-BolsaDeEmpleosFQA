@@ -7,7 +7,7 @@ Monorepo de la bolsa de oportunidades de la Fundación Quintanilla Amaya. Contie
 - El frontend público incluye empleos, voluntariados, horas sociales, prácticas y perfiles con datos de demostración.
 - El registro público consume `POST /api/auth/register` y siempre crea una cuenta con rol `CANDIDATE`.
 - El inicio de sesión autentica los tres roles y conserva sesiones revocables durante un máximo de 30 días.
-- Administrador y Super Admin acceden al panel existente con identidad real; sus módulos de negocio conservan datos de demostración.
+- Administrador y Super Admin acceden al panel existente con identidad real; el módulo Usuarios usa la API y PostgreSQL. Administrador puede consultar y crear candidatos; Super Admin también gestiona administradores. Los demás módulos de negocio conservan datos de demostración.
 - Los permisos de Candidato, Administrador y Super Admin se validan en el backend.
 
 ## Arquitectura
@@ -150,3 +150,7 @@ Las pruebas de integración del backend necesitan una base separada cuyo nombre 
 ## Autenticación
 
 Consulta [inicio de sesión y sesiones revocables](docs/AUTHENTICATION.md) para contratos, migración, persistencia, revocación y pruebas de PB-02.
+
+## Gestión de usuarios
+
+Consulta [gestión de usuarios del Super Admin](docs/USER_MANAGEMENT.md) para endpoints, permisos, restricciones y preparación del entorno.
