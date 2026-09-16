@@ -8,12 +8,13 @@ import type { AccessContext } from '../types/authorization.types.js';
 import type { ManagedUser, UserListResponse } from '../types/admin-user.types.js';
 import type { CreateUserDTO, ListUsersQuery, UpdateUserDTO } from '../validation/admin-user.schema.js';
 import { AppError } from '../utils/app-error.js';
+import { rethrowUserConflict } from '../utils/user-conflict.js';
 import { splitProfileName } from '../utils/profile-name.js';
 import { assertCanCreateAccount, assertPermission } from './authorization.service.js';
 
 /** Allowlisted identity fields; never includes authentication credentials. */
 const userSelect = {
-  id: true, email: true, createdAt: true,
+  id: true, email: true, createdAt: true, deletedAt: true,
   profile: { select: { firstName: true, lastName: true } },
   status: { select: { name: true } },
   userRoles: { select: { roles: { select: { name: true } } } },
@@ -22,7 +23,7 @@ type AccountRow = Prisma.UserGetPayload<{ select: typeof userSelect }>;
 
 /** Translates database labels to the stable management contract. */
 const toManagedUser = (account: AccountRow): ManagedUser => ({
-  id: account.id, email: account.email,
+  id: account.id, email: account.email, deletedAt: account.deletedAt?.toISOString() ?? null,
   fullName: account.profile
     ? [account.profile.firstName, account.profile.lastName].filter(Boolean).join(' ') : account.email,
   roles: account.userRoles.map(({ roles }) => roleCodeFor(roles.name))
@@ -45,30 +46,18 @@ const requireAdministrator = (access: AccessContext): void => {
   }
 };
 
-/** Converts expected database conflicts without exposing raw queries or credentials. */
-const rethrowConflict = (error: unknown): never => {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2002' && Array.isArray(error.meta?.target) && error.meta.target.includes('email')) {
-      throw new AppError(409, 'Ya existe una cuenta con este correo electrónico.');
-    }
-    if (error.code === 'P2034') {
-      throw new AppError(409, 'La cuenta cambió mientras guardabas. Actualiza la lista e inténtalo de nuevo.');
-    }
-  }
-  throw error;
-};
-
 /** Lists non-deleted accounts with a consistent count and stable ordering. */
 export const listUsers = async (query: ListUsersQuery, actor: AccessContext): Promise<UserListResponse> => {
   requireAdministrator(actor);
   const isSuperAdmin = actor.roles.includes('SUPER_ADMIN');
   assertPermission(actor, isSuperAdmin ? PERMISSIONS.USERS_READ : PERMISSIONS.CANDIDATE_READ);
+  if (!isSuperAdmin && query.deleted === 'true') throw new AppError(403, 'Solo Super Admin puede consultar cuentas eliminadas.');
   if (!isSuperAdmin && query.role && query.role !== 'CANDIDATE') {
     throw new AppError(403, 'Solo puedes consultar cuentas de candidatos.');
   }
   const words = query.search?.split(/\s+/).filter(Boolean) ?? [];
   const where: Prisma.UserWhereInput = {
-    deletedAt: null,
+    deletedAt: query.deleted === 'true' ? { not: null } : null,
     ...(!isSuperAdmin ? {
       // Exclude accounts with any additional role, including mixed privileged accounts.
       userRoles: {
@@ -115,7 +104,7 @@ export const createUser = async (payload: CreateUserDTO, actor: AccessContext): 
       });
       return user;
     });
-  } catch (error: unknown) { return rethrowConflict(error); }
+  } catch (error: unknown) { return rethrowUserConflict(error); }
 };
 
 /** Edits only identity/role, protecting Super Admin and atomically revoking affected sessions. */
@@ -164,5 +153,5 @@ export const updateUser = async (
       });
       return after;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  } catch (error: unknown) { return rethrowConflict(error); }
+  } catch (error: unknown) { return rethrowUserConflict(error); }
 };

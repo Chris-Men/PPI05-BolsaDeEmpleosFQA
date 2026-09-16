@@ -106,13 +106,13 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
   const checkPermission = (identity: Identity, permission: PermissionCode): Promise<Response> =>
     requestAs(policyApi.baseUrl, `/permission/${permission}`, identity);
 
-  it('persiste tres roles y veintiún permisos sin cambiar IDs al repetir el seed', async () => {
+  it('persiste tres roles y veintiséis permisos sin cambiar IDs al repetir el seed', async () => {
     const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
     const permissions = await prisma.permissions.findMany({ orderBy: { name: 'asc' } });
     const grants = await prisma.rolePermissions.findMany({ orderBy: [{ roleId: 'asc' }, { permissionId: 'asc' }] });
     assert.deepEqual(roles.map(({ name }) => name), ['Administrador', 'Candidato', 'Super Admin']);
-    assert.equal(permissions.length, 21);
-    assert.equal(grants.length, 29);
+    assert.equal(permissions.length, 26);
+    assert.equal(grants.length, 38);
     await seedAccountCatalogs(prisma);
     await seedAccountCatalogs(prisma);
     assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), roles);
@@ -171,15 +171,18 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
   it('aplica la matriz completa a los tres roles a través de HTTP', async () => {
     const expected: Record<RoleCode, readonly PermissionCode[]> = {
       CANDIDATE: [
+        'accounts.delete.own',
         'profiles.read.own', 'profiles.update.own', 'profiles.resume.upload.own',
         'applications.create.own', 'applications.read.own', 'applications.resume.upload.own',
       ],
       ADMINISTRATOR: [
+        'accounts.delete.own', 'candidates.status.update', 'candidates.delete',
         'candidates.create', 'candidates.read', 'profiles.resume.read.any',
         'applications.resume.read.any', 'opportunities.create', 'applications.read.any',
         'applications.select', 'organizations.create',
       ],
       SUPER_ADMIN: [
+        'accounts.delete.own', 'candidates.status.update', 'candidates.delete', 'users.status.update', 'users.restore',
         'candidates.create', 'candidates.read', 'profiles.resume.read.any',
         'applications.resume.read.any', 'opportunities.create', 'applications.read.any',
         'applications.select', 'organizations.create', 'administrators.create',

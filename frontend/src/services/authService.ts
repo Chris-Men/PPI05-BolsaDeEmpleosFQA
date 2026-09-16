@@ -20,3 +20,8 @@ export const getCurrentAccess = (): Promise<CurrentAccess> =>
 /** Revokes the current browser session or all account sessions. */
 export const logoutAccount = (all: boolean): Promise<void> =>
   apiRequest(all ? '/auth/logout-all' : '/auth/logout', { method: 'POST', authenticated: all, retryAuthentication: false });
+
+/** Deletes the authenticated account under the session lock without recursive token renewal. */
+export const deleteOwnAccount = (): Promise<void> =>
+  apiRequest('/auth/me', { method: 'DELETE', authenticated: true, retryAuthentication: false,
+    body: JSON.stringify({ confirmDeletion: true }) });

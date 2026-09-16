@@ -1,11 +1,12 @@
-import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { prisma } from '../config/prisma.js';
 import { PASSWORD_HASH_ROUNDS } from '../constants/auth.constants.js';
+import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import { ROLE_NAMES } from '../constants/authorization.constants.js';
 import type { SessionResult } from '../types/auth.types.js';
 import type { LoginDTO, RegisterCandidateDTO } from '../validation/auth.schema.js';
 import { AppError } from '../utils/app-error.js';
+import { rethrowUserConflict } from '../utils/user-conflict.js';
 import { splitProfileName } from '../utils/profile-name.js';
 import { createSession } from './session.service.js';
 
@@ -29,23 +30,23 @@ export const registerCandidate = async (payload: RegisterCandidateDTO): Promise<
       return createSession(database, user.id);
     });
   } catch (error: unknown) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002' &&
-      Array.isArray(error.meta?.target) && error.meta.target.includes('email')) {
-      throw new AppError(409, 'Ya existe una cuenta con este correo electrónico.');
-    }
-    throw error;
+    return rethrowUserConflict(error);
   }
 };
 
-/** Checks credentials without revealing whether a particular account exists. */
+/** Validates credentials before reporting disabled status; unknown/deleted accounts remain indistinguishable. */
 export const loginAccount = async (payload: LoginDTO): Promise<SessionResult> => {
-  const user = await prisma.user.findUnique({
-    where: { email: payload.email },
+  const user = await prisma.user.findFirst({
+    where: { email: payload.email, deletedAt: null },
     select: { id: true, passwordHash: true, deletedAt: true, status: { select: { name: true } } },
   });
   const valid = await bcrypt.compare(payload.password, user?.passwordHash ?? await dummyHash);
   const failure = (): AppError => new AppError(401, 'Correo o contraseña incorrectos.');
-  if (!user || !valid || user.deletedAt !== null || user.status.name !== 'Activo') throw failure();
+  if (!user || !valid || user.deletedAt !== null) throw failure();
+  if (user.status.name === USER_STATUS_NAMES.DISABLED) {
+    throw new AppError(401, 'Tu cuenta está deshabilitada. Contacta al administrador para solicitar su rehabilitación.');
+  }
+  if (user.status.name !== USER_STATUS_NAMES.ACTIVE) throw failure();
   try {
     return await prisma.$transaction((database) => createSession(database, user.id));
   } catch (error: unknown) {

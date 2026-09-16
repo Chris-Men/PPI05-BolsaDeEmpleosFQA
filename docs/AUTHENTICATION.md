@@ -79,7 +79,7 @@ Origin: https://empleos.example.test
 
 Solo Super Admin tiene el nuevo permiso del catálogo; no se añade pantalla de revocación administrativa. Las cuentas pueden iniciar sesión nuevamente después de revocarlas.
 
-Errores: 400 para entrada inválida; 401 genérico para credenciales incorrectas, cuenta inactiva o sin rol admitido; 401 para sesión inválida/vencida/revocada; 403 para origen o permisos; 404 para cuenta objetivo inexistente. Los errores no incluyen credenciales.
+Errores: 400 para entrada inválida; 401 genérico para credenciales incorrectas, cuenta eliminada o sin rol admitido; 401 con mensaje de cuenta deshabilitada cuando las credenciales son correctas; 401 para sesión inválida/vencida/revocada; 403 para origen o permisos; 404 para cuenta objetivo inexistente. Los errores no incluyen credenciales.
 
 ## Migración y compatibilidad
 

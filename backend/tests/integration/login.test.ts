@@ -100,6 +100,29 @@ describe('Inicio de sesión y revocación contra PostgreSQL', () => {
     assert.deepEqual(await unknown.json(), await incorrect.json());
   });
 
+  it('informa una cuenta deshabilitada solo con contraseña válida y sin emitir credenciales', async () => {
+    const user = await prisma.user.create({ data: {
+      email: randomUUID() + '@example.test', passwordHash: await bcrypt.hash(password, 12),
+      status: { connect: { name: 'Deshabilitado' } },
+      userRoles: { create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } } },
+    } });
+    createdIds.push(user.id);
+    const disabled = await post('/login', { email: user.email, password });
+    assert.equal(disabled.status, 401);
+    assert.deepEqual(await disabled.json(), {
+      message: 'Tu cuenta está deshabilitada. Contacta al administrador para solicitar su rehabilitación.',
+    });
+    assert.equal(disabled.headers.get('set-cookie'), null);
+    assert.equal(await prisma.authSession.count({ where: { userId: user.id } }), 0);
+    const incorrect = await post('/login', { email: user.email, password: 'Contraseña incorrecta' });
+    assert.equal(incorrect.status, 401);
+    assert.deepEqual(await incorrect.json(), { message: 'Correo o contraseña incorrectos.' });
+    await prisma.user.update({ where: { id: user.id }, data: { deletedAt: new Date() } });
+    const deleted = await post('/login', { email: user.email, password });
+    assert.equal(deleted.status, 401);
+    assert.deepEqual(await deleted.json(), { message: 'Correo o contraseña incorrectos.' });
+  });
+
   it('rechaza cuentas sin rol e inactivas con el mismo error de credenciales', async () => {
     const user = await prisma.user.create({ data: {
       email: randomUUID() + '@example.test', passwordHash: await bcrypt.hash(password, 12),

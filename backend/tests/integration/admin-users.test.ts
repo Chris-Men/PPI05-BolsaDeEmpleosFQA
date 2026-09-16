@@ -104,7 +104,7 @@ describe('Gestión de usuarios del Super Admin', () => {
     assert.equal(audit.userId, admin.id);
   });
 
-  it('Administrador no puede crear, editar, eliminar ni filtrar cuentas privilegiadas', async () => {
+  it('Administrador no puede crear, editar ni filtrar cuentas privilegiadas', async () => {
     const admin = actorFor('ADMINISTRATOR');
     for (const role of ['ADMINISTRATOR', 'SUPER_ADMIN']) {
       const response = await request('POST', '/admin/users', admin, {
@@ -116,7 +116,6 @@ describe('Gestión de usuarios del Super Admin', () => {
     for (const target of [actorFor(), admin, actorFor('CANDIDATE'), await fixture(['CANDIDATE', 'SUPER_ADMIN'])]) {
       assert.equal((await request('PATCH', '/admin/users/' + target.id, admin, { fullName: 'Cambio prohibido' })).status, 403);
       assert.equal((await request('PATCH', '/admin/users/' + target.id, admin, { role: 'ADMINISTRATOR' })).status, 403);
-      assert.equal((await request('DELETE', '/admin/users/' + target.id, admin)).status, 404);
     }
     assert.equal(await prisma.user.count({ where: { email: runId + '-forbidden@example.test' } }), 0);
   });
@@ -173,7 +172,7 @@ describe('Gestión de usuarios del Super Admin', () => {
       const created = await response.json() as ManagedUser; createdIds.push(created.id);
       assert.equal(created.email, email); assert.equal(created.fullName, 'Ana Rivera');
       assert.equal(created.status, 'ACTIVE'); assert.deepEqual(created.roles, [role]);
-      assert.deepEqual(Object.keys(created).sort(), ['createdAt', 'email', 'fullName', 'id', 'roles', 'status']);
+      assert.deepEqual(Object.keys(created).sort(), ['createdAt', 'deletedAt', 'email', 'fullName', 'id', 'roles', 'status']);
       const saved = await prisma.user.findUniqueOrThrow({ where: { id: created.id }, include: { profile: true } });
       assert.equal(saved.deletedAt, null);
       assert.equal(await bcrypt.compare(password, saved.passwordHash), true);
@@ -188,15 +187,17 @@ describe('Gestión de usuarios del Super Admin', () => {
     }
   });
 
-  it('reserva correos normalizados incluso si la cuenta está eliminada', async () => {
+  it('libera correos de eliminados y mantiene su identidad fuera del listado normal', async () => {
     const account = await fixture(['CANDIDATE']);
     await prisma.user.update({ where: { id: account.id }, data: { deletedAt: new Date() } });
     const response = await request('POST', '/admin/users', actorFor(), {
       fullName: 'Duplicado', email: ' ' + account.email.toUpperCase() + ' ', password, role: 'CANDIDATE',
     });
-    assert.equal(response.status, 409);
+    assert.equal(response.status, 201);
+    const created = await response.json() as ManagedUser; createdIds.push(created.id);
     const results = await (await request('GET', '/admin/users?search=' + account.email, actorFor())).json() as UserListResponse;
-    assert.equal(results.total, 0);
+    assert.equal(results.total, 1);
+    assert.equal(results.items[0].id, created.id);
     assert.equal((await request('PATCH', '/admin/users/' + account.id, actorFor(), { fullName: 'Otro nombre' })).status, 404);
   });
 
@@ -212,7 +213,7 @@ describe('Gestión de usuarios del Super Admin', () => {
     assert.equal((await request('PATCH', '/admin/users/invalid', actorFor(), { fullName: 'Persona' })).status, 400);
     assert.equal((await request('GET', '/admin/users?pageSize=101', actorFor())).status, 400);
     assert.equal((await request('PATCH', '/admin/users/2147483647', actorFor(), { fullName: 'Persona' })).status, 404);
-    assert.equal((await request('DELETE', '/admin/users/' + target.id, actorFor())).status, 404);
+    assert.equal((await request('DELETE', '/admin/users/' + target.id, actorFor())).status, 400);
   });
 
   it('protege todas las cuentas Super Admin incluso si tienen roles adicionales', async () => {

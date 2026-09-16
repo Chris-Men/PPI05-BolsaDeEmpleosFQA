@@ -1,3 +1,4 @@
+import { deleteAccountSchema, changeUserStatusSchema, restoreAccountSchema } from '../../src/validation/user-lifecycle.schema.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createUserSchema, updateUserSchema, listUsersSchema, userIdSchema } from '../../src/validation/admin-user.schema.js';
@@ -25,11 +26,27 @@ describe('Contratos de gestión de usuarios', () => {
     assert.deepEqual(updateUserSchema.parse({ email: ' ANA@EXAMPLE.TEST ' }), { email: 'ana@example.test' });
   });
   it('limita filtros, paginación e identificadores antes de consultar PostgreSQL', () => {
-    assert.deepEqual(listUsersSchema.parse({}), { page: 1, pageSize: 20 });
+    assert.deepEqual(listUsersSchema.parse({}), { deleted: 'false', page: 1, pageSize: 20 });
     assert.equal(listUsersSchema.parse({ page: '2', pageSize: '100', status: 'DISABLED' }).page, 2);
     for (const input of [{ page: '0' }, { page: '-1' }, { page: '1.5' }, { page: 'abc' },
       { pageSize: '101' }, { role: 'EDITOR' }, { status: 'DELETED' }, { includeDeleted: 'true' },
       { search: ['a', 'b'] }]) assert.equal(listUsersSchema.safeParse(input).success, false);
     for (const id of ['0', '-1', '01', '1.5', '2147483648']) assert.equal(userIdSchema.safeParse(id).success, false);
+  });
+});
+
+describe('Contratos del ciclo de vida', () => {
+  it('exige una confirmación verdadera y nunca acepta un objetivo o privilegios en el cuerpo', () => {
+    assert.equal(deleteAccountSchema.safeParse({ confirmDeletion: true }).success, true);
+    for (const body of [{}, { confirmDeletion: false }, { confirmDeletion: 'true' }, { confirmDeletion: true, id: 2 }]) {
+      assert.equal(deleteAccountSchema.safeParse(body).success, false);
+    }
+  });
+  it('separa estado, eliminación y restauración', () => {
+    assert.equal(changeUserStatusSchema.safeParse({ status: 'DISABLED' }).success, true);
+    assert.equal(changeUserStatusSchema.safeParse({ status: 'DELETED' }).success, false);
+    assert.equal(changeUserStatusSchema.safeParse({ status: 'ACTIVE', deletedAt: null }).success, false);
+    assert.equal(restoreAccountSchema.safeParse({}).success, true);
+    assert.equal(restoreAccountSchema.safeParse({ email: 'replacement@example.test' }).success, false);
   });
 });

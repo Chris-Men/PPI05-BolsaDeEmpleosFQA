@@ -1,3 +1,5 @@
+import { deleteOwnAccount } from '../controllers/user-lifecycle.controller.js';
+import { deleteAccountSchema } from '../validation/user-lifecycle.schema.js';
 import { Router } from 'express';
 import { getCurrentAccess, login, logout, logoutAll, refresh, register, revokeSessions } from '../controllers/auth.controller.js';
 import { authenticate, requirePermission, requireRole } from '../middleware/authorization.middleware.js';
@@ -17,3 +19,5 @@ authRouter.post('/logout-all', protectSessionMutation, authenticate, logoutAll);
 authRouter.post('/users/:userId/revoke-sessions', protectSessionMutation, authenticate,
   requireRole('SUPER_ADMIN'), requirePermission(PERMISSIONS.SESSION_REVOKE_ANY), revokeSessions);
 authRouter.get('/me', authenticate, getCurrentAccess);
+
+authRouter.delete('/me', protectSessionMutation, authenticate, validateBody(deleteAccountSchema), deleteOwnAccount);

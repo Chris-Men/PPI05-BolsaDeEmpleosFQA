@@ -1,3 +1,4 @@
+import { DeleteOwnAccount } from '../components/users/DeleteOwnAccount';
 import { useState } from 'react';
 import type {
   CandidateApplication, CurrentUser, Job, NavigateTo, RetireSelection,
@@ -358,6 +359,8 @@ export default function CandidateProfile({
           </div>
         </div>
       </div>
+
+      <DeleteOwnAccount />
 
       {/* CONFIRMAR RETIRO */}
       {confirmRetire && (

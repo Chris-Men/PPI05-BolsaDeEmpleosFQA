@@ -1,5 +1,5 @@
 import type { CurrentAccess, RoleCode } from '../types/auth';
-import type { AssignableRole, ManagedUser, UpdateUserRequest, UserFormValues } from '../types/adminUser';
+import type { AssignableRole, ManagedUser, UpdateUserRequest, UserFormValues, UserLifecycleAction } from '../types/adminUser';
 
 /** Localized labels for persisted API role codes. */
 export const ROLE_LABELS: Record<RoleCode, string> = {
@@ -29,3 +29,25 @@ export const buildUserUpdate = (original: ManagedUser, form: UserFormValues): Up
   ...(form.email.trim().toLowerCase() !== original.email ? { email: form.email.trim().toLowerCase() } : {}),
   ...(form.role && (original.roles.length !== 1 || original.roles[0] !== form.role) ? { role: form.role } : {}),
 });
+
+/** Mirrors role/target boundaries for discoverability; the API independently authorizes every action. */
+export const getUserLifecycleActions = (
+  access: Pick<CurrentAccess, 'userId' | 'roles' | 'permissions'>, user: ManagedUser,
+): UserLifecycleAction[] => {
+  if (user.id === access.userId || user.roles.includes('SUPER_ADMIN')) return [];
+  const superAdmin = access.roles.includes('SUPER_ADMIN');
+  const candidate = user.roles.length === 1 && user.roles[0] === 'CANDIDATE';
+  if (!superAdmin && (!access.roles.includes('ADMINISTRATOR') || !candidate)) return [];
+  if (user.deletedAt) return superAdmin && access.permissions.includes('users.restore') ? ['RESTORE'] : [];
+  const actions: UserLifecycleAction[] = [];
+  if (access.permissions.includes(candidate ? 'candidates.status.update' : 'users.status.update')) {
+    actions.push(user.status === 'ACTIVE' ? 'DISABLE' : 'ENABLE');
+  }
+  if (access.permissions.includes(candidate ? 'candidates.delete' : 'administrators.delete')) actions.push('DELETE');
+  return actions;
+};
+
+/** Human-facing action names, reused by table buttons. */
+export const USER_ACTION_LABELS: Record<UserLifecycleAction, string> = {
+  DISABLE: 'Deshabilitar', ENABLE: 'Rehabilitar', DELETE: 'Eliminar', RESTORE: 'Restaurar',
+};

@@ -17,6 +17,7 @@ export const updateUserSchema = registerCandidateSchema
 
 /** Bounded pagination and explicit supported filters. */
 export const listUsersSchema = z.object({
+  deleted: z.enum(['true', 'false']).default('false'),
   search: z.string().trim().max(255, 'La búsqueda es demasiado larga.').optional(),
   role: z.enum(['CANDIDATE', 'ADMINISTRATOR', 'SUPER_ADMIN'],
     { errorMap: () => ({ message: 'El filtro de rol no es válido.' }) }).optional(),

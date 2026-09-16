@@ -2,15 +2,16 @@ import type { RoleCode } from './auth';
 
 /** Roles assignable from this sprint's management interface. */
 export type AssignableRole = Extract<RoleCode, 'CANDIDATE' | 'ADMINISTRATOR'>;
-/** Lifecycle state is read-only; soft deletion is a separate backend attribute. */
+/** Access status and soft deletion are independent attributes. */
 export type UserStatusCode = 'ACTIVE' | 'DISABLED';
 /** Safe administrative user representation. */
 export interface ManagedUser {
   id: number; fullName: string; email: string; roles: RoleCode[];
-  status: UserStatusCode; createdAt: string | null;
+  status: UserStatusCode; createdAt: string | null; deletedAt: string | null;
 }
 /** Server-side search and pagination. */
 export interface UserFilters {
+  deleted?: boolean;
   search: string; role: RoleCode | ''; status: UserStatusCode | ''; page: number; pageSize: number;
 }
 /** Paginated administrative response. */
@@ -21,3 +22,6 @@ export interface CreateUserRequest { fullName: string; email: string; password: 
 export interface UpdateUserRequest { fullName?: string; email?: string; role?: AssignableRole }
 /** Form state keeps an empty role to preserve multiple existing assignments when editing. */
 export interface UserFormValues { fullName: string; email: string; password: string; role: AssignableRole | '' }
+
+/** Explicit lifecycle operations supported by the API. */
+export type UserLifecycleAction = 'DISABLE' | 'ENABLE' | 'DELETE' | 'RESTORE';

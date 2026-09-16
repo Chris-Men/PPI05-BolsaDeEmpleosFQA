@@ -1,9 +1,9 @@
 import './helpers/typescript.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const { getUsers, createUser, updateUser } = await import('../src/services/adminUserService.ts');
+const { getUsers, createUser, updateUser, changeUserLifecycle } = await import('../src/services/adminUserService.ts');
 const { configureAuthentication } = await import('../src/services/api.ts');
-const { canManageUsers, getCreatableUserRoles, buildUserUpdate } = await import('../src/utils/userManagement.ts');
+const { canManageUsers, getCreatableUserRoles, getUserLifecycleActions, buildUserUpdate } = await import('../src/utils/userManagement.ts');
 const { getAccountIdentityValidationError } = await import('../src/validation/register.ts');
 
 test('abrir Usuarios requiere un rol administrativo y el permiso de lectura correspondiente', () => {
@@ -55,4 +55,39 @@ test('servicios envían filtros y mutaciones autenticadas sin reemplazar la sesi
   await updateUser(7, { role: 'ADMINISTRATOR' });
   assert.equal(calls[2].options.method, 'PATCH'); assert.equal(calls[2].url, '/api/admin/users/7');
   assert.deepEqual(JSON.parse(calls[2].options.body), { role: 'ADMINISTRATOR' });
+});
+
+test('acciones de ciclo de vida respetan el objetivo y reservan restauración a Super Admin', () => {
+  const candidate = { id: 2, roles: ['CANDIDATE'], status: 'ACTIVE', deletedAt: null };
+  const permissions = ['candidates.status.update', 'candidates.delete', 'users.status.update', 'administrators.delete', 'users.restore'];
+  const admin = { userId: 1, roles: ['ADMINISTRATOR'], permissions };
+  const superAdmin = { ...admin, roles: ['SUPER_ADMIN'] };
+  assert.deepEqual(getUserLifecycleActions(admin, candidate), ['DISABLE', 'DELETE']);
+  assert.deepEqual(getUserLifecycleActions(admin, { ...candidate, status: 'DISABLED' }), ['ENABLE', 'DELETE']);
+  assert.deepEqual(getUserLifecycleActions(admin, { ...candidate, deletedAt: '2026-09-16' }), []);
+  assert.deepEqual(getUserLifecycleActions(superAdmin, { ...candidate, deletedAt: '2026-09-16' }), ['RESTORE']);
+  for (const roles of [['ADMINISTRATOR'], ['CANDIDATE', 'ADMINISTRATOR'], ['SUPER_ADMIN']]) {
+    assert.deepEqual(getUserLifecycleActions(admin, { ...candidate, roles }), []);
+  }
+  assert.deepEqual(getUserLifecycleActions(superAdmin, { ...candidate, roles: ['SUPER_ADMIN'] }), []);
+  assert.deepEqual(getUserLifecycleActions(admin, { ...candidate, id: 1 }), []);
+  assert.deepEqual(getUserLifecycleActions({ ...admin, permissions: [] }, candidate), []);
+});
+
+test('servicio separa estado, borrado confirmado y restauración', async (context) => {
+  const calls = [];
+  context.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push({ url, method: options.method, body: JSON.parse(options.body) });
+    return new Response(null, { status: 204 });
+  });
+  await changeUserLifecycle(2, 'DISABLE');
+  await changeUserLifecycle(2, 'ENABLE');
+  await changeUserLifecycle(2, 'DELETE');
+  await changeUserLifecycle(2, 'RESTORE');
+  assert.deepEqual(calls, [
+    { url: '/api/admin/users/2/status', method: 'PATCH', body: { status: 'DISABLED' } },
+    { url: '/api/admin/users/2/status', method: 'PATCH', body: { status: 'ACTIVE' } },
+    { url: '/api/admin/users/2', method: 'DELETE', body: { confirmDeletion: true } },
+    { url: '/api/admin/users/2/restore', method: 'POST', body: {} },
+  ]);
 });

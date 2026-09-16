@@ -1,3 +1,5 @@
+import { changeStatus, deleteUser, restoreUser } from '../controllers/user-lifecycle.controller.js';
+import { changeUserStatusSchema, deleteAccountSchema, restoreAccountSchema } from '../validation/user-lifecycle.schema.js';
 import { Router } from 'express';
 import { create, list, update } from '../controllers/admin-user.controller.js';
 import { authenticate, requirePermission, requireRole } from '../middleware/authorization.middleware.js';
@@ -15,3 +17,8 @@ adminUserRouter.get('/', validateQuery(listUsersSchema), list);
 adminUserRouter.post('/', protectSessionMutation, validateBody(createUserSchema), create);
 adminUserRouter.patch('/:id', requireRole('SUPER_ADMIN'), protectSessionMutation, requirePermission(PERMISSIONS.USERS_UPDATE),
   validateBody(updateUserSchema), update);
+
+adminUserRouter.patch('/:id/status', protectSessionMutation, validateBody(changeUserStatusSchema), changeStatus);
+adminUserRouter.delete('/:id', protectSessionMutation, validateBody(deleteAccountSchema), deleteUser);
+adminUserRouter.post('/:id/restore', requireRole('SUPER_ADMIN'), protectSessionMutation,
+  validateBody(restoreAccountSchema), restoreUser);

@@ -106,6 +106,21 @@ test('gestión de sesión: restauración, coordinación, errores y cierre', asyn
   globalThis.fetch = async () => json(fixture('final-session'));
   await sessionStore.login({ email: 'ana@example.test', password: 'test-only' });
 
+  // Failed self-deletion retains identity; success clears all in-memory access.
+  globalThis.fetch = async () => { throw new TypeError('network offline'); };
+  await assert.rejects(sessionStore.deleteAccount());
+  assert.equal(sessionStore.getSnapshot().status, 'authenticated');
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/auth/me');
+    assert.equal(options.method, 'DELETE');
+    assert.deepEqual(JSON.parse(options.body), { confirmDeletion: true });
+    return new Response(null, { status: 204 });
+  };
+  await sessionStore.deleteAccount();
+  assert.equal(sessionStore.getSnapshot().status, 'anonymous');
+  globalThis.fetch = async () => json(fixture('final-session'));
+  await sessionStore.login({ email: 'ana@example.test', password: 'test-only' });
+
   let invalidCalls = 0;
   globalThis.fetch = async () => { invalidCalls += 1; return json({ message: 'Sesión revocada.' }, 401); };
   await assert.rejects(apiRequest('/private', { authenticated: true }), { status: 401 });

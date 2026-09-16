@@ -1,5 +1,5 @@
 import { ApiError, configureAuthentication } from './api';
-import { getCurrentAccess, loginAccount, logoutAccount, refreshAccount, registerCandidate } from './authService';
+import { deleteOwnAccount, getCurrentAccess, loginAccount, logoutAccount, refreshAccount, registerCandidate } from './authService';
 import type { AuthenticationResponse, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
 /** In-memory access credential and public identity. Refresh tokens stay in HttpOnly cookies. */
@@ -116,6 +116,14 @@ export const sessionStore = {
     } catch (error: unknown) {
       if (snapshot.session?.accessToken === validatingToken) fail(error);
     }
+  },
+  /** Deletes remotely before clearing identity across tabs; network failures remain retryable. */
+  async deleteAccount(): Promise<void> {
+    await renew();
+    await withSessionLock(async () => {
+      await deleteOwnAccount();
+      invalidate();
+    });
   },
   /** Revokes remotely before declaring logout successful. */
   async logout(all = false): Promise<void> {

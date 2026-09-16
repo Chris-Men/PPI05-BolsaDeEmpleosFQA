@@ -7,5 +7,5 @@ export function useAuth() {
   const state = useContext(AuthContext);
   if (!state) throw new Error('El proveedor de sesión no está disponible.');
   return { ...state, login: sessionStore.login, register: sessionStore.register,
-    logout: sessionStore.logout, retry: sessionStore.retry };
+    logout: sessionStore.logout, deleteAccount: sessionStore.deleteAccount, retry: sessionStore.retry };
 }

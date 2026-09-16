@@ -9,6 +9,7 @@ export interface ManagedUser {
   roles: RoleCode[];
   status: UserStatusCode;
   createdAt: string | null;
+  deletedAt: string | null;
 }
 
 /** Stable page of non-deleted accounts. */
