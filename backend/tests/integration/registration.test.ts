@@ -54,7 +54,7 @@ describe('Registro contra PostgreSQL', () => {
   const register = (body: unknown): Promise<Response> =>
     fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: JSON.stringify(body),
     });
 
@@ -81,7 +81,7 @@ describe('Registro contra PostgreSQL', () => {
     assert.equal(response.status, 201);
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const body = await response.json() as RegistrationResponse;
-    assert.deepEqual(Object.keys(body).sort(), ['accessToken', 'expiresIn', 'tokenType', 'user']);
+    assert.deepEqual(Object.keys(body).sort(), ['accessToken', 'expiresIn', 'permissions', 'roles', 'sessionExpiresAt', 'tokenType', 'user', 'userId']);
     assert.deepEqual(Object.keys(body.user).sort(), [
       'createdAt', 'email', 'fullName', 'id', 'role', 'status',
     ]);
@@ -111,7 +111,7 @@ describe('Registro contra PostgreSQL', () => {
     assert.equal(claims.sub, String(account.id));
     assert.equal(claims.role, 'CANDIDATE');
     assert.equal(claims.exp! - claims.iat!, 3600);
-    assert.deepEqual(Object.keys(claims).sort(), ['exp', 'iat', 'role', 'sub']);
+    assert.deepEqual(Object.keys(claims).sort(), ['exp', 'iat', 'role', 'sid', 'sub']);
     assert.throws(
       () => jwt.verify(body.accessToken, env.JWT_SECRET, {
         algorithms: ['HS256'], clockTimestamp: claims.exp,

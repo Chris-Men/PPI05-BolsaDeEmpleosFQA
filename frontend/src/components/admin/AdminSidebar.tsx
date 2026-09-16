@@ -1,3 +1,4 @@
+import { useAuth } from '../../hooks/useAuth';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
 import type { AdminMenuName } from '../../types/admin';
@@ -24,6 +25,7 @@ export default function AdminSidebar({
   activeMenu,
   onMenuClick,
 }: AdminSidebarProps) {
+  const { session } = useAuth();
   return (
     <aside className="sidebar">
       <button
@@ -55,10 +57,10 @@ export default function AdminSidebar({
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="admin-photo">A</div>
+        <div className="admin-photo">{session?.user.fullName.charAt(0).toUpperCase()}</div>
         <div>
-          <strong>Administrador</strong>
-          <small>admin@fqa.org</small>
+          <strong>{session?.user.fullName}</strong>
+          <small>{session?.user.email}</small>
         </div>
       </div>
     </aside>

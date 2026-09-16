@@ -10,7 +10,7 @@ import { healthRouter } from './routes/health.routes.js';
 export const createApp = (): express.Express => {
   const app = express();
 
-  app.use(cors({ origin: env.CORS_ORIGIN }));
+  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use('/api', healthRouter);
   app.use('/api/auth', authRouter);

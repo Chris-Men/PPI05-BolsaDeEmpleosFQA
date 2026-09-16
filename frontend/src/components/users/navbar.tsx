@@ -1,3 +1,4 @@
+import { SessionControls } from '../auth/SessionControls';
 import { useState } from 'react';
 import logo from '../imagenes/logo/logo 1.png';
 import '../../styles/users/navbar.css';
@@ -19,7 +20,6 @@ export default function Navbar({
   userMenuOpen,
   setUserMenuOpen,
   navigateTo,
-  handleLogout,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -73,15 +73,7 @@ export default function Navbar({
                 >
                   Ir al perfil
                 </button>
-                <button
-                  className="nav-user-dropdown-item danger"
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    handleLogout();
-                  }}
-                >
-                  Cerrar sesión
-                </button>
+                <SessionControls />
               </div>
             )}
           </div>

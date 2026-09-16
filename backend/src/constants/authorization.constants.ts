@@ -26,6 +26,7 @@ export const PERMISSIONS = {
   ORGANIZATION_CREATE: 'organizations.create',
   ADMINISTRATOR_CREATE: 'administrators.create',
   ADMINISTRATOR_DELETE: 'administrators.delete',
+  SESSION_REVOKE_ANY: 'sessions.revoke.any',
   DATABASE_BACKUP: 'database.backup',
   DATABASE_RESTORE: 'database.restore',
 } as const;
@@ -49,6 +50,7 @@ const administratorPermissions: readonly PermissionCode[] = [
 export const SUPER_ADMIN_PERMISSIONS: readonly PermissionCode[] = [
   PERMISSIONS.ADMINISTRATOR_CREATE,
   PERMISSIONS.ADMINISTRATOR_DELETE,
+  PERMISSIONS.SESSION_REVOKE_ANY,
   PERMISSIONS.DATABASE_BACKUP,
   PERMISSIONS.DATABASE_RESTORE,
 ];

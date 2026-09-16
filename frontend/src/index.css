@@ -3327,3 +3327,10 @@ a {
 .nav-user-dropdown-item.danger {
   color: #C0392B;
 }
+
+/* Session restoration and accessible actions shared by both navigation layouts. */
+.session-status { min-height: 100vh; display: grid; place-content: center; gap: 1rem; padding: 2rem; text-align: center; }
+.session-controls { display: grid; gap: .5rem; padding: .5rem; }
+.session-controls button { cursor: pointer; padding: .65rem; border: 0; border-radius: .4rem; background: #f2f4f7; color: #982b2b; text-align: left; }
+.session-controls button:disabled { opacity: .6; cursor: wait; }
+.session-controls p { padding: .5rem; max-width: 20rem; color: #982b2b; }

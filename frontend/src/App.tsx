@@ -11,6 +11,8 @@ import type {
     VolunteerSpot,
 } from './types/models';
 
+import { useAuth } from './hooks/useAuth';
+import { AuthenticatedDashboard } from './components/admin/AuthenticatedDashboard';
 import Home from './screens/Home';
 import JobsListing from './screens/JobsListing';
 import JobDetail from './screens/JobDetail';
@@ -300,7 +302,24 @@ const initialStudentSpotsData: StudentSpot[] = [
 // APP
 // ============================================================
 
+
+/** Remounts account-scoped demo state whenever the real identity changes. */
 export default function App() {
+    const { status, session, error, retry } = useAuth();
+    if (status === 'loading') return <main className="session-status" role="status">Verificando sesión…</main>;
+    if (status === 'error') return <main className="session-status">
+        <p role="alert">{error}</p><button type="button" onClick={() => void retry()}>Reintentar</button>
+    </main>;
+    if (session?.roles.some((role) => role === 'SUPER_ADMIN' || role === 'ADMINISTRATOR')) {
+        return <AuthenticatedDashboard key={session.userId} />;
+    }
+    return <PublicApp key={session?.userId ?? 'anonymous'} />;
+}
+
+/** Public navigation and candidate prototype, scoped to one authenticated account. */
+function PublicApp() {
+    const { session, logout } = useAuth();
+
 
     // ==========================================================
     // NAVEGACIÓN GLOBAL
@@ -309,7 +328,10 @@ export default function App() {
     const [screen, setScreen] = useState<ScreenName>('home');
     const [screenHistory, setScreenHistory] = useState<ScreenName[]>([]);
 
-    const currentUser: CurrentUser | null = null;
+    const currentUser: CurrentUser | null = session?.roles.includes('CANDIDATE') ? {
+        email: session.user.email, role: 'candidate', name: session.user.fullName,
+        initial: session.user.fullName.charAt(0).toUpperCase(),
+    } : null;
 
 
     // ==========================================================
@@ -324,20 +346,7 @@ export default function App() {
 
     const [savedJobs, setSavedJobs] = useState<number[]>([]);
 
-    const [applications, setApplications] = useState<CandidateApplication[]>([
-        {
-            id: 'FQA-2025-04812',
-            jobId: 1,
-            jobTitle: 'Coordinadora de Programas Educativos',
-            orgName: 'Fundación Quintanilla Amaya',
-            candidateName: 'María José López Martínez',
-            candidateEmail: 'mariajose@correo.com',
-            phone: '7823 4561',
-            cvName: 'María_López_CV.pdf',
-            status: 'Pendiente',
-            date: 'Hace 2 días'
-        }
-    ]);
+    const [applications, setApplications] = useState<CandidateApplication[]>([]);
 
     const [volunteerApps, setVolunteerApps] = useState<number[]>([]);
     const [studentApps, setStudentApps] = useState<number[]>([]);
@@ -415,29 +424,16 @@ export default function App() {
         useState(1);
 
     const [formPersonal, setFormPersonal] = useState({
-        name: 'María José',
-        lastname: 'López Martínez',
-        email: 'mariajose@correo.com',
-        phone: '7823 4561',
-        municipio: 'San Salvador',
-        dept: 'San Salvador',
-        level: 'Licenciatura (completa)',
-        profession: 'Lic. Ciencias de la Educación'
+        name: currentUser?.name ?? '', lastname: '', email: currentUser?.email ?? '',
+        phone: '', municipio: '', dept: '', level: '', profession: ''
     });
 
     const [formExp, setFormExp] = useState({
-        lastRole: 'Coordinadora de Proyectos',
-        lastOrg: 'Comunidad Unida',
-        years: '2 – 4 años',
-        salary: '$650 – $800',
-        motivation:
-            'Me apasiona el trabajo que realiza la Fundación para transformar vidas.',
-        skills:
-            'Gestión de proyectos, liderazgo de equipos, informes técnicos'
+        lastRole: '', lastOrg: '', years: '', salary: '', motivation: '', skills: ''
     });
 
     const [uploadedCVName, setUploadedCVName] =
-        useState('María_López_CV.pdf');
+        useState('');
 
 
     // ==========================================================
@@ -553,20 +549,8 @@ export default function App() {
     // ==========================================================
 
     const handleLogout = () => {
-
-
-
-
-
-        setScreenHistory([]);
-
-        setScreen('home');
-
-        showToast('❌ Sesión cerrada');
-
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
+        void logout().catch((failure: unknown) => {
+            showToast(failure instanceof Error ? failure.message : 'No fue posible cerrar la sesión.');
         });
     };
 
@@ -766,7 +750,7 @@ export default function App() {
     // LOGIN
     // ==========================================================
 
-    if (screen === 'login') {
+    if (screen === 'login' || (!currentUser && ['profile', 'form', 'confirm'].includes(screen))) {
 
         return (
             <Login

@@ -44,3 +44,15 @@ export const registerCandidateSchema = z
 
 /** Input inferred from the validated registration contract. */
 export type RegisterCandidateDTO = z.infer<typeof registerCandidateSchema>;
+
+/** Login validates existing credentials without reapplying registration strength rules. */
+export const loginSchema = z.object({
+  email: requiredText('correo').trim().toLowerCase().max(255, 'El correo es demasiado largo.')
+    .email('El correo electrónico no es válido.'),
+  password: requiredText('contraseña').min(1, 'La contraseña es obligatoria.')
+    .refine((value) => Buffer.byteLength(value, 'utf8') <= 72,
+      'La contraseña no puede superar los 72 bytes en UTF-8.'),
+}).strict('La solicitud contiene campos no permitidos.');
+
+/** Validated credential input. */
+export type LoginDTO = z.infer<typeof loginSchema>;

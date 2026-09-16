@@ -13,7 +13,7 @@ interface LoginProps {
 
 type AuthPageStyle = CSSProperties & Record<`--${string}`, string>;
 
-/** Login screen displayed while backend authentication is pending. */
+/** Login screen for persistent, revocable sessions. */
 export default function Login({ navigateTo }: LoginProps) {
   const pageStyle: AuthPageStyle = {
     '--login-bg-desktop': `url("${fondoDesktop}")`,
@@ -38,7 +38,7 @@ export default function Login({ navigateTo }: LoginProps) {
           <div className="auth-card-content">
             <div className="auth-heading">
               <h1>Iniciar sesión</h1>
-              <p>El acceso seguro estará disponible próximamente.</p>
+              <p>Ingresa a tu cuenta para continuar.</p>
             </div>
             <LoginForm navigateTo={navigateTo} />
           </div>

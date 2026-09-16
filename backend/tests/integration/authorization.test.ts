@@ -24,7 +24,7 @@ const createdUserStatuses: number[] = [];
 const createdRoles: number[] = [];
 
 /** Test account metadata; tokens remain in memory and never appear in output. */
-interface Identity { id: number; token: string }
+interface Identity { id: number; token: string; sessionId?: string }
 const identities = new Map<RoleCode, Identity>();
 let passwordHash: string;
 
@@ -40,7 +40,8 @@ const createIdentity = async (roleNames: string[]): Promise<Identity> => {
     select: { id: true },
   });
   createdUsers.push(user.id);
-  return { id: user.id, token: tokenService.createAccessToken(String(user.id), 'UNTRUSTED_CLAIM') };
+  const session = await prisma.authSession.create({ data: { userId: user.id, expiresAt: new Date(Date.now() + 3600000) } });
+  return { id: user.id, sessionId: session.id, token: tokenService.createAccessToken(String(user.id), 'UNTRUSTED_CLAIM', session.id) };
 };
 
 /** Requires a fixture prepared by this suite. */
@@ -105,13 +106,13 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
   const checkPermission = (identity: Identity, permission: PermissionCode): Promise<Response> =>
     requestAs(policyApi.baseUrl, `/permission/${permission}`, identity);
 
-  it('persiste tres roles y dieciocho permisos sin cambiar IDs al repetir el seed', async () => {
+  it('persiste tres roles y diecinueve permisos sin cambiar IDs al repetir el seed', async () => {
     const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
     const permissions = await prisma.permissions.findMany({ orderBy: { name: 'asc' } });
     const grants = await prisma.rolePermissions.findMany({ orderBy: [{ roleId: 'asc' }, { permissionId: 'asc' }] });
     assert.deepEqual(roles.map(({ name }) => name), ['Administrador', 'Candidato', 'Super Admin']);
-    assert.equal(permissions.length, 18);
-    assert.equal(grants.length, 26);
+    assert.equal(permissions.length, 19);
+    assert.equal(grants.length, 27);
     await seedAccountCatalogs(prisma);
     await seedAccountCatalogs(prisma);
     assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), roles);
@@ -154,13 +155,13 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
   it('devuelve permisos propios actuales e ignora un claim JWT que dice Super Admin', async () => {
     const candidate = identityFor('CANDIDATE');
     const forgedRole = {
-      id: candidate.id, token: tokenService.createAccessToken(String(candidate.id), 'SUPER_ADMIN'),
+      id: candidate.id, token: tokenService.createAccessToken(String(candidate.id), 'SUPER_ADMIN', candidate.sessionId!),
     };
     const response = await requestAs(api.baseUrl, '/api/auth/me', forgedRole);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const body = await response.json() as AccessContext;
-    assert.deepEqual(Object.keys(body).sort(), ['permissions', 'roles', 'userId']);
+    assert.deepEqual(Object.keys(body).sort(), ['permissions', 'roles', 'sessionExpiresAt', 'user', 'userId']);
     assert.equal(body.userId, candidate.id);
     assert.deepEqual(body.roles, ['CANDIDATE']);
     assert.deepEqual(body.permissions, [...ROLE_PERMISSIONS.CANDIDATE].sort());
@@ -182,7 +183,7 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
         'candidates.create', 'candidates.read', 'profiles.resume.read.any',
         'applications.resume.read.any', 'opportunities.create', 'applications.read.any',
         'applications.select', 'organizations.create', 'administrators.create',
-        'administrators.delete', 'database.backup', 'database.restore',
+        'administrators.delete', 'database.backup', 'database.restore', 'sessions.revoke.any',
       ],
     };
     for (const role of Object.keys(expected) as RoleCode[]) {
