@@ -1,12 +1,6 @@
 import { z } from 'zod';
 import { splitProfileName } from '../utils/profile-name.js';
-
-/** Builds a required text field with localized missing/type validation messages. */
-const requiredText = (label: string): z.ZodString =>
-  z.string({
-    required_error: `El campo ${label} es obligatorio.`,
-    invalid_type_error: `El campo ${label} debe ser texto.`,
-  });
+import { emailSchema, requiredText } from './common.schema.js';
 
 /** Strict public registration contract; privilege fields are never accepted. */
 export const registerCandidateSchema = z
@@ -20,11 +14,7 @@ export const registerCandidateSchema = z
           const { firstName, lastName } = splitProfileName(value);
           return firstName.length <= 100 && lastName.length <= 100;
         }, 'El nombre y el apellido no pueden superar los 100 caracteres cada uno.'),
-      email: requiredText('correo')
-        .trim()
-        .toLowerCase()
-        .max(255, 'El correo electrónico no puede superar los 255 caracteres.')
-        .email('El correo electrónico no es válido.'),
+      email: emailSchema,
       password: requiredText('contraseña')
         .refine(
           (value) => Array.from(value).length >= 12,

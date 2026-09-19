@@ -1,3 +1,4 @@
+import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
 import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import type { PrismaClient } from '@prisma/client';
 import {
@@ -34,6 +35,15 @@ export const seedAccountCatalogs = async (database: PrismaClient): Promise<void>
 
     for (const name of Object.values(USER_STATUS_NAMES)) {
       await transaction.userStatus.upsert({ where: { name }, update: { name }, create: { name } });
+    }
+  });
+};
+
+/** Adds organization states without replacing identifiers or historical records. */
+export const seedOrganizationCatalogs = async (database: PrismaClient): Promise<void> => {
+  await database.$transaction(async (transaction) => {
+    for (const name of Object.values(ORGANIZATION_STATUS_NAMES)) {
+      await transaction.organizationStatuses.upsert({ where: { name }, update: {}, create: { name } });
     }
   });
 };

@@ -29,6 +29,9 @@ export const PERMISSIONS = {
   APPLICATION_READ_ANY: 'applications.read.any',
   APPLICATION_SELECT: 'applications.select',
   ORGANIZATION_CREATE: 'organizations.create',
+  ORGANIZATION_READ: 'organizations.read',
+  ORGANIZATION_UPDATE: 'organizations.update',
+  ORGANIZATION_STATUS_UPDATE: 'organizations.status.update',
   ADMINISTRATOR_CREATE: 'administrators.create',
   ADMINISTRATOR_DELETE: 'administrators.delete',
   USERS_READ: 'users.read',
@@ -54,6 +57,9 @@ const administratorPermissions: readonly PermissionCode[] = [
   PERMISSIONS.APPLICATION_READ_ANY,
   PERMISSIONS.APPLICATION_SELECT,
   PERMISSIONS.ORGANIZATION_CREATE,
+  PERMISSIONS.ORGANIZATION_READ,
+  PERMISSIONS.ORGANIZATION_UPDATE,
+  PERMISSIONS.ORGANIZATION_STATUS_UPDATE,
 ];
 
 /** Operations reserved to Super Admin, even if another role is misconfigured. */

@@ -106,13 +106,13 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
   const checkPermission = (identity: Identity, permission: PermissionCode): Promise<Response> =>
     requestAs(policyApi.baseUrl, `/permission/${permission}`, identity);
 
-  it('persiste tres roles y veintiséis permisos sin cambiar IDs al repetir el seed', async () => {
+  it('persiste tres roles y veintinueve permisos sin cambiar IDs al repetir el seed', async () => {
     const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
     const permissions = await prisma.permissions.findMany({ orderBy: { name: 'asc' } });
     const grants = await prisma.rolePermissions.findMany({ orderBy: [{ roleId: 'asc' }, { permissionId: 'asc' }] });
     assert.deepEqual(roles.map(({ name }) => name), ['Administrador', 'Candidato', 'Super Admin']);
-    assert.equal(permissions.length, 26);
-    assert.equal(grants.length, 38);
+    assert.equal(permissions.length, 29);
+    assert.equal(grants.length, 44);
     await seedAccountCatalogs(prisma);
     await seedAccountCatalogs(prisma);
     assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), roles);
@@ -179,13 +179,13 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
         'accounts.delete.own', 'candidates.status.update', 'candidates.delete',
         'candidates.create', 'candidates.read', 'profiles.resume.read.any',
         'applications.resume.read.any', 'opportunities.create', 'applications.read.any',
-        'applications.select', 'organizations.create',
+        'applications.select', 'organizations.create', 'organizations.read', 'organizations.update', 'organizations.status.update',
       ],
       SUPER_ADMIN: [
         'accounts.delete.own', 'candidates.status.update', 'candidates.delete', 'users.status.update', 'users.restore',
         'candidates.create', 'candidates.read', 'profiles.resume.read.any',
         'applications.resume.read.any', 'opportunities.create', 'applications.read.any',
-        'applications.select', 'organizations.create', 'administrators.create',
+        'applications.select', 'organizations.create', 'organizations.read', 'organizations.update', 'organizations.status.update', 'administrators.create',
         'administrators.delete', 'database.backup', 'database.restore', 'sessions.revoke.any', 'users.read', 'users.update',
       ],
     };
