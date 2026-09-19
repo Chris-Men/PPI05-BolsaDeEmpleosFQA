@@ -6,7 +6,9 @@ import {
     EyeOff,
     ArrowRight,
     UserRound,
-    User
+    User,
+    Check,
+    X
 } from "lucide-react";
 
 export default function RegisterForm({
@@ -27,12 +29,53 @@ export default function RegisterForm({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // ==========================================================
-    // CAMBIAR CAMPOS
-    // ==========================================================
+    const passwordRequirements = {
+        length: formData.password.length >= 8,
+        uppercase: /[A-Z]/.test(formData.password),
+        lowercase: /[a-z]/.test(formData.password),
+        number: /[0-9]/.test(formData.password),
+        special: /[^A-Za-z0-9]/.test(formData.password)
+    };
+
+    const passwordScore = Object.values(passwordRequirements).filter(
+        Boolean
+    ).length;
+
+    const getPasswordStrength = () => {
+        if (!formData.password) {
+            return {
+                text: "",
+                className: "",
+                width: "0%"
+            };
+        }
+
+        if (passwordScore <= 2) {
+            return {
+                text: "Débil",
+                className: "weak",
+                width: "30%"
+            };
+        }
+
+        if (passwordScore <= 4) {
+            return {
+                text: "Media",
+                className: "medium",
+                width: "65%"
+            };
+        }
+
+        return {
+            text: "Fuerte",
+            className: "strong",
+            width: "100%"
+        };
+    };
+
+    const passwordStrength = getPasswordStrength();
 
     const handleChange = (e) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
@@ -40,14 +83,12 @@ export default function RegisterForm({
             [name]: value
         }));
 
+        if (error) {
+            setError("");
+        }
     };
 
-    // ==========================================================
-    // REGISTRO
-    // ==========================================================
-
     const handleSubmit = (e) => {
-
         e.preventDefault();
 
         setError("");
@@ -57,19 +98,16 @@ export default function RegisterForm({
         const password = formData.password;
         const confirmPassword = formData.confirmPassword;
 
-        // Validar nombre
         if (!name) {
             setError("Ingresa tu nombre completo.");
             return;
         }
 
-        // Validar correo
         if (!email) {
             setError("Ingresa tu correo electrónico.");
             return;
         }
 
-        // Evitar registrar el correo del administrador
         if (email === "admin@fundaqa.org") {
             setError(
                 "Este correo está reservado para el administrador."
@@ -77,20 +115,46 @@ export default function RegisterForm({
             return;
         }
 
-        // Validar contraseña
         if (!password) {
             setError("Ingresa una contraseña.");
             return;
         }
 
-        if (password.length < 6) {
+        if (!passwordRequirements.length) {
             setError(
-                "La contraseña debe tener al menos 6 caracteres."
+                "La contraseña debe tener al menos 8 caracteres."
             );
             return;
         }
 
-        // Confirmar contraseña
+        if (!passwordRequirements.uppercase) {
+            setError(
+                "La contraseña debe contener al menos una letra mayúscula."
+            );
+            return;
+        }
+
+        if (!passwordRequirements.lowercase) {
+            setError(
+                "La contraseña debe contener al menos una letra minúscula."
+            );
+            return;
+        }
+
+        if (!passwordRequirements.number) {
+            setError(
+                "La contraseña debe contener al menos un número."
+            );
+            return;
+        }
+
+        if (!passwordRequirements.special) {
+            setError(
+                "La contraseña debe contener al menos un carácter especial."
+            );
+            return;
+        }
+
         if (password !== confirmPassword) {
             setError(
                 "Las contraseñas no coinciden."
@@ -99,10 +163,6 @@ export default function RegisterForm({
         }
 
         setLoading(true);
-
-        // ======================================================
-        // CREAR USUARIO
-        // ======================================================
 
         const newUser = {
             name: name,
@@ -119,19 +179,14 @@ export default function RegisterForm({
 
         setLoading(false);
 
-        // Ir al perfil
         navigateTo("home");
     };
 
     return (
         <form
-            className="login-form"
+            className="login-form register-form"
             onSubmit={handleSubmit}
         >
-
-            {/* ==================================================
-                NOMBRE
-            ================================================== */}
 
             <div className="form-group">
 
@@ -158,10 +213,6 @@ export default function RegisterForm({
             </div>
 
 
-            {/* ==================================================
-                CORREO
-            ================================================== */}
-
             <div className="form-group">
 
                 <div className="input-wrapper">
@@ -187,11 +238,7 @@ export default function RegisterForm({
             </div>
 
 
-            {/* ==================================================
-                CONTRASEÑA
-            ================================================== */}
-
-            <div className="form-group">
+            <div className="form-group password-form-group">
 
                 <div className="input-wrapper">
 
@@ -202,11 +249,7 @@ export default function RegisterForm({
                     />
 
                     <input
-                        type={
-                            showPassword
-                                ? "text"
-                                : "password"
-                        }
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="Contraseña"
                         value={formData.password}
@@ -219,9 +262,7 @@ export default function RegisterForm({
                         type="button"
                         className="password-toggle"
                         onClick={() =>
-                            setShowPassword(
-                                (prev) => !prev
-                            )
+                            setShowPassword((prev) => !prev)
                         }
                         aria-label={
                             showPassword
@@ -229,23 +270,78 @@ export default function RegisterForm({
                                 : "Mostrar contraseña"
                         }
                     >
-
                         {showPassword ? (
                             <EyeOff size={23} />
                         ) : (
                             <Eye size={23} />
                         )}
-
                     </button>
 
                 </div>
 
+
+                {formData.password && (
+                    <div className="password-security">
+
+                        <div className="password-strength-header">
+
+                            <span>
+                                Seguridad de la contraseña
+                            </span>
+
+                            <strong
+                                className={passwordStrength.className}
+                            >
+                                {passwordStrength.text}
+                            </strong>
+
+                        </div>
+
+                        <div className="password-strength-bar">
+
+                            <div
+                                className={`password-strength-fill ${passwordStrength.className}`}
+                                style={{
+                                    width: passwordStrength.width
+                                }}
+                            />
+
+                        </div>
+
+                        <div className="password-requirements">
+
+                            <PasswordRequirement
+                                valid={passwordRequirements.length}
+                                text="Mínimo 8 caracteres"
+                            />
+
+                            <PasswordRequirement
+                                valid={passwordRequirements.uppercase}
+                                text="Una letra mayúscula"
+                            />
+
+                            <PasswordRequirement
+                                valid={passwordRequirements.lowercase}
+                                text="Una letra minúscula"
+                            />
+
+                            <PasswordRequirement
+                                valid={passwordRequirements.number}
+                                text="Un número"
+                            />
+
+                            <PasswordRequirement
+                                valid={passwordRequirements.special}
+                                text="Un carácter especial"
+                            />
+
+                        </div>
+
+                    </div>
+                )}
+
             </div>
 
-
-            {/* ==================================================
-                CONFIRMAR CONTRASEÑA
-            ================================================== */}
 
             <div className="form-group">
 
@@ -285,23 +381,41 @@ export default function RegisterForm({
                                 : "Mostrar contraseña"
                         }
                     >
-
                         {showConfirmPassword ? (
                             <EyeOff size={23} />
                         ) : (
                             <Eye size={23} />
                         )}
-
                     </button>
 
                 </div>
 
+                {formData.confirmPassword && (
+                    <div
+                        className={`password-match ${
+                            formData.password === formData.confirmPassword
+                                ? "match-success"
+                                : "match-error"
+                        }`}
+                    >
+
+                        {formData.password === formData.confirmPassword ? (
+                            <>
+                                <Check size={15} />
+                                Las contraseñas coinciden
+                            </>
+                        ) : (
+                            <>
+                                <X size={15} />
+                                Las contraseñas no coinciden
+                            </>
+                        )}
+
+                    </div>
+                )}
+
             </div>
 
-
-            {/* ==================================================
-                ERROR
-            ================================================== */}
 
             {error && (
                 <div className="auth-error">
@@ -309,10 +423,6 @@ export default function RegisterForm({
                 </div>
             )}
 
-
-            {/* ==================================================
-                REGISTRARSE
-            ================================================== */}
 
             <button
                 type="submit"
@@ -334,10 +444,6 @@ export default function RegisterForm({
             </button>
 
 
-            {/* ==================================================
-                SEPARADOR
-            ================================================== */}
-
             <div className="auth-divider">
 
                 <span></span>
@@ -348,10 +454,6 @@ export default function RegisterForm({
 
             </div>
 
-
-            {/* ==================================================
-                INICIAR SESIÓN
-            ================================================== */}
 
             <button
                 type="button"
@@ -370,5 +472,29 @@ export default function RegisterForm({
             </button>
 
         </form>
+    );
+}
+
+
+function PasswordRequirement({ valid, text }) {
+
+    return (
+        <div
+            className={`password-requirement ${
+                valid ? "valid" : "invalid"
+            }`}
+        >
+
+            {valid ? (
+                <Check size={14} />
+            ) : (
+                <X size={14} />
+            )}
+
+            <span>
+                {text}
+            </span>
+
+        </div>
     );
 }

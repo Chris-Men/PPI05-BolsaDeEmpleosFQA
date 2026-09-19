@@ -23,16 +23,7 @@ import CVRecibidos from './screens/admin/CVRecibidos.jsx';
 import Estadisticas from './screens/admin/Estadisticas.jsx';
 import Configuracion from './screens/admin/configuracion.jsx';
 
-// ============================================================
-// COMPONENTES
-// ============================================================
-
 import Navbar from './components/users/navbar.jsx';
-
-
-// ============================================================
-// DATOS INICIALES
-// ============================================================
 
 const initialJobsData = [
     {
@@ -49,6 +40,7 @@ const initialJobsData = [
         isNew: true,
         views: 84,
         compat: 82,
+        status: 'Activa',
         desc: 'Buscamos una persona apasionada por la educación transformadora que lidere la planificación y ejecución de nuestros programas de refuerzo educativo en comunidades vulnerables de San Salvador.',
         responsibilities: [
             'Diseñar y coordinar los planes curriculares del Eje de Educación.',
@@ -67,7 +59,6 @@ const initialJobsData = [
             'Viáticos de transporte para visitas de campo.'
         ]
     },
-
     {
         id: 2,
         title: 'Trabajadora Social Comunitaria',
@@ -80,6 +71,7 @@ const initialJobsData = [
         isHot: true,
         views: 120,
         compat: 75,
+        status: 'Activa',
         desc: 'Buscamos un/a profesional de Trabajo Social capacitado para integrarse a nuestro equipo comunitario de apoyo familiar en la zona norte de San Salvador.',
         responsibilities: [
             'Realizar visitas domiciliarias y estudios socioeconómicos de familias.',
@@ -96,7 +88,6 @@ const initialJobsData = [
             'Estabilidad laboral y capacitaciones de desarrollo profesional.'
         ]
     },
-
     {
         id: 3,
         title: 'Especialista en Salud Comunitaria',
@@ -110,6 +101,7 @@ const initialJobsData = [
         closing: 'Cierra en 3 días',
         views: 92,
         compat: 60,
+        status: 'Activa',
         desc: 'Lidera las campañas de atención de salud primaria y prevención sanitaria preventiva en comunidades de la región oriental de El Salvador.',
         responsibilities: [
             'Coordinar brigadas médicas móviles en zonas rurales.',
@@ -126,7 +118,6 @@ const initialJobsData = [
             'Salario competitivo y seguro de vida.'
         ]
     },
-
     {
         id: 4,
         title: 'Promotor/a Ambiental de Campo',
@@ -138,6 +129,7 @@ const initialJobsData = [
         date: 'Hace 3 días',
         views: 45,
         compat: 90,
+        status: 'Activa',
         desc: 'Participa de forma proactiva en el despliegue del proyecto regional de reforestación y conservación de cuencas hidrográficas en Santa Ana.',
         responsibilities: [
             'Sensibilizar a los agricultores en técnicas de agricultura sostenible.',
@@ -154,7 +146,6 @@ const initialJobsData = [
             'Oportunidad de desarrollo y crecimiento técnico.'
         ]
     },
-
     {
         id: 5,
         title: 'Oficial de Comunicaciones',
@@ -167,6 +158,7 @@ const initialJobsData = [
         isNew: true,
         views: 110,
         compat: 70,
+        status: 'Activa',
         desc: 'Buscamos un comunicador creativo que cree contenido atractivo y gestione las redes de nuestra organización.',
         responsibilities: [
             'Diseñar estrategias de contenido para redes sociales y boletines.',
@@ -183,7 +175,6 @@ const initialJobsData = [
             'Salario atractivo de $700 a $900 mensuales.'
         ]
     },
-
     {
         id: 6,
         title: 'Coordinador de Autonomía Económica',
@@ -195,6 +186,7 @@ const initialJobsData = [
         date: 'Hace 5 días',
         views: 74,
         compat: 65,
+        status: 'Activa',
         desc: 'Lidera las iniciativas comunitarias orientadas al emprendimiento local y la capacitación financiera técnica.',
         responsibilities: [
             'Impartir talleres de educación financiera.',
@@ -222,11 +214,9 @@ const initialVolunteersData = [
         location: 'San Salvador',
         area: 'Educación',
         desc: 'Apoyo escolar presencial a niños y niñas.',
-        orgInfo:
-            'La Fundación Quintanilla Amaya desarrolla programas de educación y salud.',
+        orgInfo: 'La Fundación Quintanilla Amaya desarrolla programas de educación y salud.',
         contact: '+503 7623-4832'
     },
-
     {
         id: 2,
         title: 'Asistente Médico de Campaña',
@@ -235,11 +225,9 @@ const initialVolunteersData = [
         location: 'San Miguel',
         area: 'Salud',
         desc: 'Apoyo logístico en jornadas comunitarias.',
-        orgInfo:
-            'Organización humanitaria dedicada a brindar salud comunitaria.',
+        orgInfo: 'Organización humanitaria dedicada a brindar salud comunitaria.',
         contact: '+503 2239-4900'
     },
-
     {
         id: 3,
         title: 'Promotor de Reciclaje Urbano',
@@ -248,11 +236,9 @@ const initialVolunteersData = [
         location: 'Santa Ana',
         area: 'Medio Ambiente',
         desc: 'Visitas de sensibilización sobre reciclaje.',
-        orgInfo:
-            'ONG enfocada en proyectos de resiliencia ecológica.',
+        orgInfo: 'ONG enfocada en proyectos de resiliencia ecológica.',
         contact: '+503 2441-1022'
     },
-
     {
         id: 4,
         title: 'Facilitador de Talleres Técnicos',
@@ -261,8 +247,7 @@ const initialVolunteersData = [
         location: 'Mejicanos',
         area: 'Autonomía Económica',
         desc: 'Colabora dictando talleres técnicos.',
-        orgInfo:
-            'Institución dedicada al desarrollo social.',
+        orgInfo: 'Institución dedicada al desarrollo social.',
         contact: '+503 2225-1033'
     }
 ];
@@ -279,7 +264,6 @@ const initialStudentSpotsData = [
         horas: 40,
         contact: '+503 7623-4832'
     },
-
     {
         id: 2,
         tipo: 'practica',
@@ -293,43 +277,21 @@ const initialStudentSpotsData = [
     }
 ];
 
-
-// ============================================================
-// APP
-// ============================================================
-
 export default function App() {
-
-    // ==========================================================
-    // NAVEGACIÓN GLOBAL
-    // ==========================================================
 
     const [screen, setScreen] = useState('home');
     const [screenHistory, setScreenHistory] = useState([]);
-
     const [currentUser, setCurrentUser] = useState(null);
-
-
-    // ==========================================================
-    // NAVEGACIÓN ADMINISTRATIVA
-    // ==========================================================
 
     const [adminTab, setAdminTab] = useState('Dashboard');
 
-
-    // ==========================================================
-    // DATOS
-    // ==========================================================
-
     const [jobs, setJobs] = useState(initialJobsData);
 
-    const [volunteerSpots, setVolunteerSpots] = useState(
-        initialVolunteersData
-    );
+    const [volunteerSpots, setVolunteerSpots] =
+        useState(initialVolunteersData);
 
-    const [studentSpots, setStudentSpots] = useState(
-        initialStudentSpotsData
-    );
+    const [studentSpots, setStudentSpots] =
+        useState(initialStudentSpotsData);
 
     const [savedJobs, setSavedJobs] = useState([]);
 
@@ -354,18 +316,8 @@ export default function App() {
     const [activeStudentTab, setActiveStudentTab] =
         useState('social');
 
-
-    // ==========================================================
-    // MENÚ DEL USUARIO
-    // ==========================================================
-
     const [userMenuOpen, setUserMenuOpen] =
         useState(false);
-
-
-    // ==========================================================
-    // SELECCIONES
-    // ==========================================================
 
     const [selectedJob, setSelectedJob] =
         useState(initialJobsData[0]);
@@ -376,66 +328,27 @@ export default function App() {
     const [volSuccessContact, setVolSuccessContact] =
         useState(null);
 
-
-    // ==========================================================
-    // FLUJO DE POSTULACIÓN
-    // ==========================================================
-
     const [applyFlowType, setApplyFlowType] =
         useState('job');
 
     const [applyFlowTarget, setApplyFlowTarget] =
         useState(null);
 
+    const [qvOpen, setQvOpen] = useState(false);
+    const [qvJob, setQvJob] = useState(null);
 
-    // ==========================================================
-    // QUICK VIEW
-    // ==========================================================
+    const [loginOpen, setLoginOpen] = useState(false);
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
 
-    const [qvOpen, setQvOpen] =
-        useState(false);
-
-    const [qvJob, setQvJob] =
-        useState(null);
-
-
-    // ==========================================================
-    // LOGIN
-    // ==========================================================
-
-    const [loginOpen, setLoginOpen] =
-        useState(false);
-
-    const [loginEmail, setLoginEmail] =
-        useState('');
-
-    const [loginPassword, setLoginPassword] =
-        useState('');
-
-
-    // ==========================================================
-    // BÚSQUEDA / FILTROS
-    // ==========================================================
-
-    const [searchQuery, setSearchQuery] =
-        useState('');
-
+    const [searchQuery, setSearchQuery] = useState('');
     const [searchLocation, setSearchLocation] =
         useState('Todo el país');
-
     const [selectedArea, setSelectedArea] =
         useState('Todos');
+    const [maxSalary, setMaxSalary] = useState(1500);
 
-    const [maxSalary, setMaxSalary] =
-        useState(1500);
-
-
-    // ==========================================================
-    // FORMULARIO
-    // ==========================================================
-
-    const [formStep, setFormStep] =
-        useState(1);
+    const [formStep, setFormStep] = useState(1);
 
     const [formPersonal, setFormPersonal] = useState({
         name: 'María José',
@@ -462,21 +375,8 @@ export default function App() {
     const [uploadedCVName, setUploadedCVName] =
         useState('María_López_CV.pdf');
 
-
-    // ==========================================================
-    // TOAST
-    // ==========================================================
-
-    const [toastMsg, setToastMsg] =
-        useState('');
-
-    const [toastShow, setToastShow] =
-        useState(false);
-
-
-    // ==========================================================
-    // FORMULARIO ADMINISTRATIVO
-    // ==========================================================
+    const [toastMsg, setToastMsg] = useState('');
+    const [toastShow, setToastShow] = useState(false);
 
     const [newJobForm, setNewJobForm] = useState({
         title: '',
@@ -488,13 +388,9 @@ export default function App() {
         desc: '',
         responsibilities: '',
         requirements: '',
-        offers: ''
+        offers: '',
+        status: 'Activa'
     });
-
-
-    // ==========================================================
-    // NAVEGACIÓN
-    // ==========================================================
 
     const navigateTo = (nextScreen, data = null) => {
 
@@ -517,7 +413,6 @@ export default function App() {
         });
     };
 
-
     const goBack = () => {
 
         if (screenHistory.length > 0) {
@@ -534,14 +429,8 @@ export default function App() {
         } else {
 
             setScreen('home');
-
         }
     };
-
-
-    // ==========================================================
-    // NAVEGACIÓN ADMIN
-    // ==========================================================
 
     const handleAdminNavigation = tab => {
 
@@ -553,18 +442,11 @@ export default function App() {
         });
     };
 
-
-    // ==========================================================
-    // TOAST
-    // ==========================================================
-
     const showToast = msg => {
 
         setToastMsg(msg);
         setToastShow(true);
-
     };
-
 
     useEffect(() => {
 
@@ -577,11 +459,6 @@ export default function App() {
         return () => clearTimeout(timer);
 
     }, [toastShow]);
-
-
-    // ==========================================================
-    // CERRAR MENÚ DEL USUARIO
-    // ==========================================================
 
     useEffect(() => {
 
@@ -603,11 +480,6 @@ export default function App() {
 
     }, [userMenuOpen]);
 
-
-    // ==========================================================
-    // LOGIN
-    // ==========================================================
-
     const handleLoginSubmit = e => {
 
         e.preventDefault();
@@ -618,7 +490,6 @@ export default function App() {
         ) {
             return;
         }
-
 
         if (
             loginEmail.toLowerCase() ===
@@ -635,13 +506,9 @@ export default function App() {
             };
 
             setCurrentUser(adminUser);
-
             setLoginOpen(false);
-
             setAdminTab('Dashboard');
-
             setScreenHistory([]);
-
             setScreen('admin');
 
             showToast(
@@ -656,7 +523,6 @@ export default function App() {
             return;
         }
 
-
         const normalUser = {
             email: loginEmail,
             role: 'user',
@@ -667,7 +533,6 @@ export default function App() {
         };
 
         setCurrentUser(normalUser);
-
         setLoginOpen(false);
 
         showToast(
@@ -676,23 +541,14 @@ export default function App() {
         );
 
         setScreenHistory([]);
-
         navigateTo('home');
     };
-
-
-    // ==========================================================
-    // LOGOUT
-    // ==========================================================
 
     const handleLogout = () => {
 
         setCurrentUser(null);
-
         setAdminTab('Dashboard');
-
         setScreenHistory([]);
-
         setScreen('home');
 
         showToast('❌ Sesión cerrada');
@@ -702,11 +558,6 @@ export default function App() {
             behavior: 'smooth'
         });
     };
-
-
-    // ==========================================================
-    // FAVORITOS
-    // ==========================================================
 
     const toggleSaveJob = id => {
 
@@ -733,11 +584,6 @@ export default function App() {
         }
     };
 
-
-    // ==========================================================
-    // POSTULACIONES
-    // ==========================================================
-
     const handleVolunteerApplyClick = spot => {
 
         setApplyFlowType('volunteer');
@@ -746,7 +592,6 @@ export default function App() {
 
         navigateTo('form');
     };
-
 
     const handleStudentApplyClick = spot => {
 
@@ -757,17 +602,11 @@ export default function App() {
         navigateTo('form');
     };
 
-
-    // ==========================================================
-    // ENVÍO DE POSTULACIÓN
-    // ==========================================================
-
     const handleSubmitApplication = () => {
 
         const target = applyFlowTarget;
 
         if (!target) return;
-
 
         if (applyFlowType === 'job') {
 
@@ -814,7 +653,6 @@ export default function App() {
             return;
         }
 
-
         if (applyFlowType === 'volunteer') {
 
             setVolunteerApps(prev => [
@@ -833,7 +671,6 @@ export default function App() {
             return;
         }
 
-
         if (applyFlowType === 'student') {
 
             setStudentApps(prev => [
@@ -848,15 +685,8 @@ export default function App() {
             });
 
             goBack();
-
-            return;
         }
     };
-
-
-    // ==========================================================
-    // CREAR VACANTE
-    // ==========================================================
 
     const handleCreateJob = e => {
 
@@ -871,14 +701,12 @@ export default function App() {
             return;
         }
 
-
         const newId =
             jobs.length > 0
                 ? Math.max(
                     ...jobs.map(job => job.id)
                 ) + 1
                 : 1;
-
 
         const addedJob = {
 
@@ -903,6 +731,10 @@ export default function App() {
             views: 1,
 
             compat: 95,
+
+            status:
+                newJobForm.status ||
+                'Activa',
 
             desc: newJobForm.desc,
 
@@ -931,20 +763,16 @@ export default function App() {
                     : []
         };
 
-
         setJobs(prev => [
             addedJob,
             ...prev
         ]);
 
-
         showToast(
             '✓ Vacante publicada exitosamente'
         );
 
-
         setNewJobForm({
-
             title: '',
             org: 'Fundación Quintanilla Amaya',
             location: 'San Salvador',
@@ -954,15 +782,10 @@ export default function App() {
             desc: '',
             responsibilities: '',
             requirements: '',
-            offers: ''
-
+            offers: '',
+            status: 'Activa'
         });
     };
-
-
-    // ==========================================================
-    // ELIMINAR VACANTE
-    // ==========================================================
 
     const handleAdminDeleteJob = id => {
 
@@ -975,43 +798,49 @@ export default function App() {
         );
     };
 
-
-    // ==========================================================
-    // ACTUALIZAR ESTADO POSTULACIÓN
-    // ==========================================================
-
     const handleUpdateAppStatus = (
         appId,
         newStatus
     ) => {
 
         setApplications(prev =>
-            prev.map(app => {
-
-                if (app.id === appId) {
-
-                    return {
+            prev.map(app =>
+                app.id === appId
+                    ? {
                         ...app,
                         status: newStatus
-                    };
-                }
-
-                return app;
-
-            })
+                    }
+                    : app
+            )
         );
 
         showToast(
-            '✓ Estado actualizado a: ' +
-            newStatus
+            `✓ Estado actualizado a: ${newStatus}`
         );
     };
 
+    const handleToggleJobStatus = (jobId, newStatus) => {
 
-    // ==========================================================
-    // FILTROS
-    // ==========================================================
+    setJobs(prevJobs =>
+        prevJobs.map(job => {
 
+            if (job.id !== jobId) {
+                return job;
+            }
+
+            return {
+                ...job,
+                status: newStatus,
+                estado: newStatus,
+                draft: newStatus === 'Borrador'
+            };
+        })
+    );
+
+    showToast(
+        `✓ Estado de vacante actualizado a: ${newStatus}`
+    );
+};
     const filteredJobs = jobs.filter(job => {
 
         const query =
@@ -1025,21 +854,15 @@ export default function App() {
                 .toLowerCase()
                 .includes(query);
 
-
         const matchLoc =
-            searchLocation ===
-                'Todo el país'
+            searchLocation === 'Todo el país'
                 ? true
-                : job.location ===
-                    searchLocation;
-
+                : job.location === searchLocation;
 
         const matchArea =
             selectedArea === 'Todos'
                 ? true
-                : job.area ===
-                    selectedArea;
-
+                : job.area === selectedArea;
 
         return (
             matchQuery &&
@@ -1047,11 +870,6 @@ export default function App() {
             matchArea
         );
     });
-
-
-    // ==========================================================
-    // LOGIN
-    // ==========================================================
 
     if (screen === 'login') {
 
@@ -1064,11 +882,6 @@ export default function App() {
         );
     }
 
-
-    // ==========================================================
-    // REGISTRO
-    // ==========================================================
-
     if (screen === 'register') {
 
         return (
@@ -1080,18 +893,9 @@ export default function App() {
         );
     }
 
-
-    // ==========================================================
-    // RENDER
-    // ==========================================================
-
     return (
 
         <div id="app">
-
-            {/* ======================================================
-                NAVBAR
-            ====================================================== */}
 
             <Navbar
                 screen={screen}
@@ -1102,11 +906,6 @@ export default function App() {
                 setScreen={setScreen}
                 handleLogout={handleLogout}
             />
-
-
-            {/* ======================================================
-                BREADCRUMB
-            ====================================================== */}
 
             {screen !== 'home' &&
                 screen !== 'admin' && (
@@ -1127,13 +926,11 @@ export default function App() {
                             ›
                         </span>
 
-
                         {screen === 'jobs' && (
                             <span className="bcur">
                                 Bolsa de Empleo
                             </span>
                         )}
-
 
                         {screen === 'detail' && (
                             <>
@@ -1154,7 +951,6 @@ export default function App() {
                                 </span>
                             </>
                         )}
-
 
                         {screen === 'form' && (
                             <>
@@ -1186,13 +982,11 @@ export default function App() {
                             </>
                         )}
 
-
                         {screen === 'confirm' && (
                             <span className="bcur">
                                 Confirmación
                             </span>
                         )}
-
 
                         {screen === 'volunteers' && (
                             <span className="bcur">
@@ -1200,20 +994,17 @@ export default function App() {
                             </span>
                         )}
 
-
                         {screen === 'students' && (
                             <span className="bcur">
                                 Oportunidades para Estudiantes
                             </span>
                         )}
 
-
                         {screen === 'nosotros' && (
                             <span className="bcur">
                                 Nuestra misión
                             </span>
                         )}
-
 
                         {screen === 'profile' && (
                             <span className="bcur">
@@ -1222,7 +1013,6 @@ export default function App() {
                         )}
 
                     </div>
-
 
                     <button
                         className="back-link-btn"
@@ -1234,18 +1024,9 @@ export default function App() {
                 </div>
             )}
 
-
-            {/* ======================================================
-                CONTENEDOR DE PANTALLAS
-            ====================================================== */}
-
             <div className="screen-container">
 
-
-                {/* HOME */}
-
                 {screen === 'home' && (
-
                     <Home
                         jobs={jobs}
                         savedJobs={savedJobs}
@@ -1259,14 +1040,9 @@ export default function App() {
                         setSearchLocation={setSearchLocation}
                         setSelectedArea={setSelectedArea}
                     />
-
                 )}
 
-
-                {/* EMPLEOS */}
-
                 {screen === 'jobs' && (
-
                     <JobsListing
                         filteredJobs={filteredJobs}
                         selectedJob={selectedJob}
@@ -1281,14 +1057,9 @@ export default function App() {
                         setMaxSalary={setMaxSalary}
                         showToast={showToast}
                     />
-
                 )}
 
-
-                {/* DETALLE */}
-
                 {screen === 'detail' && (
-
                     <JobDetail
                         selectedJob={selectedJob}
                         savedJobs={savedJobs}
@@ -1296,14 +1067,9 @@ export default function App() {
                         navigateTo={navigateTo}
                         setFormStep={setFormStep}
                     />
-
                 )}
 
-
-                {/* FORMULARIO */}
-
                 {screen === 'form' && (
-
                     <FormFlow
                         applyingTo={applyFlowTarget}
                         formStep={formStep}
@@ -1317,14 +1083,9 @@ export default function App() {
                         onSubmitApplication={handleSubmitApplication}
                         showToast={showToast}
                     />
-
                 )}
 
-
-                {/* CONFIRMACIÓN */}
-
                 {screen === 'confirm' && (
-
                     <Confirmation
                         applications={applications}
                         currentUser={currentUser}
@@ -1332,14 +1093,9 @@ export default function App() {
                         navigateTo={navigateTo}
                         formPersonal={formPersonal}
                     />
-
                 )}
 
-
-                {/* VOLUNTARIADO */}
-
                 {screen === 'volunteers' && (
-
                     <Volunteers
                         volunteerSpots={volunteerSpots}
                         volunteerApps={volunteerApps}
@@ -1348,14 +1104,9 @@ export default function App() {
                             handleVolunteerApplyClick
                         }
                     />
-
                 )}
 
-
-                {/* ESTUDIANTES */}
-
                 {screen === 'students' && (
-
                     <Students
                         studentSpots={studentSpots}
                         studentApps={studentApps}
@@ -1365,21 +1116,13 @@ export default function App() {
                             handleStudentApplyClick
                         }
                     />
-
                 )}
-
-
-                {/* NOSOTROS */}
 
                 {screen === 'nosotros' && (
                     <Nosotros />
                 )}
 
-
-                {/* PERFIL */}
-
                 {screen === 'profile' && (
-
                     <CandidateProfile
                         currentUser={currentUser}
                         handleLogout={handleLogout}
@@ -1399,20 +1142,13 @@ export default function App() {
                         setUploadedCVName={setUploadedCVName}
                         showToast={showToast}
                     />
-
                 )}
-
-
-                {/* ============================================================
-                    PANEL ADMINISTRATIVO
-                ============================================================ */}
 
                 {screen === 'admin' && (
 
                     <>
 
                         {adminTab === 'Dashboard' && (
-
                             <AdminDashboard
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
@@ -1441,65 +1177,48 @@ export default function App() {
                                     handleUpdateAppStatus
                                 }
                             />
-
                         )}
 
-
                         {adminTab === 'Usuarios' && (
-
                             <Users
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
                                 adminTab={adminTab}
                                 setAdminTab={handleAdminNavigation}
                             />
-
                         )}
 
-
                         {adminTab === 'Nueva Postulación' && (
-
                             <NuevaPostulacion
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
                                 adminTab={adminTab}
                                 setAdminTab={handleAdminNavigation}
-
                                 jobs={jobs}
                                 setJobs={setJobs}
-
                                 showToast={showToast}
                             />
-
                         )}
 
-
                         {adminTab === 'Organizaciones' && (
-
                             <Organizaciones
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
                                 adminTab={adminTab}
                                 setAdminTab={handleAdminNavigation}
                             />
-
                         )}
 
-
                         {adminTab === 'Categorías' && (
-
                             <Categorias
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
                                 adminTab={adminTab}
                                 setAdminTab={handleAdminNavigation}
                             />
-
                         )}
 
-
                         {adminTab === 'Administrar Postulaciones' && (
-
                             <AdministrarPostulaciones
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
@@ -1510,12 +1229,9 @@ export default function App() {
                                     handleUpdateAppStatus
                                 }
                             />
-
                         )}
 
-
                         {adminTab === 'CV Recibidos' && (
-
                             <CVRecibidos
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
@@ -1523,12 +1239,9 @@ export default function App() {
                                 setAdminTab={handleAdminNavigation}
                                 applications={applications}
                             />
-
                         )}
 
-
                         {adminTab === 'Estadísticas' && (
-
                             <Estadisticas
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
@@ -1537,31 +1250,21 @@ export default function App() {
                                 applications={applications}
                                 jobs={jobs}
                             />
-
                         )}
 
-
                         {adminTab === 'Configuración' && (
-
                             <Configuracion
                                 currentUser={currentUser}
                                 handleLogout={handleLogout}
                                 adminTab={adminTab}
                                 setAdminTab={handleAdminNavigation}
                             />
-
                         )}
 
                     </>
-
                 )}
 
             </div>
-
-
-            {/* ======================================================
-                QUICK VIEW
-            ====================================================== */}
 
             {qvOpen && qvJob && (
 
@@ -1591,55 +1294,15 @@ export default function App() {
                                 {qvJob.location}
                             </div>
 
-                            <div className="qv-badges">
-
-                                <span className="qv-badge">
-                                    📚 {qvJob.area}
-                                </span>
-
-                                <span className="qv-badge">
-                                    ⏱ {qvJob.type}
-                                </span>
-
-                                <span className="qv-badge">
-                                    💰 {qvJob.salary}
-                                </span>
-
-                            </div>
-
                         </div>
 
-
                         <div className="qv-body">
-
-                            <p className="qv-sec">
-                                Sobre el rol
-                            </p>
 
                             <p>
                                 {qvJob.desc}
                             </p>
 
-                            <p className="qv-sec">
-                                Requisitos mínimos
-                            </p>
-
-                            <ul className="qv-list">
-
-                                {qvJob.requirements?.map(
-                                    (req, idx) => (
-
-                                        <li key={idx}>
-                                            {req}
-                                        </li>
-
-                                    )
-                                )}
-
-                            </ul>
-
                         </div>
-
 
                         <div className="qv-footer">
 
@@ -1648,11 +1311,8 @@ export default function App() {
                                 onClick={() => {
 
                                     setQvOpen(false);
-
                                     setApplyFlowType('job');
-
                                     setApplyFlowTarget(qvJob);
-
                                     setFormStep(1);
 
                                     navigateTo('form');
@@ -1661,7 +1321,6 @@ export default function App() {
                             >
                                 Aplicar ahora →
                             </button>
-
 
                             <button
                                 className="qv-close"
@@ -1677,13 +1336,7 @@ export default function App() {
                     </div>
 
                 </div>
-
             )}
-
-
-            {/* ======================================================
-                LOGIN MODAL
-            ====================================================== */}
 
             {loginOpen && (
 
@@ -1708,7 +1361,6 @@ export default function App() {
                         <p>
                             Accede de forma segura al portal con tu dirección de correo electrónico institucional o personal.
                         </p>
-
 
                         <form
                             onSubmit={handleLoginSubmit}
@@ -1741,7 +1393,6 @@ export default function App() {
 
                             </div>
 
-
                             <div
                                 style={{
                                     display: 'flex',
@@ -1768,7 +1419,6 @@ export default function App() {
 
                             </div>
 
-
                             <div className="modal-actions">
 
                                 <button
@@ -1791,7 +1441,6 @@ export default function App() {
                             </div>
 
                         </form>
-
 
                         <div className="login-hint">
 
@@ -1823,13 +1472,7 @@ export default function App() {
                     </div>
 
                 </div>
-
             )}
-
-
-            {/* ======================================================
-                ORGANIZACIÓN DE VOLUNTARIADO
-            ====================================================== */}
 
             {selectedOrg && (
 
@@ -1851,37 +1494,8 @@ export default function App() {
                             Sobre {selectedOrg.org}
                         </h3>
 
-                        <p
-                            style={{
-                                fontStyle: 'italic',
-                                color: 'var(--c500)'
-                            }}
-                        >
-                            Eje de impacto:{' '}
-                            {selectedOrg.area}
-                        </p>
-
-                        <p
-                            style={{
-                                marginTop: '10px',
-                                fontSize: '13.5px',
-                                color: 'var(--c700)'
-                            }}
-                        >
+                        <p>
                             {selectedOrg.orgInfo}
-                        </p>
-
-                        <p
-                            style={{
-                                marginTop: '10px',
-                                fontSize: '12px',
-                                color: 'var(--c400)'
-                            }}
-                        >
-                            <strong>
-                                Ubicación de cobertura:
-                            </strong>{' '}
-                            {selectedOrg.location}
                         </p>
 
                         <div className="modal-actions">
@@ -1900,13 +1514,7 @@ export default function App() {
                     </div>
 
                 </div>
-
             )}
-
-
-            {/* ======================================================
-                POSTULACIÓN EXITOSA
-            ====================================================== */}
 
             {volSuccessContact && (
 
@@ -1924,26 +1532,9 @@ export default function App() {
                         }
                     >
 
-                        <div
-                            style={{
-                                textAlign: 'center',
-                                marginBottom: '15px'
-                            }}
-                        >
-                            <span
-                                style={{
-                                    fontSize: '40px'
-                                }}
-                            >
-                                🎉
-                            </span>
-                        </div>
-
-
                         <h3>
                             ¡Postulación Enviada!
                         </h3>
-
 
                         <p>
                             Tu solicitud para participar en{' '}
@@ -1952,49 +1543,6 @@ export default function App() {
                             </strong>{' '}
                             ha sido registrada con éxito.
                         </p>
-
-
-                        <div
-                            style={{
-                                background: 'var(--gl)',
-                                padding: '15px',
-                                borderRadius: 'var(--rad)',
-                                marginBottom: '15px',
-                                textAlign: 'center'
-                            }}
-                        >
-
-                            <p
-                                style={{
-                                    fontSize: '12px',
-                                    color: 'var(--c500)',
-                                    marginBottom: '5px'
-                                }}
-                            >
-                                Comunícate directamente al número del administrador:
-                            </p>
-
-                            <strong
-                                style={{
-                                    fontSize: '20px',
-                                    color: 'var(--gd)'
-                                }}
-                            >
-                                {volSuccessContact.contact}
-                            </strong>
-
-                            <p
-                                style={{
-                                    fontSize: '11px',
-                                    color: 'var(--c400)',
-                                    marginTop: '5px'
-                                }}
-                            >
-                                O bien, espera pacientemente a que se comuniquen contigo.
-                            </p>
-
-                        </div>
-
 
                         <div className="modal-actions">
 
@@ -2012,13 +1560,7 @@ export default function App() {
                     </div>
 
                 </div>
-
             )}
-
-
-            {/* ======================================================
-                TOAST
-            ====================================================== */}
 
             <div
                 className={`toast ${

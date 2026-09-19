@@ -16,6 +16,7 @@ import Categorias from "./Categorias";
 import Estadisticas from "./Estadisticas";
 import Users from "./Users";
 import Configuracion from "./configuracion";
+
 function AdminDashboard({
     currentUser,
     handleLogout,
@@ -38,25 +39,27 @@ function AdminDashboard({
     updateConfigurations,
     resetConfiguration,
 }) {
-    // =========================================================
-    // ESTADOS
-    // =========================================================
 
-    const [activeMenu, setActiveMenu] = useState("Dashboard");
+    const [activeMenu, setActiveMenu] =
+        useState("Dashboard");
 
-    const [menuHistory, setMenuHistory] = useState([]);
+    const [menuHistory, setMenuHistory] =
+        useState([]);
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] =
+        useState("");
 
-    const [notifications, setNotifications] = useState(false);
+    const [notifications, setNotifications] =
+        useState(false);
 
-    const [editingJobId, setEditingJobId] = useState(null);
+    const [editingJobId, setEditingJobId] =
+        useState(null);
 
     const [stats, setStats] = useState({
         vacantes: 0,
         cvs: 0,
-        empresas: 0,
-        usuarios: 0,
+        empresas: 18,
+        usuarios: 4,
     });
 
     // =========================================================
@@ -64,6 +67,7 @@ function AdminDashboard({
     // =========================================================
 
     useEffect(() => {
+
         const objetivos = {
             vacantes: jobs.length,
             cvs: applications.length,
@@ -71,76 +75,84 @@ function AdminDashboard({
             usuarios: 4,
         };
 
-        const duration = 1000;
+        const duration = 700;
         const startTime = Date.now();
 
         let animationFrame;
 
         const animate = () => {
-            const elapsed = Date.now() - startTime;
 
-            const progress = Math.min(
-                elapsed / duration,
-                1
-            );
+            const elapsed =
+                Date.now() - startTime;
+
+            const progress =
+                Math.min(
+                    elapsed / duration,
+                    1
+                );
 
             setStats({
-                vacantes: Math.floor(
-                    objetivos.vacantes * progress
-                ),
+                vacantes:
+                    Math.floor(
+                        objetivos.vacantes *
+                        progress
+                    ),
 
-                cvs: Math.floor(
-                    objetivos.cvs * progress
-                ),
+                cvs:
+                    Math.floor(
+                        objetivos.cvs *
+                        progress
+                    ),
 
-                empresas: Math.floor(
-                    objetivos.empresas * progress
-                ),
+                empresas:
+                    objetivos.empresas,
 
-                usuarios: Math.floor(
-                    objetivos.usuarios * progress
-                ),
+                usuarios:
+                    objetivos.usuarios,
             });
 
             if (progress < 1) {
+
                 animationFrame =
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(
+                        animate
+                    );
             }
         };
 
         animate();
 
         return () => {
+
             if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
+                cancelAnimationFrame(
+                    animationFrame
+                );
             }
         };
-    }, [jobs, applications]);
+
+    }, [jobs.length, applications.length]);
 
     // =========================================================
     // NAVEGACIÓN
     // =========================================================
 
-    const navegarA = (nombre) => {
-        if (!nombre) {
-            return;
-        }
+    const navegarA = nombre => {
 
-        if (nombre === activeMenu) {
-            return;
-        }
+        if (!nombre) return;
 
-        setMenuHistory((historialAnterior) => [
-            ...historialAnterior,
-            activeMenu,
+        if (nombre === activeMenu) return;
+
+        setMenuHistory(previous => [
+            ...previous,
+            activeMenu
         ]);
 
         setActiveMenu(nombre);
-
         setSearch("");
     };
 
-    const handleMenuClick = (name) => {
+    const handleMenuClick = name => {
         navegarA(name);
     };
 
@@ -149,7 +161,9 @@ function AdminDashboard({
     // =========================================================
 
     const handleBack = () => {
+
         if (menuHistory.length === 0) {
+
             setActiveMenu("Dashboard");
             setEditingJobId(null);
             setSearch("");
@@ -157,23 +171,21 @@ function AdminDashboard({
             return;
         }
 
-        const historialAnterior = [
-            ...menuHistory,
+        const historyCopy = [
+            ...menuHistory
         ];
 
         const previousScreen =
-            historialAnterior.pop();
+            historyCopy.pop();
 
-        setMenuHistory(historialAnterior);
-
+        setMenuHistory(historyCopy);
         setActiveMenu(previousScreen);
-
         setSearch("");
-
         setEditingJobId(null);
     };
 
     const handleBackFromNewJob = () => {
+
         setEditingJobId(null);
 
         handleBack();
@@ -183,16 +195,60 @@ function AdminDashboard({
     // GUARDAR BORRADOR
     // =========================================================
 
-    const handleDraft = () => {
+    const handleDraft = async () => {
+
         if (!newJobForm?.title?.trim()) {
-            return;
+
+            return {
+                success: false,
+                message:
+                    "No se pudo guardar el borrador porque falta ingresar el título de la vacante."
+            };
         }
 
         if (
-            typeof handleSaveDraft ===
+            typeof handleSaveDraft !==
             "function"
         ) {
-            handleSaveDraft();
+
+            return {
+                success: false,
+                message:
+                    "No se pudo guardar el borrador porque la función para guardar borradores no está disponible."
+            };
+        }
+
+        try {
+
+            const resultado =
+                await handleSaveDraft();
+
+            if (
+                resultado &&
+                typeof resultado === "object"
+            ) {
+                return resultado;
+            }
+
+            return {
+                success: true,
+                message:
+                    "El borrador se guardó correctamente."
+            };
+
+        } catch (error) {
+
+            console.error(
+                "Error al guardar el borrador:",
+                error
+            );
+
+            return {
+                success: false,
+                message:
+                    error?.message ||
+                    "No se pudo guardar el borrador. Ocurrió un error durante el proceso."
+            };
         }
     };
 
@@ -200,10 +256,9 @@ function AdminDashboard({
     // EDITAR VACANTE
     // =========================================================
 
-    const handleEditJob = (job) => {
-        if (!job) {
-            return;
-        }
+    const handleEditJob = job => {
+
+        if (!job) return;
 
         setEditingJobId(job.id);
 
@@ -211,7 +266,9 @@ function AdminDashboard({
             typeof setNewJobForm ===
             "function"
         ) {
+
             setNewJobForm({
+
                 title: job.title || "",
 
                 org: job.org || "",
@@ -242,40 +299,34 @@ function AdminDashboard({
                     Array.isArray(
                         job.responsibilities
                     )
-                        ? job.responsibilities.join(
-                            ", "
-                        )
-                        : job.responsibilities ||
-                        "",
+                        ? job.responsibilities.join(", ")
+                        : job.responsibilities || "",
 
                 requirements:
                     Array.isArray(
                         job.requirements
                     )
-                        ? job.requirements.join(
-                            ", "
-                        )
-                        : job.requirements ||
-                        "",
+                        ? job.requirements.join(", ")
+                        : job.requirements || "",
 
                 offers:
                     Array.isArray(
                         job.offers
                     )
-                        ? job.offers.join(
-                            ", "
-                        )
-                        : job.offers ||
-                        "",
+                        ? job.offers.join(", ")
+                        : job.offers || "",
+
+                status:
+                    job.status ||
+                    job.estado ||
+                    "Activa",
             });
         }
 
-        setMenuHistory(
-            (previous) => [
-                ...previous,
-                "Administrar Postulaciones",
-            ]
-        );
+        setMenuHistory(previous => [
+            ...previous,
+            "Administrar Postulaciones"
+        ]);
 
         setActiveMenu(
             "Nueva Postulación"
@@ -288,29 +339,156 @@ function AdminDashboard({
     // CREAR / ACTUALIZAR VACANTE
     // =========================================================
 
-    const handleSubmitJob = (event) => {
-        if (editingJobId !== null) {
-            if (
-                typeof handleUpdateJob ===
-                "function"
-            ) {
-                handleUpdateJob(
-                    editingJobId,
-                    newJobForm,
-                    event
-                );
+    const handleSubmitJob = async (event) => {
 
-                setEditingJobId(null);
-            }
-
-            return;
+        // Evita el error cuando existe un evento real
+        if (event?.preventDefault) {
+            event.preventDefault();
         }
 
+        // =====================================================
+        // EDITAR VACANTE
+        // =====================================================
+
+        if (editingJobId !== null) {
+
+            if (
+                typeof handleUpdateJob !==
+                "function"
+            ) {
+
+                return {
+                    success: false,
+                    message:
+                        "No se pudo actualizar la vacante porque la función de actualización no está disponible."
+                };
+            }
+
+            try {
+
+                const resultado =
+                    await handleUpdateJob(
+                        editingJobId,
+                        newJobForm,
+                        event
+                    );
+
+                setEditingJobId(null);
+
+                if (
+                    resultado &&
+                    typeof resultado === "object"
+                ) {
+
+                    return resultado;
+                }
+
+                return {
+                    success: true,
+                    message:
+                        "La vacante fue actualizada correctamente."
+                };
+
+            } catch (error) {
+
+                console.error(
+                    "Error al actualizar la vacante:",
+                    error
+                );
+
+                return {
+                    success: false,
+                    message:
+                        error?.message ||
+                        "No se pudo actualizar la vacante. Ocurrió un error durante el proceso."
+                };
+            }
+        }
+
+        // =====================================================
+        // CREAR NUEVA VACANTE
+        // =====================================================
+
         if (
-            typeof handleCreateJob ===
+            typeof handleCreateJob !==
             "function"
         ) {
-            handleCreateJob(event);
+
+            return {
+                success: false,
+                message:
+                    "No se pudo publicar la vacante porque la función de creación no está disponible."
+            };
+        }
+
+        try {
+
+            /*
+             * NuevaPostulacion llama:
+             *
+             * onPublish()
+             *
+             * Por eso no existe un evento real.
+             *
+             * Se crea un objeto compatible para evitar
+             * el error:
+             *
+             * Cannot read properties of undefined
+             * (reading 'preventDefault')
+             */
+
+            const eventoSeguro = {
+                preventDefault: () => {}
+            };
+
+            const resultado =
+                await handleCreateJob(
+                    eventoSeguro
+                );
+
+            if (
+                resultado &&
+                typeof resultado === "object"
+            ) {
+
+                return resultado;
+            }
+
+            return {
+                success: true,
+                message:
+                    "La vacante fue publicada correctamente."
+            };
+
+        } catch (error) {
+
+            console.error(
+                "Error al publicar la vacante:",
+                error
+            );
+
+            let mensaje =
+                "No se pudo publicar la vacante. Ocurrió un error durante el proceso.";
+
+            if (
+                error?.response?.data?.message
+            ) {
+
+                mensaje =
+                    error.response.data.message;
+
+            } else if (
+                error?.message
+            ) {
+
+                mensaje =
+                    error.message;
+            }
+
+            return {
+                success: false,
+                message: mensaje
+            };
         }
     };
 
@@ -319,6 +497,7 @@ function AdminDashboard({
     // =========================================================
 
     const handleNotifications = () => {
+
         setNotifications(true);
 
         setTimeout(() => {
@@ -327,47 +506,115 @@ function AdminDashboard({
     };
 
     // =========================================================
+    // OBTENER ESTADO DE VACANTE
+    // =========================================================
+
+    const obtenerEstadoVacante = job => {
+
+        const estado =
+            job?.status ||
+            job?.estado ||
+            "Activa";
+
+        const estadosValidos = [
+            "Activa",
+            "Inactiva",
+            "Cerrada",
+            "Borrador"
+        ];
+
+        if (
+            estadosValidos.includes(
+                estado
+            )
+        ) {
+
+            return estado;
+        }
+
+        return "Activa";
+    };
+
+    // =========================================================
+    // CLASE DEL ESTADO
+    // =========================================================
+
+    const obtenerClaseEstado = estado => {
+
+        switch (estado) {
+
+            case "Activa":
+                return "status-active";
+
+            case "Inactiva":
+                return "status-inactive";
+
+            case "Cerrada":
+                return "status-closed";
+
+            case "Borrador":
+                return "status-draft";
+
+            default:
+                return "status-active";
+        }
+    };
+
+    // =========================================================
     // DASHBOARD
     // =========================================================
 
     const renderDashboard = () => {
+
         const vacantesActividad =
             jobs
                 .slice(0, 10)
-                .map((job) => ({
-                    id: job.id,
+                .map(job => {
 
-                    puesto:
-                        job.title ||
-                        "Sin título",
+                    const estado =
+                        obtenerEstadoVacante(
+                            job
+                        );
 
-                    empresa:
-                        job.org ||
-                        "Sin organización",
+                    return {
 
-                    estado:
-                        job.status ||
-                        "Activa",
+                        id: job.id,
 
-                    candidatos:
-                        job.views || 0,
-                }));
+                        puesto:
+                            job.title ||
+                            "Sin título",
+
+                        empresa:
+                            job.org ||
+                            "Sin organización",
+
+                        estado,
+
+                        candidatos:
+                            job.views ||
+                            job.applicants ||
+                            0,
+                    };
+                });
 
         const filteredVacantes =
-            vacantesActividad.filter(
-                (item) =>
-                    `${item.puesto} ${item.empresa} ${item.estado} ${item.candidatos}`
-                        .toLowerCase()
-                        .includes(
-                            search.toLowerCase()
-                        )
-            );
+            vacantesActividad.filter(item => {
+
+                const texto =
+                    `${item.puesto}
+                    ${item.empresa}
+                    ${item.estado}
+                    ${item.candidatos}`;
+
+                return texto
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    );
+            });
 
         return (
             <>
-                {/* =================================================
-                    TARJETAS
-                ================================================= */}
 
                 <div className="cards">
 
@@ -385,7 +632,6 @@ function AdminDashboard({
                         </span>
                     </div>
 
-
                     <div className="card">
                         <span>
                             CV recibidos
@@ -400,7 +646,6 @@ function AdminDashboard({
                         </span>
                     </div>
 
-
                     <div className="card">
                         <span>
                             Organizaciones
@@ -414,7 +659,6 @@ function AdminDashboard({
                             Organizaciones registradas
                         </span>
                     </div>
-
 
                     <div className="card">
                         <span>
@@ -432,16 +676,7 @@ function AdminDashboard({
 
                 </div>
 
-
-                {/* =================================================
-                    COLUMNAS DEL DASHBOARD
-                ================================================= */}
-
                 <div className="dashboard-grid">
-
-                    {/* =================================================
-                        VACANTES RECIENTES
-                    ================================================= */}
 
                     <div className="table-box">
 
@@ -460,9 +695,6 @@ function AdminDashboard({
 
                             </div>
 
-
-                            {/* BOTÓN VER TODAS */}
-
                             <button
                                 type="button"
                                 onClick={() =>
@@ -476,11 +708,9 @@ function AdminDashboard({
 
                         </div>
 
-
                         <div className="table-responsive">
 
-                            {filteredVacantes.length ===
-                                0 ? (
+                            {filteredVacantes.length === 0 ? (
 
                                 <div className="empty">
                                     No hay vacantes
@@ -515,11 +745,10 @@ function AdminDashboard({
 
                                     </thead>
 
-
                                     <tbody>
 
                                         {filteredVacantes.map(
-                                            (item) => (
+                                            item => (
 
                                                 <tr
                                                     key={
@@ -541,7 +770,13 @@ function AdminDashboard({
 
                                                     <td>
 
-                                                        <span className="status">
+                                                        <span
+                                                            className={
+                                                                `status ${obtenerClaseEstado(
+                                                                    item.estado
+                                                                )}`
+                                                            }
+                                                        >
                                                             {
                                                                 item.estado
                                                             }
@@ -563,17 +798,11 @@ function AdminDashboard({
                                     </tbody>
 
                                 </table>
-
                             )}
 
                         </div>
 
                     </div>
-
-
-                    {/* =================================================
-                        ATENCIÓN REQUERIDA
-                    ================================================= */}
 
                     <div className="attention-box">
 
@@ -593,10 +822,7 @@ function AdminDashboard({
 
                         </div>
 
-
                         <div className="attention-list">
-
-                            {/* POSTULACIONES */}
 
                             <button
                                 type="button"
@@ -633,9 +859,6 @@ function AdminDashboard({
 
                             </button>
 
-
-                            {/* CV RECIBIDOS */}
-
                             <button
                                 type="button"
                                 className="attention-item"
@@ -670,9 +893,6 @@ function AdminDashboard({
                                 </div>
 
                             </button>
-
-
-                            {/* NUEVA POSTULACIÓN */}
 
                             <button
                                 type="button"
@@ -712,54 +932,61 @@ function AdminDashboard({
                     </div>
 
                 </div>
+
             </>
         );
     };
 
     // =========================================================
-    // CONTENIDO SEGÚN MENÚ
+    // CONTENIDO
     // =========================================================
 
     const renderContent = () => {
+
         switch (activeMenu) {
 
             case "Dashboard":
 
                 return renderDashboard();
 
-
             case "Nueva Postulación":
 
                 return (
                     <NuevaPostulacion
-                        newJobForm={
-                            newJobForm
-                        }
+    newJobForm={
+        newJobForm
+    }
 
-                        setNewJobForm={
-                            setNewJobForm
-                        }
+    setNewJobForm={
+        setNewJobForm
+    }
 
-                        onPublish={
-                            handleSubmitJob
-                        }
+    onPublish={
+        handleSubmitJob
+    }
 
-                        onSaveDraft={
-                            handleDraft
-                        }
+    onSaveDraft={
+        handleDraft
+    }
 
-                        onBack={
-                            handleBackFromNewJob
-                        }
-                    />
+    onBack={
+        handleBackFromNewJob
+    }
+
+    isEditing={
+        editingJobId !== null
+    }
+/>
                 );
-
 
             case "Administrar Postulaciones":
 
                 return (
                     <AdministrarPostulaciones
-                        jobs={jobs}
+
+                        jobs={
+                            jobs
+                        }
 
                         applications={
                             applications
@@ -784,9 +1011,9 @@ function AdminDashboard({
                         setAdminTab={
                             setActiveMenu
                         }
+
                     />
                 );
-
 
             case "CV Recibidos":
 
@@ -796,7 +1023,9 @@ function AdminDashboard({
                             applications
                         }
 
-                        jobs={jobs}
+                        jobs={
+                            jobs
+                        }
 
                         adminTab={
                             activeMenu
@@ -807,7 +1036,6 @@ function AdminDashboard({
                         }
                     />
                 );
-
 
             case "Organizaciones":
 
@@ -822,7 +1050,6 @@ function AdminDashboard({
                         }
                     />
                 );
-
 
             case "Categorías":
 
@@ -841,7 +1068,6 @@ function AdminDashboard({
                         }
                     />
                 );
-
 
             case "Estadísticas":
 
@@ -865,7 +1091,6 @@ function AdminDashboard({
                     />
                 );
 
-
             case "Usuarios":
 
                 return (
@@ -883,7 +1108,6 @@ function AdminDashboard({
                         }
                     />
                 );
-
 
             case "Configuración":
 
@@ -919,31 +1143,21 @@ function AdminDashboard({
                     />
                 );
 
-
             default:
 
                 return (
                     <div className="empty">
-
                         Sección no encontrada:
-
                         {" "}
-
                         {activeMenu}
-
                     </div>
                 );
         }
     };
 
-    // =========================================================
-    // RENDER PRINCIPAL
-    // =========================================================
-
     return (
-        <div className="admin-container">
 
-            {/* SIDEBAR */}
+        <div className="admin-container">
 
             <AdminSidebar
                 activeMenu={
@@ -955,12 +1169,7 @@ function AdminDashboard({
                 }
             />
 
-
-            {/* ÁREA PRINCIPAL */}
-
             <main className="admin-main">
-
-                {/* TOPBAR */}
 
                 <AdminTopbar
                     activeMenu={
@@ -978,11 +1187,11 @@ function AdminDashboard({
                     onNotifications={
                         handleNotifications
                     }
-                    handleLogout={handleLogout}
+
+                    handleLogout={
+                        handleLogout
+                    }
                 />
-
-
-                {/* CONTENIDO */}
 
                 <section className="content">
 
@@ -992,16 +1201,11 @@ function AdminDashboard({
 
             </main>
 
-
-            {/* TOAST */}
-
             {notifications && (
 
                 <div className="toast show">
-
                     No hay nuevas
                     notificaciones.
-
                 </div>
 
             )}

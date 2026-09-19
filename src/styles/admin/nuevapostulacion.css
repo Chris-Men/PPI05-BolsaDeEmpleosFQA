@@ -1059,3 +1059,176 @@
     }
 
 }
+
+/* =========================
+   ALERTA PERSONALIZADA
+========================= */
+
+.admin-alert-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(25, 48, 7, 0.42);
+    backdrop-filter: blur(4px);
+    animation: adminAlertFadeIn 0.2s ease;
+}
+
+.admin-alert-box {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    padding: 32px 30px 28px;
+    border-radius: 18px;
+    background: #ffffff;
+    text-align: center;
+    box-shadow: 0 20px 55px rgba(25, 48, 7, 0.22);
+    animation: adminAlertScaleIn 0.25s ease;
+}
+
+.admin-alert-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a9284;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-alert-close:hover {
+    background: #f2f5ef;
+    color: #193007;
+}
+
+.admin-alert-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.admin-alert-success .admin-alert-icon {
+    background: #eaf5df;
+    color: #5ba222;
+}
+
+.admin-alert-error .admin-alert-icon {
+    background: #fcebea;
+    color: #d84949;
+}
+
+.admin-alert-content h3 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.admin-alert-content p {
+    margin: 0 auto;
+    max-width: 350px;
+    color: #697264;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.admin-alert-button {
+    width: 100%;
+    height: 44px;
+    margin-top: 24px;
+    border: none;
+    border-radius: 9px;
+    background: #82ba2e;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-alert-button:hover {
+    background: #5ba222;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(91, 162, 34, 0.18);
+}
+
+.admin-alert-error .admin-alert-button {
+    background: #d84949;
+}
+
+.admin-alert-error .admin-alert-button:hover {
+    background: #c43d3d;
+    box-shadow: 0 5px 12px rgba(216, 73, 73, 0.18);
+}
+
+/* =========================
+   ANIMACIONES
+========================= */
+
+@keyframes adminAlertFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes adminAlertScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 600px) {
+    .admin-alert-overlay {
+        padding: 15px;
+    }
+
+    .admin-alert-box {
+        max-width: 100%;
+        padding: 28px 20px 22px;
+        border-radius: 16px;
+    }
+
+    .admin-alert-icon {
+        width: 58px;
+        height: 58px;
+        font-size: 27px;
+    }
+
+    .admin-alert-content h3 {
+        font-size: 18px;
+    }
+
+    .admin-alert-content p {
+        font-size: 13px;
+    }
+}

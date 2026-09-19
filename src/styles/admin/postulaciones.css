@@ -1332,3 +1332,310 @@
     }
 
 }
+
+/* =====================================================
+   ESTADOS DE VACANTES
+===================================================== */
+
+.admin-postulaciones-status-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* =====================================================
+   ESTADO GENERAL
+===================================================== */
+
+.admin-postulaciones-status {
+    display: inline-flex;
+
+    align-items: center;
+    gap: 7px;
+
+    padding: 7px 12px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   PUNTO DEL ESTADO
+===================================================== */
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+
+    min-width: 7px;
+
+    border-radius: 50%;
+
+    display: inline-block;
+}
+
+
+/* =====================================================
+   ACTIVO
+===================================================== */
+
+.admin-postulaciones-status.active {
+    background: #EAF7E0;
+    color: #4F8A1D;
+}
+
+.admin-postulaciones-status.active .status-dot {
+    background: #6EAA2C;
+}
+
+
+/* =====================================================
+   INACTIVO
+===================================================== */
+
+.admin-postulaciones-status.inactive {
+    background: #FDECEC;
+    color: #B42318;
+}
+
+.admin-postulaciones-status.inactive .status-dot {
+    background: #D92D20;
+}
+
+
+/* =====================================================
+   CERRADA
+===================================================== */
+
+.admin-postulaciones-status.closed {
+    background: #FFF4E5;
+    color: #B54708;
+}
+
+.admin-postulaciones-status.closed .status-dot {
+    background: #F79009;
+}
+
+
+/* =====================================================
+   BORRADOR
+===================================================== */
+
+.admin-postulaciones-status.draft {
+    background: #F1F3F5;
+    color: #667085;
+}
+
+.admin-postulaciones-status.draft .status-dot {
+    background: #98A2B3;
+}
+
+
+/* =====================================================
+   SELECTOR DE ESTADO
+===================================================== */
+
+.admin-postulaciones-status-select {
+    min-width: 105px;
+
+    padding: 7px 28px 7px 10px;
+
+    border-radius: 8px;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    outline: none;
+
+    appearance: auto;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+/* =====================================================
+   SELECT ACTIVO
+===================================================== */
+
+.admin-postulaciones-status-select.active {
+    border: 1px solid #B7D99A;
+
+    background: #F3FAED;
+
+    color: #4F8A1D;
+}
+
+
+/* =====================================================
+   SELECT INACTIVO
+===================================================== */
+
+.admin-postulaciones-status-select.inactive {
+    border: 1px solid #F0B5B1;
+
+    background: #FFF5F4;
+
+    color: #B42318;
+}
+
+
+/* =====================================================
+   SELECT CERRADA
+===================================================== */
+
+.admin-postulaciones-status-select.closed {
+    border: 1px solid #F5C78E;
+
+    background: #FFF9F0;
+
+    color: #B54708;
+}
+
+
+/* =====================================================
+   SELECT BORRADOR
+===================================================== */
+
+.admin-postulaciones-status-select.draft {
+    border: 1px solid #D0D5DD;
+
+    background: #F8F9FA;
+
+    color: #667085;
+}
+
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.admin-postulaciones-status-select:focus {
+    box-shadow:
+        0 0 0 3px rgba(130, 186, 46, 0.15);
+}
+
+
+/* =====================================================
+   ESTADO EN MODAL
+===================================================== */
+
+.modal-status {
+    display: inline-flex;
+
+    align-items: center;
+    gap: 7px;
+
+    width: fit-content;
+
+    padding: 7px 12px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   MODAL - ACTIVO
+===================================================== */
+
+.modal-status.active {
+    background: #EAF7E0;
+    color: #4F8A1D;
+}
+
+.modal-status.active .status-dot {
+    background: #6EAA2C;
+}
+
+
+/* =====================================================
+   MODAL - INACTIVO
+===================================================== */
+
+.modal-status.inactive {
+    background: #FDECEC;
+    color: #B42318;
+}
+
+.modal-status.inactive .status-dot {
+    background: #D92D20;
+}
+
+
+/* =====================================================
+   MODAL - CERRADA
+===================================================== */
+
+.modal-status.closed {
+    background: #FFF4E5;
+    color: #B54708;
+}
+
+.modal-status.closed .status-dot {
+    background: #F79009;
+}
+
+
+/* =====================================================
+   MODAL - BORRADOR
+===================================================== */
+
+.modal-status.draft {
+    background: #F1F3F5;
+    color: #667085;
+}
+
+.modal-status.draft .status-dot {
+    background: #98A2B3;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .admin-postulaciones-status-control {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-postulaciones-status-select {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .admin-postulaciones-status {
+        font-size: 11px;
+
+        padding: 6px 9px;
+    }
+
+    .admin-postulaciones-status-select {
+        min-width: 95px;
+
+        font-size: 11px;
+    }
+
+}

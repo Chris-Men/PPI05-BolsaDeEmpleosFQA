@@ -1,10 +1,10 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import "../../styles/admin/postulaciones.css";
 
 function AdministrarPostulaciones({
     jobs = [],
     onEditJob,
+    onToggleJobStatus,
 }) {
     // =====================================================
     // ESTADOS
@@ -21,26 +21,62 @@ function AdministrarPostulaciones({
     const [vacanteSeleccionada, setVacanteSeleccionada] =
         useState(null);
 
+    // Estado local para que el cambio se refleje
+    // inmediatamente en la tabla
+    const [jobsLocales, setJobsLocales] =
+        useState(Array.isArray(jobs) ? jobs : []);
+
+
+    // =====================================================
+    // SINCRONIZAR JOBS CON EL DASHBOARD
+    // =====================================================
+
+    useEffect(() => {
+        if (Array.isArray(jobs)) {
+            setJobsLocales(jobs);
+        }
+    }, [jobs]);
+
+
+    // =====================================================
+    // NORMALIZAR ESTADO
+    // =====================================================
+
+    const normalizarEstado = (job) => {
+        let estado =
+            job?.status ||
+            job?.estado ||
+            "Activo";
+
+        if (estado === "Activa") {
+            estado = "Activo";
+        }
+
+        if (estado === "Inactiva") {
+            estado = "Inactivo";
+        }
+
+        if (estado === "Cerrado") {
+            estado = "Cerrada";
+        }
+
+        if (job?.draft === true) {
+            estado = "Borrador";
+        }
+
+        return estado;
+    };
+
+
     // =====================================================
     // CONVERTIR JOBS
     // =====================================================
 
-    const vacantes = Array.isArray(jobs)
-        ? jobs.map((job, index) => {
+    const vacantes = Array.isArray(jobsLocales)
+        ? jobsLocales.map((job, index) => {
 
-            let estado = "Activa";
-
-            if (job.status) {
-                estado = job.status;
-            }
-
-            if (job.estado) {
-                estado = job.estado;
-            }
-
-            if (job.draft === true) {
-                estado = "Borrador";
-            }
+            const estado =
+                normalizarEstado(job);
 
             return {
                 ...job,
@@ -56,6 +92,7 @@ function AdministrarPostulaciones({
 
                 organizacion:
                     job.org ||
+                    job.organization ||
                     job.organizacion ||
                     "Organización no especificada",
 
@@ -67,7 +104,6 @@ function AdministrarPostulaciones({
                 postulantes:
                     job.applicants ??
                     job.postulantes ??
-                    job.views ??
                     0,
 
                 estado,
@@ -116,6 +152,7 @@ function AdministrarPostulaciones({
         })
         : [];
 
+
     // =====================================================
     // FILTRAR VACANTES
     // =====================================================
@@ -150,13 +187,19 @@ function AdministrarPostulaciones({
         );
     });
 
+
     // =====================================================
     // VER VACANTE
     // =====================================================
 
     const handleVer = (item) => {
-        setVacanteSeleccionada(item);
+
+        setVacanteSeleccionada({
+            ...item,
+            estado: normalizarEstado(item),
+        });
     };
+
 
     // =====================================================
     // CERRAR MODAL
@@ -166,34 +209,180 @@ function AdministrarPostulaciones({
         setVacanteSeleccionada(null);
     };
 
+
     // =====================================================
     // EDITAR VACANTE
     // =====================================================
 
     const handleEditar = (item) => {
 
+        if (!item) {
+            return;
+        }
+
         if (typeof onEditJob === "function") {
             onEditJob(item);
         }
     };
 
+
+    // =====================================================
+    // CAMBIAR ESTADO
+    // =====================================================
+
+    const handleCambiarEstado = (
+        item,
+        nuevoEstado
+    ) => {
+
+        if (!item || !nuevoEstado) {
+            return;
+        }
+
+        console.log(
+            "Cambiando estado:",
+            item.id,
+            nuevoEstado
+        );
+
+
+        // =================================================
+        // ACTUALIZAR ESTADO LOCAL INMEDIATAMENTE
+        // =================================================
+
+        setJobsLocales((prevJobs) => {
+
+            return prevJobs.map((job) => {
+
+                const jobId =
+                    job.id ??
+                    null;
+
+                if (
+                    String(jobId) !==
+                    String(item.id)
+                ) {
+                    return job;
+                }
+
+                return {
+                    ...job,
+
+                    status: nuevoEstado,
+
+                    estado: nuevoEstado,
+
+                    draft:
+                        nuevoEstado === "Borrador",
+                };
+            });
+        });
+
+
+        // =================================================
+        // ACTUALIZAR MODAL
+        // =================================================
+
+        if (
+            vacanteSeleccionada &&
+            String(vacanteSeleccionada.id) ===
+            String(item.id)
+        ) {
+
+            setVacanteSeleccionada((prev) => ({
+                ...prev,
+
+                estado: nuevoEstado,
+
+                status: nuevoEstado,
+
+                draft:
+                    nuevoEstado === "Borrador",
+            }));
+        }
+
+
+        // =================================================
+        // ACTUALIZAR DASHBOARD / APP
+        // =================================================
+
+        if (
+            typeof onToggleJobStatus ===
+            "function"
+        ) {
+
+            onToggleJobStatus(
+                item.id,
+                nuevoEstado
+            );
+
+        } else {
+
+            console.error(
+                "onToggleJobStatus no fue proporcionado a AdministrarPostulaciones"
+            );
+        }
+    };
+
+
+    // =====================================================
+    // CLASE DEL ESTADO
+    // =====================================================
+
+    const obtenerClaseEstado = (
+        estado
+    ) => {
+
+        const estadoNormalizado =
+            String(estado || "")
+                .trim()
+                .toLowerCase();
+
+        switch (estadoNormalizado) {
+
+            case "activo":
+            case "activa":
+                return "active";
+
+            case "inactivo":
+            case "inactiva":
+                return "inactive";
+
+            case "cerrada":
+            case "cerrado":
+                return "closed";
+
+            case "borrador":
+                return "draft";
+
+            default:
+                return "inactive";
+        }
+    };
+
+
     // =====================================================
     // FORMATEAR FECHA
     // =====================================================
 
-    const formatearFecha = (fecha) => {
+    const formatearFecha = (
+        fecha
+    ) => {
 
         if (!fecha) {
             return "Sin fecha";
         }
 
-        if (typeof fecha === "string") {
+        if (
+            typeof fecha === "string"
+        ) {
 
-            // YYYY-MM-DD
+            const partes =
+                fecha.split("-");
 
-            const partes = fecha.split("-");
-
-            if (partes.length === 3) {
+            if (
+                partes.length === 3
+            ) {
 
                 return `${partes[2]}/${partes[1]}/${partes[0]}`;
             }
@@ -202,18 +391,14 @@ function AdministrarPostulaciones({
         return fecha;
     };
 
+
     // =====================================================
     // RENDER
     // =====================================================
 
     return (
+
         <div className="administrar-postulaciones">
-
-            {/* =================================================
-                ENCABEZADO
-            ================================================= */}
-
-        
 
             {/* =================================================
                 FILTROS
@@ -307,8 +492,12 @@ function AdministrarPostulaciones({
                         Todos los estados
                     </option>
 
-                    <option value="Activa">
-                        Activa
+                    <option value="Activo">
+                        Activo
+                    </option>
+
+                    <option value="Inactivo">
+                        Inactivo
                     </option>
 
                     <option value="Cerrada">
@@ -375,118 +564,179 @@ function AdministrarPostulaciones({
 
                             {filtered.length > 0 ? (
 
-                                filtered.map((item) => (
+                                filtered.map(
+                                    (item) => {
 
-                                    <tr
-                                        key={item.id}
-                                    >
+                                        const estadoClase =
+                                            obtenerClaseEstado(
+                                                item.estado
+                                            );
 
-                                        {/* VACANTE */}
+                                        return (
 
-                                        <td>
-
-                                            <strong>
-                                                {item.titulo}
-                                            </strong>
-
-                                        </td>
-
-
-                                        {/* ORGANIZACIÓN */}
-
-                                        <td>
-                                            {item.organizacion}
-                                        </td>
-
-
-                                        {/* TIPO */}
-
-                                        <td>
-
-                                            <span className="admin-postulaciones-type">
-
-                                                {item.tipo}
-
-                                            </span>
-
-                                        </td>
-
-
-                                        {/* POSTULANTES */}
-
-                                        <td>
-                                            {item.postulantes}
-                                        </td>
-
-
-                                        {/* ESTADO */}
-
-                                        <td>
-
-                                            <span
-                                                className={
-                                                    `admin-postulaciones-status ${
-                                                        item.estado === "Activa"
-                                                            ? "active"
-                                                            : item.estado === "Borrador"
-                                                                ? "draft"
-                                                                : "closed"
-                                                    }`
+                                            <tr
+                                                key={
+                                                    item.id
                                                 }
                                             >
 
-                                                {item.estado}
+                                                {/* VACANTE */}
 
-                                            </span>
+                                                <td>
 
-                                        </td>
+                                                    <strong>
+                                                        {
+                                                            item.titulo
+                                                        }
+                                                    </strong>
 
-
-                                        {/* FECHA */}
-
-                                        <td>
-
-                                            {formatearFecha(
-                                                item.fecha
-                                            )}
-
-                                        </td>
+                                                </td>
 
 
-                                        {/* ACCIONES */}
+                                                {/* ORGANIZACIÓN */}
 
-                                        <td>
-
-                                            <div className="admin-postulaciones-actions">
-
-                                                <button
-                                                    type="button"
-                                                    className="admin-postulaciones-action"
-                                                    onClick={() =>
-                                                        handleVer(item)
+                                                <td>
+                                                    {
+                                                        item.organizacion
                                                     }
-                                                >
-                                                    Ver
-                                                </button>
+                                                </td>
 
 
-                                                <button
-                                                    type="button"
-                                                    className="admin-postulaciones-action"
-                                                    onClick={() =>
-                                                        handleEditar(item)
+                                                {/* TIPO */}
+
+                                                <td>
+
+                                                    <span className="admin-postulaciones-type">
+
+                                                        {
+                                                            item.tipo
+                                                        }
+
+                                                    </span>
+
+                                                </td>
+
+
+                                                {/* POSTULANTES */}
+
+                                                <td>
+                                                    {
+                                                        item.postulantes
                                                     }
-                                                >
-                                                    Editar
-                                                </button>
+                                                </td>
 
-                                            </div>
 
-                                        </td>
+                                                {/* ESTADO */}
 
-                                    </tr>
+                                                <td>
 
-                                ))
+                                                    <div
+                                                        className={`admin-postulaciones-status-control ${estadoClase}`}
+                                                    >
+
+                                                        <span
+                                                            className={`admin-postulaciones-status ${estadoClase}`}
+                                                        >
+
+                                                            <span className="status-dot"></span>
+
+                                                            {
+                                                                item.estado
+                                                            }
+
+                                                        </span>
+
+
+                                                        <select
+                                                            className={`admin-postulaciones-status-select ${estadoClase}`}
+                                                            value={
+                                                                item.estado
+                                                            }
+                                                            onChange={(e) =>
+                                                                handleCambiarEstado(
+                                                                    item,
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                            aria-label={`Cambiar estado de ${item.titulo}`}
+                                                        >
+
+                                                            <option value="Activo">
+                                                                Activo
+                                                            </option>
+
+                                                            <option value="Inactivo">
+                                                                Inactivo
+                                                            </option>
+
+                                                            <option value="Cerrada">
+                                                                Cerrada
+                                                            </option>
+
+                                                            <option value="Borrador">
+                                                                Borrador
+                                                            </option>
+
+                                                        </select>
+
+                                                    </div>
+
+                                                </td>
+
+
+                                                {/* FECHA */}
+
+                                                <td>
+
+                                                    {
+                                                        formatearFecha(
+                                                            item.fecha
+                                                        )
+                                                    }
+
+                                                </td>
+
+
+                                                {/* ACCIONES */}
+
+                                                <td>
+
+                                                    <div className="admin-postulaciones-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            className="admin-postulaciones-action"
+                                                            onClick={() =>
+                                                                handleVer(
+                                                                    item
+                                                                )
+                                                            }
+                                                        >
+                                                            Ver
+                                                        </button>
+
+
+                                                        <button
+                                                            type="button"
+                                                            className="admin-postulaciones-action"
+                                                            onClick={() =>
+                                                                handleEditar(
+                                                                    item
+                                                                )
+                                                            }
+                                                        >
+                                                            Editar
+                                                        </button>
+
+                                                    </div>
+
+                                                </td>
+
+                                            </tr>
+
+                                        );
+                                    }
+                                )
 
                             ) : (
 
@@ -497,7 +747,7 @@ function AdministrarPostulaciones({
                                         className="admin-postulaciones-empty"
                                     >
 
-                                        {jobs.length === 0
+                                        {jobsLocales.length === 0
                                             ? "No existen vacantes registradas."
                                             : "No se encontraron vacantes."
                                         }
@@ -525,7 +775,9 @@ function AdministrarPostulaciones({
 
                 <div
                     className="admin-vacante-modal-overlay"
-                    onClick={handleCerrarVista}
+                    onClick={
+                        handleCerrarVista
+                    }
                 >
 
                     <div
@@ -535,9 +787,7 @@ function AdministrarPostulaciones({
                         }
                     >
 
-                        {/* =================================================
-                            HEADER MODAL
-                        ================================================= */}
+                        {/* HEADER */}
 
                         <div className="admin-vacante-modal-header">
 
@@ -576,9 +826,7 @@ function AdministrarPostulaciones({
                         </div>
 
 
-                        {/* =================================================
-                            INFORMACIÓN
-                        ================================================= */}
+                        {/* INFORMACIÓN */}
 
                         <div className="admin-vacante-modal-info">
 
@@ -633,10 +881,18 @@ function AdministrarPostulaciones({
                                     Estado
                                 </span>
 
-                                <strong>
+                                <strong
+                                    className={`modal-status ${obtenerClaseEstado(
+                                        vacanteSeleccionada.estado
+                                    )}`}
+                                >
+
+                                    <span className="status-dot"></span>
+
                                     {
                                         vacanteSeleccionada.estado
                                     }
+
                                 </strong>
 
                             </div>
@@ -644,9 +900,7 @@ function AdministrarPostulaciones({
                         </div>
 
 
-                        {/* =================================================
-                            CONTENIDO
-                        ================================================= */}
+                        {/* CONTENIDO */}
 
                         <div className="admin-vacante-modal-content">
 
@@ -679,7 +933,13 @@ function AdministrarPostulaciones({
 
                                     <p>
                                         {
-                                            vacanteSeleccionada.responsabilidades
+                                            Array.isArray(
+                                                vacanteSeleccionada.responsabilidades
+                                            )
+                                                ? vacanteSeleccionada.responsabilidades.join(
+                                                    ", "
+                                                )
+                                                : vacanteSeleccionada.responsabilidades
                                         }
                                     </p>
 
@@ -698,7 +958,13 @@ function AdministrarPostulaciones({
 
                                     <p>
                                         {
-                                            vacanteSeleccionada.requisitos
+                                            Array.isArray(
+                                                vacanteSeleccionada.requisitos
+                                            )
+                                                ? vacanteSeleccionada.requisitos.join(
+                                                    ", "
+                                                )
+                                                : vacanteSeleccionada.requisitos
                                         }
                                     </p>
 
@@ -717,7 +983,13 @@ function AdministrarPostulaciones({
 
                                     <p>
                                         {
-                                            vacanteSeleccionada.beneficios
+                                            Array.isArray(
+                                                vacanteSeleccionada.beneficios
+                                            )
+                                                ? vacanteSeleccionada.beneficios.join(
+                                                    ", "
+                                                )
+                                                : vacanteSeleccionada.beneficios
                                         }
                                     </p>
 
@@ -749,9 +1021,7 @@ function AdministrarPostulaciones({
                         </div>
 
 
-                        {/* =================================================
-                            BOTONES MODAL
-                        ================================================= */}
+                        {/* BOTONES */}
 
                         <div className="admin-vacante-modal-actions">
 
