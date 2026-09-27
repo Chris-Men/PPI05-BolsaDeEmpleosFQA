@@ -1,8 +1,45 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import type { CandidateApplication, Job, StateSetter } from '../../types/models';
-import type { AdminIdentity, AdminMenuName } from '../../types/admin';
+
+import { useState, type FormEvent } from 'react';
+
+import type {
+    CandidateApplication,
+    Job,
+    StateSetter,
+} from '../../types/models';
+
+import type {
+    AdminIdentity,
+    AdminMenuName,
+} from '../../types/admin';
+
 import type { NewJobForm } from './NuevaPostulacion';
 import type { SiteConfiguration } from '../../config/siteConfiguration';
+
+import AdminSidebar from '../../components/admin/AdminSidebar';
+import AdminTopbar from '../../components/admin/AdminTopbar';
+
+import '../../styles/admin/admin-layout.css';
+import '../../styles/admin/admin-sidebar.css';
+import '../../styles/admin/admin-topbar.css';
+import '../../styles/admin/dashboard.css';
+
+import NuevaPostulacion from './NuevaPostulacion';
+
+import AdministrarPostulaciones, {
+    type NormalizedVacancy,
+} from './AdministrarPostulaciones';
+
+import CVrecibidos from './CVrecibidos';
+import Organizaciones from './Organizaciones';
+import Categorias from './Categorias';
+import Estadisticas from './Estadisticas';
+import Users from './Users';
+import Configuracion from './Configuracion';
+
+
+// =========================================================
+// TIPOS
+// =========================================================
 
 interface DashboardJob extends Job {
     status?: string;
@@ -12,137 +49,105 @@ interface DashboardJob extends Job {
 
 interface AdminDashboardProps {
     currentUser: AdminIdentity | null;
+
     handleLogout: () => void;
+
     jobs?: DashboardJob[];
+
     newJobForm: NewJobForm;
+
     setNewJobForm: StateSetter<NewJobForm>;
-    handleCreateJob?: (event?: FormEvent<HTMLFormElement>) => void;
+
+    handleCreateJob?: (
+        event?: FormEvent<HTMLFormElement>
+    ) => void;
+
     handleUpdateJob?: (
         id: string | number,
         form: NewJobForm,
-        event?: FormEvent<HTMLFormElement>,
+        event?: FormEvent<HTMLFormElement>
     ) => void;
+
     handleSaveDraft?: () => void;
+
     applications?: CandidateApplication[];
+
     configuration: SiteConfiguration;
+
     setConfiguration: StateSetter<SiteConfiguration>;
+
     resetConfiguration?: () => void;
 }
 
-import AdminSidebar from "../../components/admin/AdminSidebar";
-import AdminTopbar from "../../components/admin/AdminTopbar";
 
-import "../../styles/admin/admin-layout.css";
-import "../../styles/admin/admin-sidebar.css";
-import "../../styles/admin/admin-topbar.css";
-import "../../styles/admin/dashboard.css";
+// =========================================================
+// COMPONENTE
+// =========================================================
 
-import NuevaPostulacion from "./NuevaPostulacion";
-import AdministrarPostulaciones, { type NormalizedVacancy } from "./AdministrarPostulaciones";
-import CVrecibidos from "./CVrecibidos";
-import Organizaciones from "./Organizaciones";
-import Categorias from "./Categorias";
-import Estadisticas from "./Estadisticas";
-import Users from "./Users";
-import Configuracion from "./Configuracion";
-/** Administrative prototype reached through the authenticated role guard. */
 function AdminDashboard({
     currentUser,
     handleLogout,
+
     jobs = [],
+
     newJobForm,
     setNewJobForm,
+
     handleCreateJob,
     handleUpdateJob,
     handleSaveDraft,
+
     applications = [],
+
     configuration,
     setConfiguration,
     resetConfiguration,
 }: AdminDashboardProps) {
+
     // =========================================================
     // ESTADOS
     // =========================================================
 
-    const [activeMenu, setActiveMenu] = useState<AdminMenuName>('Dashboard');
+    const [activeMenu, setActiveMenu] =
+        useState<AdminMenuName>('Dashboard');
 
-    const [menuHistory, setMenuHistory] = useState<AdminMenuName[]>([]);
+    const [menuHistory, setMenuHistory] =
+        useState<AdminMenuName[]>([]);
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] =
+        useState('');
 
+    const [editingJobId, setEditingJobId] =
+        useState<string | number | null>(null);
 
-    const [editingJobId, setEditingJobId] = useState<string | number | null>(null);
-
-    const [stats, setStats] = useState({
-        vacantes: 0,
-        cvs: 0,
-        empresas: 0,
-        usuarios: 0,
-    });
 
     // =========================================================
     // ESTADÍSTICAS
     // =========================================================
+    //
+    // IMPORTANTE:
+    // Las estadísticas ya NO utilizan useEffect ni setState.
+    // Esto evita el ciclo:
+    //
+    // render → useEffect → setStats → render → useEffect...
+    //
+    // Los valores se calculan directamente desde las props.
+    // =========================================================
 
-    useEffect(() => {
-        const objetivos = {
-            vacantes: jobs.length,
-            cvs: applications.length,
-            empresas: 18,
-            usuarios: 4,
-        };
+    const stats = {
+        vacantes: jobs.length,
+        cvs: applications.length,
+        empresas: 18,
+        usuarios: 4,
+    };
 
-        const duration = 1000;
-        const startTime = Date.now();
-
-        let animationFrame: number | undefined;
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-
-            const progress = Math.min(
-                elapsed / duration,
-                1
-            );
-
-            setStats({
-                vacantes: Math.floor(
-                    objetivos.vacantes * progress
-                ),
-
-                cvs: Math.floor(
-                    objetivos.cvs * progress
-                ),
-
-                empresas: Math.floor(
-                    objetivos.empresas * progress
-                ),
-
-                usuarios: Math.floor(
-                    objetivos.usuarios * progress
-                ),
-            });
-
-            if (progress < 1) {
-                animationFrame =
-                    requestAnimationFrame(animate);
-            }
-        };
-
-        animate();
-
-        return () => {
-            if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
-            }
-        };
-    }, [jobs, applications]);
 
     // =========================================================
     // NAVEGACIÓN
     // =========================================================
 
     const navegarA = (nombre: AdminMenuName) => {
+
         if (!nombre) {
             return;
         }
@@ -158,22 +163,28 @@ function AdminDashboard({
 
         setActiveMenu(nombre);
 
-        setSearch("");
+        setSearch('');
     };
+
 
     const handleMenuClick = (name: AdminMenuName) => {
         navegarA(name);
     };
+
 
     // =========================================================
     // REGRESAR
     // =========================================================
 
     const handleBack = () => {
+
         if (menuHistory.length === 0) {
-            setActiveMenu("Dashboard");
+
+            setActiveMenu('Dashboard');
+
             setEditingJobId(null);
-            setSearch("");
+
+            setSearch('');
 
             return;
         }
@@ -187,41 +198,51 @@ function AdminDashboard({
 
         setMenuHistory(historialAnterior);
 
-        setActiveMenu(previousScreen ?? 'Dashboard');
+        setActiveMenu(
+            previousScreen ?? 'Dashboard'
+        );
 
-        setSearch("");
+        setSearch('');
 
         setEditingJobId(null);
     };
 
+
     const handleBackFromNewJob = () => {
+
         setEditingJobId(null);
 
         handleBack();
     };
+
 
     // =========================================================
     // GUARDAR BORRADOR
     // =========================================================
 
     const handleDraft = () => {
+
         if (!newJobForm?.title?.trim()) {
             return;
         }
 
         if (
             typeof handleSaveDraft ===
-            "function"
+            'function'
         ) {
             handleSaveDraft();
         }
     };
 
+
     // =========================================================
     // EDITAR VACANTE
     // =========================================================
 
-    const handleEditJob = (job: NormalizedVacancy) => {
+    const handleEditJob = (
+        job: NormalizedVacancy
+    ) => {
+
         if (!job) {
             return;
         }
@@ -230,91 +251,99 @@ function AdminDashboard({
 
         if (
             typeof setNewJobForm ===
-            "function"
+            'function'
         ) {
-            setNewJobForm({
-                title: job.title || "",
 
-                org: job.org || "",
+            setNewJobForm({
+
+                title: job.title || '',
+
+                org: job.org || '',
 
                 location:
-                    job.location || "",
+                    job.location || '',
 
                 area:
                     job.area ||
-                    "Educación",
+                    'Educación',
 
                 type:
                     job.type ||
-                    "Tiempo completo",
+                    'Tiempo completo',
 
                 salary:
-                    job.salary || "",
+                    job.salary || '',
 
                 deadline:
                     job.deadline ||
                     job.closing ||
-                    "",
+                    '',
 
                 desc:
-                    job.desc || "",
+                    job.desc || '',
 
                 responsibilities:
                     Array.isArray(
                         job.responsibilities
                     )
                         ? job.responsibilities.join(
-                            ", "
+                            ', '
                         )
                         : job.responsibilities ||
-                        "",
+                        '',
 
                 requirements:
                     Array.isArray(
                         job.requirements
                     )
                         ? job.requirements.join(
-                            ", "
+                            ', '
                         )
                         : job.requirements ||
-                        "",
+                        '',
 
                 offers:
                     Array.isArray(
                         job.offers
                     )
                         ? job.offers.join(
-                            ", "
+                            ', '
                         )
                         : job.offers ||
-                        "",
+                        '',
             });
         }
 
         setMenuHistory(
             (previous) => [
                 ...previous,
-                "Administrar Postulaciones",
+                'Administrar Postulaciones',
             ]
         );
 
         setActiveMenu(
-            "Nueva Postulación"
+            'Nueva Postulación'
         );
 
-        setSearch("");
+        setSearch('');
     };
+
 
     // =========================================================
     // CREAR / ACTUALIZAR VACANTE
     // =========================================================
 
-    const handleSubmitJob = (event?: FormEvent<HTMLFormElement>) => {
+    const handleSubmitJob = (
+        event?: FormEvent<HTMLFormElement>
+    ) => {
+
         if (editingJobId !== null) {
+
             if (
                 typeof handleUpdateJob ===
-                "function"
+                'function'
             ) {
+
                 handleUpdateJob(
                     editingJobId,
                     newJobForm,
@@ -329,17 +358,19 @@ function AdminDashboard({
 
         if (
             typeof handleCreateJob ===
-            "function"
+            'function'
         ) {
             handleCreateJob(event);
         }
     };
+
 
     // =========================================================
     // DASHBOARD
     // =========================================================
 
     const renderDashboard = () => {
+
         const vacantesActividad =
             jobs
                 .slice(0, 10)
@@ -348,19 +379,20 @@ function AdminDashboard({
 
                     puesto:
                         job.title ||
-                        "Sin título",
+                        'Sin título',
 
                     empresa:
                         job.org ||
-                        "Sin organización",
+                        'Sin organización',
 
                     estado:
                         job.status ||
-                        "Activa",
+                        'Activa',
 
                     candidatos:
                         job.views || 0,
                 }));
+
 
         const filteredVacantes =
             vacantesActividad.filter(
@@ -372,6 +404,7 @@ function AdminDashboard({
                         )
             );
 
+
         return (
             <>
                 {/* =================================================
@@ -380,7 +413,10 @@ function AdminDashboard({
 
                 <div className="cards">
 
+                    {/* VACANTES */}
+
                     <div className="card">
+
                         <span>
                             Vacantes
                         </span>
@@ -392,10 +428,14 @@ function AdminDashboard({
                         <span className="card-detail">
                             Vacantes registradas
                         </span>
+
                     </div>
 
 
+                    {/* CV */}
+
                     <div className="card">
+
                         <span>
                             CV recibidos
                         </span>
@@ -407,10 +447,14 @@ function AdminDashboard({
                         <span className="card-detail">
                             Postulaciones recibidas
                         </span>
+
                     </div>
 
 
+                    {/* ORGANIZACIONES */}
+
                     <div className="card">
+
                         <span>
                             Organizaciones
                         </span>
@@ -422,10 +466,14 @@ function AdminDashboard({
                         <span className="card-detail">
                             Organizaciones registradas
                         </span>
+
                     </div>
 
 
+                    {/* USUARIOS */}
+
                     <div className="card">
+
                         <span>
                             Usuarios
                         </span>
@@ -437,6 +485,7 @@ function AdminDashboard({
                         <span className="card-detail">
                             Usuarios registrados
                         </span>
+
                     </div>
 
                 </div>
@@ -447,6 +496,7 @@ function AdminDashboard({
                 ================================================= */}
 
                 <div className="dashboard-grid">
+
 
                     {/* =================================================
                         VACANTES RECIENTES
@@ -476,7 +526,7 @@ function AdminDashboard({
                                 type="button"
                                 onClick={() =>
                                     navegarA(
-                                        "Administrar Postulaciones"
+                                        'Administrar Postulaciones'
                                     )
                                 }
                             >
@@ -605,6 +655,7 @@ function AdminDashboard({
 
                         <div className="attention-list">
 
+
                             {/* POSTULACIONES */}
 
                             <button
@@ -612,7 +663,7 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        "Administrar Postulaciones"
+                                        'Administrar Postulaciones'
                                     )
                                 }
                             >
@@ -650,7 +701,7 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        "CV Recibidos"
+                                        'CV Recibidos'
                                     )
                                 }
                             >
@@ -688,7 +739,7 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        "Nueva Postulación"
+                                        'Nueva Postulación'
                                     )
                                 }
                             >
@@ -716,6 +767,7 @@ function AdminDashboard({
 
                             </button>
 
+
                         </div>
 
                     </div>
@@ -725,15 +777,22 @@ function AdminDashboard({
         );
     };
 
+
     // =========================================================
     // CONTENIDO SEGÚN MENÚ
     // =========================================================
 
     const renderContent = () => {
+
         switch (activeMenu) {
+
             case 'Dashboard':
+
                 return renderDashboard();
+
+
             case 'Nueva Postulación':
+
                 return (
                     <NuevaPostulacion
                         newJobForm={newJobForm}
@@ -743,50 +802,113 @@ function AdminDashboard({
                         onBack={handleBackFromNewJob}
                     />
                 );
+
+
             case 'Administrar Postulaciones':
+
                 return (
                     <AdministrarPostulaciones
                         jobs={jobs}
                         onEditJob={handleEditJob}
                     />
                 );
+
+
             case 'CV Recibidos':
-                return <CVrecibidos applications={applications} jobs={jobs} />;
+
+                return (
+                    <CVrecibidos
+                        applications={applications}
+                        jobs={jobs}
+                    />
+                );
+
+
             case 'Organizaciones':
-                return <Organizaciones search={search} />;
+
+                return (
+                    <Organizaciones
+                        search={search}
+                    />
+                );
+
+
             case 'Categorías':
-                return <Categorias />;
+
+                return (
+                    <Categorias />
+                );
+
+
             case 'Estadísticas':
-                return <Estadisticas jobs={jobs} applications={applications} />;
+
+                return (
+                    <Estadisticas
+                        jobs={jobs}
+                        applications={applications}
+                    />
+                );
+
+
             case 'Usuarios':
-                return <Users />;
+
+                return (
+                    <Users />
+                );
+
+
             case 'Configuración':
+
                 return (
                     <Configuracion
                         configuration={configuration}
                         setConfiguration={setConfiguration}
-                        resetConfiguration={resetConfiguration}
+                        resetConfiguration={
+                            resetConfiguration
+                        }
                     />
                 );
+
+
+            default:
+
+                return renderDashboard();
         }
     };
 
+
+    // =========================================================
+    // RENDER PRINCIPAL
+    // =========================================================
+
     return (
+
         <div className="admin-container">
+
             <AdminSidebar
                 activeMenu={activeMenu}
                 onMenuClick={handleMenuClick}
             />
+
+
             <main className="admin-main">
+
                 <AdminTopbar
                     activeMenu={activeMenu}
                     currentUser={currentUser}
                     handleLogout={handleLogout}
                 />
-                <section className="content">{renderContent()}</section>
+
+
+                <section className="content">
+                    {renderContent()}
+                </section>
+
             </main>
+
         </div>
     );
 }
+
 
 export default AdminDashboard;
