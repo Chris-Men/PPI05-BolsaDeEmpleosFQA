@@ -1,21 +1,33 @@
-import { useState, type FormEvent } from 'react';
 
-interface Category {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  oportunidades: number;
-}
-
-interface CategoryForm {
-  nombre: string;
-  descripcion: string;
-}
+import {
+    useEffect,
+    useState,
+    type FormEvent,
+} from "react";
 
 import "../../styles/admin/categorias.css";
 
-/** Preserved local category management prototype. */
+interface Category {
+    id: number;
+    nombre: string;
+    descripcion: string;
+    oportunidades: number;
+}
+
+interface CategoryForm {
+    nombre: string;
+    descripcion: string;
+}
+
+type SuccessAlertType =
+    | "crear"
+    | "editar"
+    | "eliminar"
+    | null;
+
+
 function Categorias() {
+
     // =====================================================
     // DATOS INICIALES
     // =====================================================
@@ -58,27 +70,79 @@ function Categorias() {
         },
     ]);
 
+
     // =====================================================
-    // ESTADOS
+    // ESTADOS DEL MODAL
     // =====================================================
 
-    const [modalOpen, setModalOpen] = useState(false);
+    const [modalOpen, setModalOpen] =
+        useState(false);
 
-    const [modoModal, setModoModal] = useState<'crear' | 'editar'>('crear');
+    const [modoModal, setModoModal] =
+        useState<"crear" | "editar">("crear");
 
     const [categoriaSeleccionada, setCategoriaSeleccionada] =
         useState<Category | null>(null);
 
-    const [formulario, setFormulario] = useState<CategoryForm>({
-        nombre: "",
-        descripcion: "",
-    });
+    const [formulario, setFormulario] =
+        useState<CategoryForm>({
+            nombre: "",
+            descripcion: "",
+        });
+
 
     // =====================================================
-    // ABRIR MODAL NUEVA CATEGORÍA
+    // ESTADOS DE ELIMINACIÓN
+    // =====================================================
+
+    const [categoriaAEliminar, setCategoriaAEliminar] =
+        useState<Category | null>(null);
+
+    const [alertaEliminarOpen, setAlertaEliminarOpen] =
+        useState(false);
+
+
+    // =====================================================
+    // ESTADO ALERTA DE ÉXITO
+    // =====================================================
+
+    const [successAlert, setSuccessAlert] =
+        useState<SuccessAlertType>(null);
+
+    const [successCategoryName, setSuccessCategoryName] =
+        useState("");
+
+
+    // =====================================================
+    // CERRAR AUTOMÁTICAMENTE ALERTA DE ÉXITO
+    // =====================================================
+
+    useEffect(() => {
+
+        if (!successAlert) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+
+            setSuccessAlert(null);
+            setSuccessCategoryName("");
+
+        }, 3500);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+
+    }, [successAlert]);
+
+
+    // =====================================================
+    // ABRIR NUEVA CATEGORÍA
     // =====================================================
 
     const abrirNuevaCategoria = () => {
+
         setModoModal("crear");
 
         setCategoriaSeleccionada(null);
@@ -91,11 +155,15 @@ function Categorias() {
         setModalOpen(true);
     };
 
+
     // =====================================================
-    // ABRIR MODAL EDITAR
+    // ABRIR EDITAR CATEGORÍA
     // =====================================================
 
-    const abrirEditarCategoria = (categoria: Category) => {
+    const abrirEditarCategoria = (
+        categoria: Category
+    ) => {
+
         setModoModal("editar");
 
         setCategoriaSeleccionada(categoria);
@@ -108,11 +176,13 @@ function Categorias() {
         setModalOpen(true);
     };
 
+
     // =====================================================
     // CERRAR MODAL
     // =====================================================
 
     const cerrarModal = () => {
+
         setModalOpen(false);
 
         setCategoriaSeleccionada(null);
@@ -123,104 +193,237 @@ function Categorias() {
         });
     };
 
+
     // =====================================================
     // ACTUALIZAR FORMULARIO
     // =====================================================
 
-    const actualizarCampo = (campo: keyof CategoryForm, valor: string) => {
+    const actualizarCampo = (
+        campo: keyof CategoryForm,
+        valor: string
+    ) => {
+
         setFormulario((prev) => ({
             ...prev,
             [campo]: valor,
         }));
     };
 
+
+    // =====================================================
+    // MOSTRAR ALERTA DE ÉXITO
+    // =====================================================
+
+    const mostrarAlertaExito = (
+        tipo: "crear" | "editar" | "eliminar",
+        nombre: string
+    ) => {
+
+        setSuccessCategoryName(nombre);
+
+        setSuccessAlert(tipo);
+    };
+
+
     // =====================================================
     // GUARDAR CATEGORÍA
     // =====================================================
 
-    const guardarCategoria = (e: FormEvent<HTMLFormElement>) => {
+    const guardarCategoria = (
+        e: FormEvent<HTMLFormElement>
+    ) => {
+
         e.preventDefault();
 
-        const nombre = formulario.nombre.trim();
+        const nombre =
+            formulario.nombre.trim();
 
         const descripcion =
             formulario.descripcion.trim();
 
+
+        // =================================================
+        // VALIDACIÓN
+        // =================================================
+
         if (!nombre) {
             return;
         }
+
 
         // =================================================
         // CREAR
         // =================================================
 
         if (modoModal === "crear") {
-            const nuevaCategoria = {
+
+            const nuevaCategoria: Category = {
+
                 id: Date.now(),
+
                 nombre,
+
                 descripcion:
                     descripcion ||
                     "Sin descripción.",
+
                 oportunidades: 0,
             };
+
 
             setCategorias((prev) => [
                 ...prev,
                 nuevaCategoria,
             ]);
+
+
+            cerrarModal();
+
+
+            // Mostrar alerta de creación
+            mostrarAlertaExito(
+                "crear",
+                nombre
+            );
+
+
+            return;
         }
+
 
         // =================================================
         // EDITAR
         // =================================================
 
-        else if (categoriaSeleccionada) {
+        if (categoriaSeleccionada) {
+
             setCategorias((prev) =>
                 prev.map((categoria) =>
                     categoria.id ===
                     categoriaSeleccionada.id
                         ? {
-                              ...categoria,
-                              nombre,
-                              descripcion:
-                                  descripcion ||
-                                  "Sin descripción.",
-                          }
+                            ...categoria,
+
+                            nombre,
+
+                            descripcion:
+                                descripcion ||
+                                "Sin descripción.",
+                        }
                         : categoria
                 )
             );
-        }
 
-        cerrarModal();
+
+            cerrarModal();
+
+
+            // Mostrar alerta de actualización
+            mostrarAlertaExito(
+                "editar",
+                nombre
+            );
+        }
     };
 
+
     // =====================================================
-    // ELIMINAR CATEGORÍA
+    // SOLICITAR ELIMINACIÓN
     // =====================================================
 
-    const eliminarCategoria = (categoria: Category) => {
-        const confirmar = window.confirm(
-            `¿Desea eliminar la categoría "${categoria.nombre}"?`
-        );
+    const solicitarEliminarCategoria = (
+        categoria: Category
+    ) => {
 
-        if (!confirmar) {
+        setCategoriaAEliminar(categoria);
+
+        setAlertaEliminarOpen(true);
+    };
+
+
+    // =====================================================
+    // CANCELAR ELIMINACIÓN
+    // =====================================================
+
+    const cancelarEliminarCategoria = () => {
+
+        setAlertaEliminarOpen(false);
+
+        setCategoriaAEliminar(null);
+    };
+
+
+    // =====================================================
+    // CONFIRMAR ELIMINACIÓN
+    // =====================================================
+
+    const confirmarEliminarCategoria = () => {
+
+        if (!categoriaAEliminar) {
             return;
         }
+
+
+        // Guardamos el nombre antes de limpiar
+        // la categoría seleccionada.
+
+        const nombreEliminado =
+            categoriaAEliminar.nombre;
+
+
+        // =================================================
+        // ELIMINAR DE LA LISTA
+        // =================================================
 
         setCategorias((prev) =>
             prev.filter(
                 (item) =>
-                    item.id !== categoria.id
+                    item.id !==
+                    categoriaAEliminar.id
             )
         );
+
+
+        // =================================================
+        // CERRAR ALERTA DE CONFIRMACIÓN
+        // =================================================
+
+        setAlertaEliminarOpen(false);
+
+        setCategoriaAEliminar(null);
+
+
+        // =================================================
+        // MOSTRAR ALERTA DE ÉXITO
+        // =================================================
+
+        mostrarAlertaExito(
+            "eliminar",
+            nombreEliminado
+        );
     };
+
+
+    // =====================================================
+    // CERRAR ALERTA DE ÉXITO
+    // =====================================================
+
+    const cerrarAlertaExito = () => {
+
+        setSuccessAlert(null);
+
+        setSuccessCategoryName("");
+    };
+
 
     // =====================================================
     // RENDER
     // =====================================================
 
     return (
+
         <section className="admin-screen categorias-screen">
+
 
             {/* =================================================
                 HEADER
@@ -228,7 +431,19 @@ function Categorias() {
 
             <div className="screen-header">
 
-            
+                <div>
+
+                    <h2>
+                        Categorías
+                    </h2>
+
+                    <p>
+                        Administra las categorías
+                        profesionales disponibles.
+                    </p>
+
+                </div>
+
 
                 <button
                     type="button"
@@ -239,6 +454,7 @@ function Categorias() {
                 </button>
 
             </div>
+
 
             {/* =================================================
                 GRID DE CATEGORÍAS
@@ -255,15 +471,23 @@ function Categorias() {
                             key={categoria.id}
                         >
 
-                            {/* ICONO */}
+
+                            {/* =================================================
+                                ICONO
+                            ================================================= */}
 
                             <div className="category-icon">
+
                                 {categoria.nombre
                                     .charAt(0)
                                     .toUpperCase()}
+
                             </div>
 
-                            {/* CONTENIDO */}
+
+                            {/* =================================================
+                                CONTENIDO
+                            ================================================= */}
 
                             <div className="category-content">
 
@@ -276,15 +500,21 @@ function Categorias() {
                                 </p>
 
                                 <span>
+
                                     {categoria.oportunidades}{" "}
+
                                     {categoria.oportunidades === 1
                                         ? "oportunidad"
                                         : "oportunidades"}
+
                                 </span>
 
                             </div>
 
-                            {/* ACCIONES */}
+
+                            {/* =================================================
+                                ACCIONES
+                            ================================================= */}
 
                             <div className="category-actions">
 
@@ -300,11 +530,12 @@ function Categorias() {
                                     Editar
                                 </button>
 
+
                                 <button
                                     type="button"
                                     className="delete-button"
                                     onClick={() =>
-                                        eliminarCategoria(
+                                        solicitarEliminarCategoria(
                                             categoria
                                         )
                                     }
@@ -334,9 +565,7 @@ function Categorias() {
                         <button
                             type="button"
                             className="primary-button"
-                            onClick={
-                                abrirNuevaCategoria
-                            }
+                            onClick={abrirNuevaCategoria}
                         >
                             + Nueva categoría
                         </button>
@@ -347,8 +576,9 @@ function Categorias() {
 
             </div>
 
+
             {/* =================================================
-                MODAL
+                MODAL CREAR / EDITAR
             ================================================= */}
 
             {modalOpen && (
@@ -358,9 +588,8 @@ function Categorias() {
                     onMouseDown={(e) => {
 
                         if (
-                            e.currentTarget.classList.contains(
-                                "categoria-modal-overlay"
-                            )
+                            e.currentTarget ===
+                            e.target
                         ) {
                             cerrarModal();
                         }
@@ -369,6 +598,7 @@ function Categorias() {
                 >
 
                     <div className="categoria-modal">
+
 
                         {/* =================================================
                             HEADER MODAL
@@ -379,18 +609,23 @@ function Categorias() {
                             <div>
 
                                 <span>
+
                                     {modoModal === "crear"
                                         ? "NUEVA CATEGORÍA"
                                         : "EDITAR CATEGORÍA"}
+
                                 </span>
 
                                 <h2>
+
                                     {modoModal === "crear"
                                         ? "Crear categoría"
                                         : "Editar categoría"}
+
                                 </h2>
 
                             </div>
+
 
                             <button
                                 type="button"
@@ -403,6 +638,7 @@ function Categorias() {
 
                         </div>
 
+
                         {/* =================================================
                             FORMULARIO
                         ================================================= */}
@@ -411,6 +647,11 @@ function Categorias() {
                             className="categoria-form"
                             onSubmit={guardarCategoria}
                         >
+
+
+                            {/* =================================================
+                                NOMBRE
+                            ================================================= */}
 
                             <div className="categoria-field">
 
@@ -437,6 +678,11 @@ function Categorias() {
 
                             </div>
 
+
+                            {/* =================================================
+                                DESCRIPCIÓN
+                            ================================================= */}
+
                             <div className="categoria-field">
 
                                 <label htmlFor="categoria-descripcion">
@@ -460,6 +706,7 @@ function Categorias() {
 
                             </div>
 
+
                             {/* =================================================
                                 ACCIONES MODAL
                             ================================================= */}
@@ -474,13 +721,16 @@ function Categorias() {
                                     Cancelar
                                 </button>
 
+
                                 <button
                                     type="submit"
                                     className="primary-button"
                                 >
+
                                     {modoModal === "crear"
                                         ? "Crear categoría"
                                         : "Guardar cambios"}
+
                                 </button>
 
                             </div>
@@ -492,6 +742,206 @@ function Categorias() {
                 </div>
 
             )}
+
+
+            {/* =================================================
+                ALERTA DE ÉXITO
+                CREAR / EDITAR / ELIMINAR
+            ================================================= */}
+
+            {successAlert && (
+
+                <div
+                    className="success-alert-overlay"
+                    onMouseDown={(e) => {
+
+                        if (
+                            e.currentTarget ===
+                            e.target
+                        ) {
+                            cerrarAlertaExito();
+                        }
+
+                    }}
+                >
+
+                    <div
+                        className="success-alert"
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="success-alert-title"
+                    >
+
+
+                        {/* =================================================
+                            ICONO
+                        ================================================= */}
+
+                        <div
+                            className="success-alert-icon"
+                            aria-hidden="true"
+                        >
+                            ✓
+                        </div>
+
+
+                        {/* =================================================
+                            CONTENIDO
+                        ================================================= */}
+
+                        <div className="success-alert-content">
+
+                            <h2 id="success-alert-title">
+
+                                {successAlert === "crear"
+                                    ? "¡Categoría creada!"
+                                    : successAlert === "editar"
+                                        ? "¡Categoría actualizada!"
+                                        : "¡Categoría eliminada!"}
+
+                            </h2>
+
+
+                            <p>
+
+                                {successAlert === "crear"
+                                    ? "La nueva categoría se creó correctamente."
+                                    : successAlert === "editar"
+                                        ? "Los cambios de la categoría se guardaron correctamente."
+                                        : "La categoría se eliminó correctamente."}
+
+                            </p>
+
+
+                            <strong>
+                                "{successCategoryName}"
+                            </strong>
+
+                        </div>
+
+
+                        {/* =================================================
+                            CERRAR
+                        ================================================= */}
+
+                        <button
+                            type="button"
+                            className="success-alert-close"
+                            onClick={cerrarAlertaExito}
+                            aria-label="Cerrar alerta"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+                </div>
+
+            )}
+
+
+            {/* =================================================
+                ALERTA DE CONFIRMACIÓN DE ELIMINACIÓN
+            ================================================= */}
+
+            {alertaEliminarOpen &&
+                categoriaAEliminar && (
+
+                    <div
+                        className="delete-alert-overlay"
+                        onMouseDown={(e) => {
+
+                            if (
+                                e.currentTarget ===
+                                e.target
+                            ) {
+                                cancelarEliminarCategoria();
+                            }
+
+                        }}
+                    >
+
+                        <div
+                            className="delete-alert"
+                            role="alertdialog"
+                            aria-modal="true"
+                            aria-labelledby="delete-alert-title"
+                        >
+
+
+                            {/* =================================================
+                                ICONO
+                            ================================================= */}
+
+                            <div
+                                className="delete-alert-icon"
+                                aria-hidden="true"
+                            >
+                                !
+                            </div>
+
+
+                            {/* =================================================
+                                CONTENIDO
+                            ================================================= */}
+
+                            <div className="delete-alert-content">
+
+                                <h2 id="delete-alert-title">
+                                    ¿Eliminar categoría?
+                                </h2>
+
+                                <p>
+                                    Estás a punto de eliminar
+                                    la categoría:
+                                </p>
+
+                                <strong>
+                                    "{categoriaAEliminar.nombre}"
+                                </strong>
+
+                                <span>
+                                    Esta acción no se puede
+                                    deshacer.
+                                </span>
+
+                            </div>
+
+
+                            {/* =================================================
+                                ACCIONES
+                            ================================================= */}
+
+                            <div className="delete-alert-actions">
+
+                                <button
+                                    type="button"
+                                    className="delete-alert-cancel"
+                                    onClick={
+                                        cancelarEliminarCategoria
+                                    }
+                                >
+                                    Cancelar
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    className="delete-alert-confirm"
+                                    onClick={
+                                        confirmarEliminarCategoria
+                                    }
+                                >
+                                    Eliminar
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )}
 
         </section>
     );
