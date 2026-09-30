@@ -1,6 +1,12 @@
 import { apiRequest } from './api';
 import type { AuthenticationResponse, CurrentAccess, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
+export interface ForgotPasswordRequest { email: string;}
+export interface ForgotPasswordResponse { message: string; developmentToken?: string;}
+
+export interface ResetPasswordRequest { token: string; password: string;}
+export interface ResetPasswordResponse { message: string;}
+
 /** Registers a candidate; the refresh credential is handled only by the browser. */
 export const registerCandidate = (payload: RegisterCandidateRequest): Promise<AuthenticationResponse> =>
   apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(payload) });
@@ -25,3 +31,21 @@ export const logoutAccount = (all: boolean): Promise<void> =>
 export const deleteOwnAccount = (): Promise<void> =>
   apiRequest('/auth/me', { method: 'DELETE', authenticated: true, retryAuthentication: false,
     body: JSON.stringify({ confirmDeletion: true }) });
+
+    /**
+ * Requests a password recovery token.
+ *
+ * The developmentToken is intentionally kept for the current
+ * development/testing environment. It will be removed when
+ * real email delivery is implemented.
+ */
+export const requestPasswordReset = ( payload: ForgotPasswordRequest,): Promise<ForgotPasswordResponse> =>
+  apiRequest('/auth/forgot-password', { method: 'POST',
+    body: JSON.stringify(payload), });
+
+/**
+ * Changes the account password using a valid recovery token.
+ */
+export const resetPassword = ( payload: ResetPasswordRequest,): Promise<ResetPasswordResponse> =>
+  apiRequest('/auth/reset-password', { method: 'POST',
+    body: JSON.stringify(payload), });

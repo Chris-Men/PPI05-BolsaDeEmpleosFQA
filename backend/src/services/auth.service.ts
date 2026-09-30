@@ -1,14 +1,15 @@
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import { prisma } from '../config/prisma.js';
 import { PASSWORD_HASH_ROUNDS } from '../constants/auth.constants.js';
 import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import { ROLE_NAMES } from '../constants/authorization.constants.js';
 import type { SessionResult } from '../types/auth.types.js';
-import type { LoginDTO, RegisterCandidateDTO } from '../validation/auth.schema.js';
+import type { ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { rethrowUserConflict } from '../utils/user-conflict.js';
 import { splitProfileName } from '../utils/profile-name.js';
-import { createSession } from './session.service.js';
+import { createSession, revokeUserSessions } from './session.service.js';
 
 /** Valid bcrypt fallback equalizes credential checks for unknown accounts. */
 const dummyHash = bcrypt.hash('non-account-random-placeholder', PASSWORD_HASH_ROUNDS);
@@ -53,4 +54,120 @@ export const loginAccount = async (payload: LoginDTO): Promise<SessionResult> =>
     if (error instanceof AppError && error.statusCode === 401) throw failure();
     throw error;
   }
+};
+
+/**
+ * Creates a password-reset token for an existing account.
+ *
+ * The raw token is intentionally not stored in the database.
+ * Only its SHA-256 hash is persisted.
+ */
+export const requestPasswordReset = async (
+  payload: ForgotPasswordDTO,
+): Promise<string> => {
+  const user = await prisma.user.findFirst({
+    where: {
+      email: payload.email,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  /*
+   * Do not reveal whether the email belongs to an account.
+   * The controller will return the same response either way.
+   */
+  if (!user) {
+    return '';
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    },
+  });
+
+  return token;
+};
+
+/**
+ * Resets an account password using a valid, unused and non-expired token.
+ */
+export const resetPassword = async (
+  payload: ResetPasswordDTO,
+): Promise<void> => {
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(payload.token)
+    .digest('hex');
+
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+    select: {
+      id: true,
+      userId: true,
+      expiresAt: true,
+      usedAt: true,
+    },
+  });
+
+  const now = new Date();
+
+  if (
+    !resetToken ||
+    resetToken.usedAt !== null ||
+    resetToken.expiresAt <= now
+  ) {
+    throw new AppError(
+      400,
+      'El enlace de recuperación no es válido o ha expirado.',
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(
+    payload.password,
+    PASSWORD_HASH_ROUNDS,
+  );
+
+  await prisma.$transaction(async (database) => {
+    const consumed = await database.passwordResetToken.updateMany({
+      where: {
+        id: resetToken.id,
+        usedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: {
+        usedAt: now,
+      },
+    });
+
+    if (consumed.count !== 1) {
+      throw new AppError(
+        400,
+        'El enlace de recuperación no es válido o ha expirado.',
+      );
+    }
+
+    await database.user.update({
+      where: { id: resetToken.userId },
+      data: {
+        passwordHash,
+      },
+    });
+  });
+
+  await revokeUserSessions(resetToken.userId);
 };

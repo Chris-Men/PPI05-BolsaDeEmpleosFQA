@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
-import { loginAccount, registerCandidate } from '../services/auth.service.js';
+import { loginAccount, registerCandidate, requestPasswordReset, resetPassword } from '../services/auth.service.js';
 import { getPublicUser, logoutSession, refreshSession, revokeUserSessions } from '../services/session.service.js';
 import { clearSessionCookie, readRefreshCookie, sendSession } from '../middleware/session-cookie.middleware.js';
-import type { LoginDTO, RegisterCandidateDTO } from '../validation/auth.schema.js';
+import type { ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
 import { AppError } from '../utils/app-error.js';
 
 /** Returns current database-backed access and public identity. */
@@ -77,4 +77,52 @@ export const revokeSessions = async (request: Request, response: Response, next:
     if (Number(value) === request.user?.userId) clearSessionCookie(response);
     response.set('Cache-Control', 'no-store').status(204).end();
   } catch (error: unknown) { next(error); }
+};
+
+/**
+ * Requests a password reset without revealing whether the email exists.
+ */
+export const forgotPassword = async (
+  request: Request<Record<string, never>, unknown, ForgotPasswordDTO>,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const token = await requestPasswordReset(request.body);
+
+    /*
+     * Temporary development response.
+     *
+     * This will be replaced by email delivery once the complete
+     * password-reset flow is working
+     */
+    response.set('Cache-Control', 'no-store').json({
+      message:
+        'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',
+      ...(token ? { developmentToken: token } : {}),
+    });
+  } catch (error: unknown) {
+    next(error);
+  }
+};
+
+/**
+ * Resets a password using a valid recovery token.
+ */
+export const resetPasswordController = async (
+  request: Request<Record<string, never>, unknown, ResetPasswordDTO>,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    await resetPassword(request.body);
+
+    response
+      .set('Cache-Control', 'no-store')
+      .json({
+        message: 'Tu contraseña ha sido actualizada correctamente.',
+      });
+  } catch (error: unknown) {
+    next(error);
+  }
 };

@@ -50,18 +50,31 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
     </div>
     <div className="form-group">
       <label htmlFor="login-password">Contraseña</label>
+
       <div className="input-wrapper">
         <LockKeyhole size={25} className="input-icon" aria-hidden="true" />
+
         <input id="login-password" name="password" type={visible ? 'text' : 'password'}
           autoComplete="current-password" value={password} required disabled={loading}
           onChange={(event) => setPassword(event.target.value)}
           aria-describedby={error ? 'login-error' : undefined} />
+
         <button className="password-toggle" type="button" onClick={() => setVisible(!visible)}
           aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={visible}>
           {visible ? <EyeOff size={22} /> : <Eye size={22} />}
         </button>
+
       </div>
     </div>
+    <button
+      type="button"
+      className="forgot-password-button"
+      onClick={() => navigateTo('forgot-password')}
+      disabled={loading}
+    >
+      ¿Olvidaste tu contraseña?
+    </button>
+    
     <button type="submit" className="login-button" disabled={loading}>
       {loading ? 'Iniciando sesión…' : 'Iniciar sesión'}
     </button>

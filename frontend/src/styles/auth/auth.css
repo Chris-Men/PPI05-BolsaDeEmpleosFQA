@@ -455,39 +455,34 @@
    OLVIDÉ MI CONTRASEÑA
 ========================================================= */
 
-.forgot-password {
-  display: flex;
-
-  justify-content: flex-end;
-
-  margin-top: -4px;
-
-  margin-bottom: 27px;
-}
-
-
-.forgot-password button {
+.forgot-password-button {
+  display: block;
+  width: fit-content;
+  margin: -4px 0 27px auto;
   padding: 0;
-
   border: none;
-
   background: transparent;
-
   color: #4f9225;
-
+  font-family: inherit;
   font-size: 15px;
-
+  font-weight: 500;
   text-decoration: underline;
-
+  text-underline-offset: 3px;
   cursor: pointer;
-
   transition:
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-
-.forgot-password button:hover {
+.forgot-password-button:hover {
   color: #326d1d;
+  transform: translateY(-1px);
+}
+
+.forgot-password-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 
@@ -642,6 +637,14 @@
 
   box-shadow:
     0 7px 18px rgba(75, 143, 32, 0.10);
+}
+
+/* =========================================================
+   ESPACIO ENTRE BOTONES DE FORMULARIOS SECUNDARIOS
+========================================================= */
+
+.login-form>.login-button+.register-button {
+  margin-top: 12px;
 }
 
 
@@ -1121,7 +1124,7 @@
   }
 
 
-  .forgot-password button {
+  .forgot-password-button {
     font-size: 14px;
   }
 
