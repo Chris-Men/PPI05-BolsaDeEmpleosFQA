@@ -46,3 +46,32 @@ export const loginSchema = z.object({
 
 /** Validated credential input. */
 export type LoginDTO = z.infer<typeof loginSchema>;
+
+/**
+ * Payload used to request a password reset link.
+ */
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ForgotPasswordDTO = z.infer<typeof forgotPasswordSchema>;
+
+/**
+ * Payload used to reset the password with a valid recovery token.
+ */
+export const resetPasswordSchema = z.object({
+  token: requiredText('token')
+    .min(1, 'El token de recuperación es obligatorio.'),
+
+  password: requiredText('contraseña')
+    .refine(
+      (value) => Array.from(value).length >= 12,
+      'La contraseña debe tener al menos 12 caracteres.',
+    )
+    .refine(
+      (value) => Buffer.byteLength(value, 'utf8') <= 72,
+      'La contraseña no puede superar los 72 bytes en UTF-8.',
+    ),
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;

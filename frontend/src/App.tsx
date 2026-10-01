@@ -25,6 +25,8 @@ import CandidateProfile from './screens/CandidateProfile';
 
 import Login from './screens/auth/Login';
 import Register from './screens/auth/Register';
+import ForgotPassword from './screens/auth/ForgotPassword';
+import ResetPassword from './screens/auth/ResetPassword';
 
 
 // ============================================================
@@ -325,7 +327,24 @@ function PublicApp() {
     // NAVEGACIÓN GLOBAL
     // ==========================================================
 
-    const [screen, setScreen] = useState<ScreenName>('home');
+    const getInitialScreen = (): ScreenName => {
+        const path = window.location.pathname;
+
+        if (
+            path === '/reset-password' &&
+            new URLSearchParams(window.location.search).has('token')
+        ) {
+            return 'reset-password';
+        }
+
+        if (path === '/forgot-password') {
+            return 'forgot-password';
+        }
+
+        return 'home';
+    };
+
+    const [screen, setScreen] = useState<ScreenName>(getInitialScreen());
     const [screenHistory, setScreenHistory] = useState<ScreenName[]>([]);
 
     const currentUser: CurrentUser | null = session?.roles.includes('CANDIDATE') ? {
@@ -728,14 +747,14 @@ function PublicApp() {
                 'Todo el país'
                 ? true
                 : job.location ===
-                    searchLocation;
+                searchLocation;
 
 
         const matchArea =
             selectedArea === 'Todos'
                 ? true
                 : job.area ===
-                    selectedArea;
+                selectedArea;
 
 
         return (
@@ -770,6 +789,26 @@ function PublicApp() {
             <Register
                 navigateTo={navigateTo}
                 showToast={showToast}
+            />
+        );
+    }
+
+    // ==========================================================
+    // RECUPERACION DE CONTRASEÑA
+    // ==========================================================
+
+    if (screen === 'forgot-password') {
+        return (
+            <ForgotPassword
+                navigateTo={navigateTo}
+            />
+        );
+    }
+
+    if (screen === 'reset-password') {
+        return (
+            <ResetPassword
+                navigateTo={navigateTo}
             />
         );
     }
@@ -1412,9 +1451,8 @@ function PublicApp() {
             ====================================================== */}
 
             <div
-                className={`toast ${
-                    toastShow ? 'show' : ''
-                }`}
+                className={`toast ${toastShow ? 'show' : ''
+                    }`}
             >
 
                 <span>

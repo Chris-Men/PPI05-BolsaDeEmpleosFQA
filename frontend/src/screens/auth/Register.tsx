@@ -31,9 +31,7 @@ export default function Register({ navigateTo, showToast }: RegisterProps) {
           <div className="auth-brand-content">
             <img src={logoFQA} alt="FQA Empleos" className="fqa-logo-image" />
             <p className="auth-brand-description">
-              Conectando talento
-              <br />
-              con oportunidades.
+              Conectando talento con oportunidades.
             </p>
           </div>
         </section>

@@ -10,6 +10,7 @@ datasource db {
 /// Authentication account with one role and one lifecycle state.
 model User {
   sessions AuthSession[]
+  passwordResetTokens PasswordResetToken[]
   deletedAt DateTime? @map("deleted_at") @db.Timestamp(6)
   id                       Int                        @id @default(autoincrement())
   /// users_email_live_key enforces uniqueness WHERE deleted_at IS NULL (Prisma 6 migration SQL).
@@ -36,6 +37,23 @@ model User {
 
   @@index([statusId], map: "ix_users_status_id")
   @@map("users")
+}
+
+/// Recuperacion de contraseña
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  tokenHash String   @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@unique([tokenHash])
+  @@map("password_reset_tokens")
 }
 
 /// Registration creates this profile atomically with its account.

@@ -12,7 +12,9 @@ export type ScreenName =
   | 'nosotros'
   | 'profile'
   | 'login'
-  | 'register';
+  | 'register'
+  | 'forgot-password'
+  | 'reset-password';
 
 /** Candidate information used by the local profile demo. */
 export interface CurrentUser {
