@@ -88,18 +88,9 @@ export const forgotPassword = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const token = await requestPasswordReset(request.body);
-
-    /*
-     * Temporary development response.
-     *
-     * This will be replaced by email delivery once the complete
-     * password-reset flow is working
-     */
-    response.set('Cache-Control', 'no-store').json({
-      message:
-        'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',
-      ...(token ? { developmentToken: token } : {}),
+    await requestPasswordReset(request.body);
+    response.set('Cache-Control', 'no-store').status(202).json({
+      message: 'Si existe una cuenta activa con ese correo, recibirás un enlace de recuperación.',
     });
   } catch (error: unknown) {
     next(error);

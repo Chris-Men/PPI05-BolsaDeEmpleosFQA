@@ -21,7 +21,6 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [developmentToken, setDevelopmentToken] = useState('');
   const submitting = useRef(false);
 
   const pageStyle: AuthPageStyle = {
@@ -38,7 +37,6 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
 
     setError('');
     setSuccess('');
-    setDevelopmentToken('');
 
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -62,9 +60,6 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
 
       setSuccess(response.message);
 
-      if (response.developmentToken) {
-        setDevelopmentToken(response.developmentToken);
-      }
     } catch (failure: unknown) {
       setError(
         failure instanceof ApiError
@@ -181,19 +176,6 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
                   ? 'Enviando…'
                   : 'Enviar enlace de recuperación'}
               </button>
-
-              {developmentToken && (
-                <div className="auth-development-token">
-                  <strong>Token de desarrollo</strong>
-
-                  <code>{developmentToken}</code>
-
-                  <small>
-                    Este token se muestra únicamente durante el desarrollo
-                    para poder probar el restablecimiento sin correo.
-                  </small>
-                </div>
-              )}
 
               <button
                 type="button"

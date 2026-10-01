@@ -1,7 +1,9 @@
 import { env } from './config/env.js';
 import { createApp } from './app.js';
+import { startEmailWorker } from './services/email-worker.service.js';
 
 const app = createApp();
+startEmailWorker();
 
 /** Starts the API listener using the validated application port. */
 const startServer = (): void => {

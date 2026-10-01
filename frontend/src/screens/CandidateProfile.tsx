@@ -17,7 +17,6 @@ import {
   Trash2,
   Upload,
   UserRound,
-  UsersRound,
   X,
 } from 'lucide-react';
 

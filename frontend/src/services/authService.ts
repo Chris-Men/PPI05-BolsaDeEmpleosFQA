@@ -2,7 +2,7 @@ import { apiRequest } from './api';
 import type { AuthenticationResponse, CurrentAccess, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
 export interface ForgotPasswordRequest { email: string;}
-export interface ForgotPasswordResponse { message: string; developmentToken?: string;}
+export interface ForgotPasswordResponse { message: string;}
 
 export interface ResetPasswordRequest { token: string; password: string;}
 export interface ResetPasswordResponse { message: string;}
@@ -32,13 +32,7 @@ export const deleteOwnAccount = (): Promise<void> =>
   apiRequest('/auth/me', { method: 'DELETE', authenticated: true, retryAuthentication: false,
     body: JSON.stringify({ confirmDeletion: true }) });
 
-    /**
- * Requests a password recovery token.
- *
- * The developmentToken is intentionally kept for the current
- * development/testing environment. It will be removed when
- * real email delivery is implemented.
- */
+/** Requests an email link without exposing the token in the API response. */
 export const requestPasswordReset = ( payload: ForgotPasswordRequest,): Promise<ForgotPasswordResponse> =>
   apiRequest('/auth/forgot-password', { method: 'POST',
     body: JSON.stringify(payload), });
