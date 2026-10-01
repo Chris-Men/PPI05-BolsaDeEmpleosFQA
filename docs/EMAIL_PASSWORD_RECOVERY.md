@@ -32,3 +32,16 @@ Cada enlace dura 30 minutos, se usa una sola vez y solo se guarda su hash SHA-25
 Los servicios `enqueueApplicationConfirmation` y `enqueueApplicationDecision` preparan mensajes para el candidato dentro de la transacción que guardará la postulación o decisión. El llamador debe proporcionar una `eventKey` estable y única por evento para evitar duplicados. Hay textos de confirmación para empleo, voluntariado, horas sociales y prácticas, y textos de aprobación o rechazo para futuras postulaciones con estado.
 
 Actualmente no hay APIs de postulaciones en el backend, así que estas funciones no tienen disparadores reales. Los registros de voluntariado no tienen estado individual y solo podrán generar confirmación hasta que se modele su decisión.
+
+## Reconciliación de una base creada por la rama anterior
+
+Una base que aplicó `20260929063215_email_password_recovery` usa otra estructura de `password_reset_tokens` y ya tiene `email_outbox`. No ejecutes `prisma migrate deploy` directamente sobre esa base: las migraciones de esta rama intentarían crear tablas existentes.
+
+Con el backend detenido, haz primero un respaldo completo con `pg_dump -Fc`. Ejecuta `backend/scripts/reconcile-legacy-password-reset.sql` con `psql -v ON_ERROR_STOP=1`; renombra las columnas existentes y agrega la clave `id` sin borrar tokens ni mensajes. Luego, desde `backend/`, registra las estructuras equivalentes con:
+
+```bash
+npx prisma migrate resolve --applied 20260929193125_add_password_reset_tokens
+npx prisma migrate resolve --applied 20261001083439_email_outbox
+```
+
+Finalmente, ejecuta `backend/scripts/retire-legacy-email-migration.sql` con `psql -v ON_ERROR_STOP=1` y confirma con `npx prisma migrate status` y `npx prisma migrate deploy`. El segundo script retira del historial activo solo la entrada combinada anterior y exige que ambas migraciones nuevas estén registradas. Conserva el respaldo hasta completar la verificación.
