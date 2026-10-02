@@ -6,6 +6,8 @@ export interface ForgotPasswordResponse { message: string;}
 
 export interface ResetPasswordRequest { token: string; password: string;}
 export interface ResetPasswordResponse { message: string;}
+export interface ChangePasswordRequest { currentPassword: string; newPassword: string }
+export interface ChangePasswordResponse { message: string }
 
 /** Registers a candidate; the refresh credential is handled only by the browser. */
 export const registerCandidate = (payload: RegisterCandidateRequest): Promise<AuthenticationResponse> =>
@@ -43,3 +45,8 @@ export const requestPasswordReset = ( payload: ForgotPasswordRequest,): Promise<
 export const resetPassword = ( payload: ResetPasswordRequest,): Promise<ResetPasswordResponse> =>
   apiRequest('/auth/reset-password', { method: 'POST',
     body: JSON.stringify(payload), });
+
+/** Changes the authenticated account password without renewing inside the session lock. */
+export const changeAccountPassword = (payload: ChangePasswordRequest): Promise<ChangePasswordResponse> =>
+  apiRequest('/auth/change-password', { method: 'POST', authenticated: true,
+    retryAuthentication: false, body: JSON.stringify(payload) });

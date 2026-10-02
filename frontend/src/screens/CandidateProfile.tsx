@@ -12,7 +12,7 @@ import {
   LogOut,
   Menu,
   Search,
-  ShieldCheck,
+  Settings,
   Star,
   Trash2,
   Upload,
@@ -20,7 +20,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { DeleteOwnAccount } from '../components/users/DeleteOwnAccount';
+import { CandidateSettings } from '../components/users/CandidateSettings';
 
 import '../styles/users/profileuser.css';
 
@@ -71,6 +71,8 @@ type ProfileTab =
   | 'student'
   | 'saved';
 
+type ProfileSection = 'overview' | 'settings';
+
 export default function CandidateProfile({
   currentUser,
   handleLogout,
@@ -104,6 +106,9 @@ export default function CandidateProfile({
 
   const [activeTab, setActiveTab] =
     useState<ProfileTab>('jobs');
+
+  const [activeSection, setActiveSection] =
+    useState<ProfileSection>('overview');
 
   const [confirmRetire, setConfirmRetire] =
     useState<RetireSelection | null>(null);
@@ -307,10 +312,12 @@ export default function CandidateProfile({
 
           <button
             type="button"
-            className="profile-sidebar-item active"
-            onClick={() =>
-              setMobileMenuOpen(false)
-            }
+            className={`profile-sidebar-item ${activeSection === 'overview' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSection('overview');
+              setMobileMenuOpen(false);
+            }}
+            aria-current={activeSection === 'overview' ? 'page' : undefined}
           >
             <House size={19} />
 
@@ -332,7 +339,6 @@ export default function CandidateProfile({
             </span>
           </button>
 
-
           <button
             type="button"
             className="profile-sidebar-item"
@@ -346,7 +352,6 @@ export default function CandidateProfile({
               Mis documentos
             </span>
           </button>
-
 
           <button
             type="button"
@@ -366,6 +371,19 @@ export default function CandidateProfile({
             <span className="profile-notification-count">
               0
             </span>
+          </button>
+
+          <button
+            type="button"
+            className={`profile-sidebar-item ${activeSection === 'settings' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSection('settings');
+              setMobileMenuOpen(false);
+            }}
+            aria-current={activeSection === 'settings' ? 'page' : undefined}
+          >
+            <Settings size={19} />
+            <span>Configuración</span>
           </button>
 
         </nav>
@@ -474,6 +492,8 @@ export default function CandidateProfile({
         =================================================== */}
 
         <div className="profile-content">
+
+          {activeSection === 'settings' ? <CandidateSettings /> : <>
 
 
           {/* =================================================
@@ -1277,39 +1297,7 @@ export default function CandidateProfile({
           </div>
 
 
-          {/* =================================================
-              ELIMINAR CUENTA
-          ================================================= */}
-
-          <section className="profile-delete-section">
-
-            <div className="profile-delete-decoration">
-              <ShieldCheck size={90} />
-            </div>
-
-            <div className="profile-delete-icon">
-              <Trash2 size={21} />
-            </div>
-
-            <div className="profile-delete-content">
-
-              <h2>
-                Eliminar cuenta
-              </h2>
-
-              <p>
-                Al eliminar tu cuenta perderás
-                el acceso a tu perfil y a tus
-                postulaciones.
-              </p>
-
-              <div className="profile-delete-component">
-                <DeleteOwnAccount />
-              </div>
-
-            </div>
-
-          </section>
+          </>}
 
         </div>
 

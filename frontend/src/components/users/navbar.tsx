@@ -73,7 +73,7 @@ export default function Navbar({
                 >
                   Ir al perfil
                 </button>
-                <SessionControls />
+                <SessionControls showAll={false} />
               </div>
             )}
           </div>

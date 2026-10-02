@@ -6,7 +6,7 @@ import { PASSWORD_HASH_ROUNDS } from '../constants/auth.constants.js';
 import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import { ROLE_NAMES } from '../constants/authorization.constants.js';
 import type { SessionResult } from '../types/auth.types.js';
-import type { ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
+import type { ChangePasswordDTO, ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { rethrowUserConflict } from '../utils/user-conflict.js';
 import { splitProfileName } from '../utils/profile-name.js';
@@ -181,4 +181,50 @@ export const resetPassword = async (payload: ResetPasswordDTO): Promise<void> =>
       kind: 'PASSWORD_CHANGED',
     });
   });
+};
+
+/** Replaces an authenticated user's password while preserving the requesting session. */
+export const changePassword = async (
+  userId: number, sessionId: string, payload: ChangePasswordDTO,
+): Promise<void> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true, passwordHash: true, deletedAt: true, statusId: true,
+      status: { select: { name: true } },
+    },
+  });
+  if (!user || user.deletedAt || user.status.name !== USER_STATUS_NAMES.ACTIVE) {
+    throw new AppError(401, 'Debes iniciar sesión nuevamente.');
+  }
+  if (!await bcrypt.compare(payload.currentPassword, user.passwordHash)) {
+    throw new AppError(400, 'La contraseña actual es incorrecta.');
+  }
+  if (await bcrypt.compare(payload.newPassword, user.passwordHash)) {
+    throw new AppError(400, 'La nueva contraseña debe ser diferente de la actual.');
+  }
+
+  const passwordHash = await bcrypt.hash(payload.newPassword, PASSWORD_HASH_ROUNDS);
+  await prisma.$transaction(async (database) => {
+    const now = new Date();
+    const currentSession = await database.authSession.findFirst({
+      where: { id: sessionId, userId, revokedAt: null, expiresAt: { gt: now } },
+      select: { id: true },
+    });
+    if (!currentSession) throw new AppError(401, 'Debes iniciar sesión nuevamente.');
+    const updated = await database.user.updateMany({
+      where: { id: userId, passwordHash: user.passwordHash, deletedAt: null, statusId: user.statusId },
+      data: { passwordHash },
+    });
+    if (updated.count !== 1) throw new AppError(409, 'La contraseña cambió. Inicia sesión nuevamente.');
+    await database.passwordResetToken.updateMany({
+      where: { userId, usedAt: null }, data: { usedAt: now },
+    });
+    await database.authSession.updateMany({
+      where: { userId, id: { not: sessionId }, revokedAt: null }, data: { revokedAt: now },
+    });
+    await enqueueEmail(database, 'password-changed:' + randomUUID(), user.email, {
+      kind: 'PASSWORD_CHANGED',
+    });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 };

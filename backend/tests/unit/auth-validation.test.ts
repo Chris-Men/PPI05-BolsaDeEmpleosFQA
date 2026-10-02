@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { registerCandidateSchema } from '../../src/validation/auth.schema.js';
+import { changePasswordSchema, registerCandidateSchema } from '../../src/validation/auth.schema.js';
 
 const validInput = {
   fullName: 'Ana Rivera',
@@ -77,4 +77,13 @@ describe('Validación del registro', () => {
       }
     });
   }
+});
+
+describe('Validación del cambio autenticado de contraseña', () => {
+  it('exige contraseña actual y una nueva que cumpla las reglas de registro', () => {
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'Nueva clave segura 2026' }).success, true);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: '', newPassword: 'Nueva clave segura 2026' }).success, false);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'corta' }).success, false);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'Nueva clave segura 2026', role: 'SUPER_ADMIN' }).success, false);
+  });
 });

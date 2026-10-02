@@ -75,3 +75,11 @@ export const resetPasswordSchema = z.object({
 }).strict('La solicitud contiene campos no permitidos.');
 
 export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
+
+/** Authenticated password change requires the current credential and registration-strength replacement. */
+export const changePasswordSchema = z.object({
+  currentPassword: loginSchema.shape.password,
+  newPassword: registerCandidateSchema.shape.password,
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ChangePasswordDTO = z.infer<typeof changePasswordSchema>;

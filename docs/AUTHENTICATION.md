@@ -42,6 +42,7 @@ Toda mutación requiere `X-FQA-Request: 1`. Si existe `Origin`, debe coincidir e
 | GET /me | Authorization: Bearer JWT | Identidad pública, roles, permisos y vencimiento |
 | POST /logout | Cookie; no necesita JWT vigente | 204, revocación y borrado de cookie; idempotente |
 | POST /logout-all | Bearer JWT vigente | 204, revoca todas las sesiones propias |
+| POST /change-password | Bearer JWT vigente; currentPassword, newPassword | 200, actualiza la contraseña y revoca las demás sesiones propias |
 | POST /users/:userId/revoke-sessions | Bearer, rol SUPER_ADMIN y sessions.revoke.any | 204, revoca todas las sesiones de esa cuenta |
 
 Registro, login y refresh devuelven el mismo contrato:
@@ -78,6 +79,8 @@ Origin: https://empleos.example.test
 ```
 
 Solo Super Admin tiene el nuevo permiso del catálogo; no se añade pantalla de revocación administrativa. Las cuentas pueden iniciar sesión nuevamente después de revocarlas.
+
+En el perfil de candidato, **Configuración** agrupa el cambio de contraseña, el cierre de todas las sesiones y la eliminación de cuenta. El cambio exige la contraseña actual y una nueva de 12 caracteres como mínimo y 72 bytes UTF-8 como máximo. El backend cambia el hash bcrypt, invalida enlaces de recuperación pendientes, revoca las demás sesiones y encola un aviso por correo en una transacción. La sesión y la cookie del dispositivo que realiza el cambio continúan vigentes.
 
 Errores: 400 para entrada inválida; 401 genérico para credenciales incorrectas, cuenta eliminada o sin rol admitido; 401 con mensaje de cuenta deshabilitada cuando las credenciales son correctas; 401 para sesión inválida/vencida/revocada; 403 para origen o permisos; 404 para cuenta objetivo inexistente. Los errores no incluyen credenciales.
 

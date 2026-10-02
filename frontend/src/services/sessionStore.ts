@@ -1,5 +1,6 @@
 import { ApiError, configureAuthentication } from './api';
-import { deleteOwnAccount, getCurrentAccess, loginAccount, logoutAccount, refreshAccount, registerCandidate } from './authService';
+import { changeAccountPassword, deleteOwnAccount, getCurrentAccess, loginAccount, logoutAccount, refreshAccount, registerCandidate } from './authService';
+import type { ChangePasswordRequest } from './authService';
 import type { AuthenticationResponse, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
 /** In-memory access credential and public identity. Refresh tokens stay in HttpOnly cookies. */
@@ -123,6 +124,13 @@ export const sessionStore = {
     await withSessionLock(async () => {
       await deleteOwnAccount();
       invalidate();
+    });
+  },
+  /** Changes the password while keeping this browser's valid session in memory. */
+  async changePassword(payload: ChangePasswordRequest): Promise<void> {
+    await renew();
+    await withSessionLock(async () => {
+      await changeAccountPassword(payload);
     });
   },
   /** Revokes remotely before declaring logout successful. */

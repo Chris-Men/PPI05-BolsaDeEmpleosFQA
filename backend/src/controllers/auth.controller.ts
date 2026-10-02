@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
-import { loginAccount, registerCandidate, requestPasswordReset, resetPassword } from '../services/auth.service.js';
+import { changePassword, loginAccount, registerCandidate, requestPasswordReset, resetPassword } from '../services/auth.service.js';
 import { getPublicUser, logoutSession, refreshSession, revokeUserSessions } from '../services/session.service.js';
 import { clearSessionCookie, readRefreshCookie, sendSession } from '../middleware/session-cookie.middleware.js';
-import type { ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
+import type { ChangePasswordDTO, ForgotPasswordDTO, LoginDTO, RegisterCandidateDTO, ResetPasswordDTO } from '../validation/auth.schema.js';
 import { AppError } from '../utils/app-error.js';
 
 /** Returns current database-backed access and public identity. */
@@ -113,6 +113,23 @@ export const resetPasswordController = async (
       .json({
         message: 'Tu contraseña ha sido actualizada correctamente.',
       });
+  } catch (error: unknown) {
+    next(error);
+  }
+};
+
+/** Changes an authenticated user's password while keeping this browser session active. */
+export const changePasswordController = async (
+  request: Request<Record<string, never>, unknown, ChangePasswordDTO>,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!request.user || !request.session) throw new AppError(401, 'Debes iniciar sesión.');
+    await changePassword(request.user.userId, request.session.id, request.body);
+    response.set('Cache-Control', 'no-store').json({
+      message: 'Tu contraseña se actualizó. Las demás sesiones se cerraron.',
+    });
   } catch (error: unknown) {
     next(error);
   }
