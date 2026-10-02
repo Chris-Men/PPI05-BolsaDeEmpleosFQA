@@ -54,13 +54,19 @@ Los valores completos y la forma de generar `JWT_SECRET` están documentados en 
 
 ## Inicio rápido en desarrollo
 
-Con Docker Desktop iniciado, desde la raíz del repositorio:
+Con Docker Desktop iniciado, desde la raíz del repositorio en PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1
+```
+
+El script crea `.env` con credenciales aleatorias si no existe, construye las imágenes, aplica las migraciones, carga los catálogos e inicia los servicios. Si `.env` ya existe, conserva sus valores. Para configurar tus propias credenciales, créalo antes de ejecutar el script:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Edita `.env` antes de continuar. Luego ejecuta el procedimiento de primera instalación:
+Edita `.env` antes de continuar. El procedimiento manual equivalente es:
 
 ```bash
 docker compose -f docker-compose.dev.yml build

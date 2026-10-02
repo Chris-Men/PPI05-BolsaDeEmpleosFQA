@@ -131,6 +131,14 @@ Vite incorpora variables `VITE_*` al código del navegador. No coloques secretos
 
 ### Primera instalación
 
+Con Docker Desktop iniciado, en PowerShell desde la raíz del repositorio, puedes completar la instalación con un solo comando:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1
+```
+
+El script crea `.env` con secretos aleatorios si no existe, conserva un `.env` existente, construye las imágenes, genera Prisma Client, aplica las migraciones, ejecuta el seed e inicia los servicios. No borra la base ni sus volúmenes. Si necesitas valores propios, crea y completa `.env` antes de ejecutarlo. Para seguir los pasos por separado:
+
 1. Crea y completa `.env`.
 2. Construye las imágenes de desarrollo:
 
