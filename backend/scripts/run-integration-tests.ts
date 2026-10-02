@@ -34,6 +34,7 @@ const main = async (): Promise<void> => {
     NODE_ENV: 'test',
     CORS_ORIGIN: 'http://localhost:5173',
     JWT_SECRET: randomBytes(48).toString('hex'),
+    MAIL_OUTBOX_KEY: randomBytes(32).toString('hex'),
   };
 
   await run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'], environment);

@@ -6,7 +6,7 @@ Esta guía parte de un clon nuevo y distingue el entorno de desarrollo de la con
 
 - Git.
 - Docker Desktop o Docker Engine con Docker Compose v2.
-- Puertos `5173` y `3000` disponibles en desarrollo.
+- Puertos `5173`, `3000`, `5433` y `8025` disponibles en desarrollo.
 - Node.js 22 y npm 10 o superior solamente si se ejecutarán servicios fuera de Docker.
 
 Comprueba Docker con:
@@ -43,6 +43,9 @@ PORT=3000
 CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=REEMPLAZAR_POR_UN_SECRETO_ALEATORIO_DE_64_CARACTERES
 DATABASE_URL=postgresql://fqa_user:REEMPLAZAR_PASSWORD@postgres:5432/fqa_empleos?schema=public
+MAIL_OUTBOX_KEY=REEMPLAZAR_POR_64_CARACTERES_HEXADECIMALES
+SMTP_FROM=no-reply@fqa.local
+RESET_PASSWORD_URL=http://localhost:5173/reset-password
 
 POSTGRES_DB=fqa_empleos
 POSTGRES_USER=fqa_user
@@ -58,9 +61,9 @@ IMAGE_TAG=latest
 Genera `JWT_SECRET` con al menos 32 bytes aleatorios. En PowerShell:
 
 ```powershell
-[Convert]::ToHexString(
-  [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
-).ToLower()
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+($bytes | ForEach-Object { $_.ToString('x2') }) -join ''
 ```
 
 En Bash con OpenSSL:
@@ -70,6 +73,10 @@ openssl rand -hex 32
 ```
 
 No reutilices el secreto de desarrollo en producción.
+
+Para el correo, define también `MAIL_OUTBOX_KEY` con 64 caracteres hexadecimales aleatorios generados con el mismo comando anterior, `SMTP_FROM=no-reply@fqa.local` y `RESET_PASSWORD_URL=http://localhost:5173/reset-password`. La clave debe ser distinta de `JWT_SECRET`. El Compose de desarrollo conecta el backend a Mailpit y muestra los correos en `http://localhost:8025`. Para ejecutar Node fuera de Docker, añade `SMTP_HOST=localhost`, `SMTP_PORT=1025` y `SMTP_SECURE=false` a `backend/.env`; Mailpit debe estar iniciado. En producción configura `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` y `SMTP_FROM` para tu proveedor real.
+
+Consulta [correo y recuperación de contraseña](EMAIL_PASSWORD_RECOVERY.md) para los endpoints, límites y reintentos.
 
 ### `backend/.env`
 
@@ -85,9 +92,15 @@ La diferencia principal es que `DATABASE_URL` usa `localhost`, porque Node se ej
 NODE_ENV=development
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
-DATABASE_URL=postgresql://fqa_user:REEMPLAZAR_PASSWORD@localhost:5432/fqa_empleos?schema=public
+DATABASE_URL=postgresql://fqa_user:REEMPLAZAR_PASSWORD@localhost:5433/fqa_empleos?schema=public
 JWT_SECRET=REEMPLAZAR_POR_UN_SECRETO_ALEATORIO_DE_64_CARACTERES
-TEST_DATABASE_URL=postgresql://fqa_user:REEMPLAZAR_PASSWORD@localhost:5432/fqa_empleos_test?schema=public
+TEST_DATABASE_URL=postgresql://fqa_user:REEMPLAZAR_PASSWORD@localhost:5433/fqa_empleos_test?schema=public
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_SECURE=false
+SMTP_FROM=no-reply@fqa.local
+RESET_PASSWORD_URL=http://localhost:5173/reset-password
+MAIL_OUTBOX_KEY=REEMPLAZAR_POR_64_CARACTERES_HEXADECIMALES
 ```
 
 `TEST_DATABASE_URL` es opcional hasta que se ejecuten pruebas de integración.
@@ -282,6 +295,13 @@ PORT=3000
 CORS_ORIGIN=https://empleos.example.com
 JWT_SECRET=REEMPLAZAR_POR_UN_SECRETO_DISTINTO_Y_ALEATORIO
 DATABASE_URL=postgresql://fqa_prod:REEMPLAZAR_PASSWORD@postgres:5432/fqa_empleos?schema=public
+MAIL_OUTBOX_KEY=REEMPLAZAR_POR_64_CARACTERES_HEXADECIMALES
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=REEMPLAZAR_USUARIO_SMTP
+SMTP_PASS=REEMPLAZAR_PASSWORD_SMTP
+SMTP_FROM=notificaciones@empleos.example.com
 POSTGRES_DB=fqa_empleos
 POSTGRES_USER=fqa_prod
 POSTGRES_PASSWORD=REEMPLAZAR_PASSWORD

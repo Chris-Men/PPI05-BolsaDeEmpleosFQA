@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-/** Offers server-confirmed logout actions in candidate and administrative menus. */
-export function SessionControls() {
+interface SessionControlsProps { showCurrent?: boolean; showAll?: boolean }
+
+/** Offers server-confirmed logout actions where each control is needed. */
+export function SessionControls({ showCurrent = true, showAll = true }: SessionControlsProps) {
   const { logout } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -18,8 +20,8 @@ export function SessionControls() {
   };
 
   return <div className="session-controls">
-    <button type="button" disabled={busy} onClick={() => void close(false)}>Cerrar sesión</button>
-    <button type="button" disabled={busy} onClick={() => void close(true)}>Cerrar todas mis sesiones</button>
+    {showCurrent && <button type="button" disabled={busy} onClick={() => void close(false)}>Cerrar sesión</button>}
+    {showAll && <button type="button" disabled={busy} onClick={() => void close(true)}>Cerrar todas mis sesiones</button>}
     {error && <p role="alert">{error}</p>}
   </div>;
 }

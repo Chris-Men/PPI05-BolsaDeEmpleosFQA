@@ -29,13 +29,18 @@ export function getAccountIdentityValidationError(name: string, address: string)
 export function getRegistrationValidationError(values: RegistrationFormValues): string | null {
   const identityError = getAccountIdentityValidationError(values.name, values.email);
   if (identityError) return identityError;
-  if (Array.from(values.password).length < 12) {
+  return getNewPasswordValidationError(values.password, values.confirmPassword);
+}
+
+/** Applies the shared new-password and confirmation rules to account forms. */
+export function getNewPasswordValidationError(password: string, confirmation: string): string | null {
+  if (Array.from(password).length < 12) {
     return 'La contraseña debe tener al menos 12 caracteres.';
   }
-  if (new TextEncoder().encode(values.password).length > 72) {
+  if (new TextEncoder().encode(password).length > 72) {
     return 'La contraseña no puede superar los 72 bytes en UTF-8.';
   }
-  if (values.password !== values.confirmPassword) {
+  if (password !== confirmation) {
     return 'Las contraseñas no coinciden.';
   }
   return null;

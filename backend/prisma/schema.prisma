@@ -56,6 +56,26 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+/// Encrypted messages awaiting SMTP delivery; event keys prevent duplicate enqueues.
+model EmailOutbox {
+  id               String    @id @default(uuid()) @db.Uuid
+  eventKey         String    @unique @map("event_key") @db.VarChar(160)
+  kind             String    @db.VarChar(50)
+  recipientEmail   String    @map("recipient_email") @db.VarChar(255)
+  encryptedPayload String    @map("encrypted_payload")
+  iv               String    @db.VarChar(24)
+  authTag          String    @map("auth_tag") @db.VarChar(24)
+  attempts         Int       @default(0)
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at")
+  lockedUntil      DateTime? @map("locked_until")
+  sentAt           DateTime? @map("sent_at")
+  discardedAt      DateTime? @map("discarded_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@index([sentAt, discardedAt, nextAttemptAt, lockedUntil])
+  @@map("email_outbox")
+}
+
 /// Registration creates this profile atomically with its account.
 model UserProfile {
   id        Int     @id @default(autoincrement())

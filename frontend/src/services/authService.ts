@@ -2,10 +2,12 @@ import { apiRequest } from './api';
 import type { AuthenticationResponse, CurrentAccess, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 
 export interface ForgotPasswordRequest { email: string;}
-export interface ForgotPasswordResponse { message: string; developmentToken?: string;}
+export interface ForgotPasswordResponse { message: string;}
 
 export interface ResetPasswordRequest { token: string; password: string;}
 export interface ResetPasswordResponse { message: string;}
+export interface ChangePasswordRequest { currentPassword: string; newPassword: string }
+export interface ChangePasswordResponse { message: string }
 
 /** Registers a candidate; the refresh credential is handled only by the browser. */
 export const registerCandidate = (payload: RegisterCandidateRequest): Promise<AuthenticationResponse> =>
@@ -32,13 +34,7 @@ export const deleteOwnAccount = (): Promise<void> =>
   apiRequest('/auth/me', { method: 'DELETE', authenticated: true, retryAuthentication: false,
     body: JSON.stringify({ confirmDeletion: true }) });
 
-    /**
- * Requests a password recovery token.
- *
- * The developmentToken is intentionally kept for the current
- * development/testing environment. It will be removed when
- * real email delivery is implemented.
- */
+/** Requests an email link without exposing the token in the API response. */
 export const requestPasswordReset = ( payload: ForgotPasswordRequest,): Promise<ForgotPasswordResponse> =>
   apiRequest('/auth/forgot-password', { method: 'POST',
     body: JSON.stringify(payload), });
@@ -49,3 +45,8 @@ export const requestPasswordReset = ( payload: ForgotPasswordRequest,): Promise<
 export const resetPassword = ( payload: ResetPasswordRequest,): Promise<ResetPasswordResponse> =>
   apiRequest('/auth/reset-password', { method: 'POST',
     body: JSON.stringify(payload), });
+
+/** Changes the authenticated account password without renewing inside the session lock. */
+export const changeAccountPassword = (payload: ChangePasswordRequest): Promise<ChangePasswordResponse> =>
+  apiRequest('/auth/change-password', { method: 'POST', authenticated: true,
+    retryAuthentication: false, body: JSON.stringify(payload) });

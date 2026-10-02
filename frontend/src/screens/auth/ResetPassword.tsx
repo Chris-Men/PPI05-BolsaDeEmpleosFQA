@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useRef,
     useState,
     type CSSProperties,
@@ -77,8 +78,12 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
 
     const passwordStrength = getPasswordStrength(password);
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token')?.trim() ?? '';
+    const [token] = useState(() => new URLSearchParams(window.location.search).get('token')?.trim() ?? '');
+
+    /** Remove the credential from the address bar before other navigation. */
+    useEffect(() => {
+        window.history.replaceState({}, document.title, '/reset-password');
+    }, []);
 
     const goToScreen = (nextScreen: 'login' | 'home') => {
         window.history.replaceState({}, document.title, '/');

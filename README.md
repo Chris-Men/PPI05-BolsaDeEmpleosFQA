@@ -151,6 +151,10 @@ Las pruebas de integración del backend necesitan una base separada cuyo nombre 
 
 Consulta [inicio de sesión y sesiones revocables](docs/AUTHENTICATION.md) para contratos, migración, persistencia, revocación y pruebas de PB-02.
 
+## Correo y recuperación de contraseña
+
+El backend permite solicitar y completar la recuperación de contraseña por correo para cualquier rol. El correo se encola cifrado en PostgreSQL y se entrega por SMTP con reintentos. En desarrollo, Mailpit muestra los mensajes en `http://localhost:8025`. Las plantillas de postulaciones están preparadas para conectarse cuando existan APIs reales de postulaciones. Consulta [correo y recuperación de contraseña](docs/EMAIL_PASSWORD_RECOVERY.md).
+
 ## Gestión de usuarios
 
 Consulta [gestión y ciclo de vida de usuarios](docs/USER_MANAGEMENT.md) para endpoints, permisos, restricciones y preparación del entorno.
