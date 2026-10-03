@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 
 import {
   Bell,
@@ -35,6 +38,7 @@ import type {
   VolunteerSpot,
 } from '../types/models';
 
+
 interface CandidateProfileProps {
   currentUser: CurrentUser | null;
 
@@ -64,11 +68,13 @@ interface CandidateProfileProps {
   showToast: (message: string) => void;
 }
 
+
 type ProfileTab =
   | 'jobs'
   | 'volunteer'
   | 'student'
   | 'saved';
+
 
 export default function CandidateProfile({
   currentUser,
@@ -96,6 +102,7 @@ export default function CandidateProfile({
 
   showToast,
 }: CandidateProfileProps) {
+
   /* =========================================================
      ESTADOS
   ========================================================= */
@@ -111,28 +118,66 @@ export default function CandidateProfile({
 
 
   /* =========================================================
+     BLOQUEAR SCROLL DEL BODY
+     
+     Cuando el sidebar está abierto en móvil:
+     - El contenido de fondo no se desplaza.
+     - El sidebar conserva su propio scroll.
+  ========================================================= */
+
+  useEffect(() => {
+
+    if (mobileMenuOpen) {
+      document.body.classList.add(
+        'profile-sidebar-is-open'
+      );
+    } else {
+      document.body.classList.remove(
+        'profile-sidebar-is-open'
+      );
+    }
+
+    return () => {
+      document.body.classList.remove(
+        'profile-sidebar-is-open'
+      );
+    };
+
+  }, [mobileMenuOpen]);
+
+
+  /* =========================================================
      DATOS
   ========================================================= */
 
-  const myApplications = applications.filter(
-    (app) =>
-      app.candidateEmail === currentUser?.email
-  );
+  const myApplications =
+    applications.filter(
+      (app) =>
+        app.candidateEmail ===
+        currentUser?.email
+    );
+
 
   const myVolunteerSpots =
-    volunteerSpots.filter((spot) =>
-      volunteerApps.includes(spot.id)
+    volunteerSpots.filter(
+      (spot) =>
+        volunteerApps.includes(spot.id)
     );
+
 
   const myStudentSpots =
-    studentSpots.filter((spot) =>
-      studentApps.includes(spot.id)
+    studentSpots.filter(
+      (spot) =>
+        studentApps.includes(spot.id)
     );
 
+
   const mySavedJobs =
-    jobs.filter((job) =>
-      savedJobs.includes(job.id)
+    jobs.filter(
+      (job) =>
+        savedJobs.includes(job.id)
     );
+
 
   const totalActive =
     myApplications.length +
@@ -141,28 +186,48 @@ export default function CandidateProfile({
 
 
   /* =========================================================
+     CERRAR SIDEBAR
+  ========================================================= */
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+
+  /* =========================================================
      NAVEGACIÓN
   ========================================================= */
 
   const goToJobs = () => {
+
     navigateTo('jobs');
-    setMobileMenuOpen(false);
+
+    closeMobileMenu();
   };
+
 
   const goToVolunteers = () => {
+
     navigateTo('volunteers');
-    setMobileMenuOpen(false);
+
+    closeMobileMenu();
   };
+
 
   const goToStudents = () => {
+
     navigateTo('students');
-    setMobileMenuOpen(false);
+
+    closeMobileMenu();
   };
 
- const goToHelp = () => {
+
+  const goToHelp = () => {
+
     navigateTo('help');
-    setMobileMenuOpen(false);
-};
+
+    closeMobileMenu();
+  };
 
 
   /* =========================================================
@@ -170,14 +235,19 @@ export default function CandidateProfile({
   ========================================================= */
 
   const handleConfirmRetire = () => {
+
     if (!confirmRetire) return;
 
+
     if (confirmRetire.kind === 'job') {
-      setApplications((prev) =>
-        prev.filter(
-          (application) =>
-            application.id !== confirmRetire.id
-        )
+
+      setApplications(
+        (prev) =>
+          prev.filter(
+            (application) =>
+              application.id !==
+              confirmRetire.id
+          )
       );
 
       showToast(
@@ -185,11 +255,15 @@ export default function CandidateProfile({
       );
     }
 
+
     if (confirmRetire.kind === 'volunteer') {
-      setVolunteerApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
+
+      setVolunteerApps(
+        (prev) =>
+          prev.filter(
+            (id) =>
+              id !== confirmRetire.id
+          )
       );
 
       showToast(
@@ -197,17 +271,22 @@ export default function CandidateProfile({
       );
     }
 
+
     if (confirmRetire.kind === 'student') {
-      setStudentApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
+
+      setStudentApps(
+        (prev) =>
+          prev.filter(
+            (id) =>
+              id !== confirmRetire.id
+          )
       );
 
       showToast(
         '✓ Postulación estudiantil retirada'
       );
     }
+
 
     setConfirmRetire(null);
   };
@@ -218,6 +297,7 @@ export default function CandidateProfile({
   ========================================================= */
 
   const handleUploadCV = () => {
+
     setUploadedCVName(
       'Curriculum_Bolsa_FQA.pdf'
     );
@@ -227,7 +307,9 @@ export default function CandidateProfile({
     );
   };
 
+
   const handleRemoveCV = () => {
+
     setUploadedCVName('');
 
     showToast(
@@ -241,6 +323,7 @@ export default function CandidateProfile({
   ========================================================= */
 
   return (
+
     <div className="profile-user-screen">
 
       {/* =====================================================
@@ -281,9 +364,7 @@ export default function CandidateProfile({
         <button
           type="button"
           className="profile-mobile-close"
-          onClick={() =>
-            setMobileMenuOpen(false)
-          }
+          onClick={closeMobileMenu}
           aria-label="Cerrar menú"
         >
           <X size={20} />
@@ -299,9 +380,7 @@ export default function CandidateProfile({
           <button
             type="button"
             className="profile-sidebar-item active"
-            onClick={() =>
-              setMobileMenuOpen(false)
-            }
+            onClick={closeMobileMenu}
           >
             <House size={19} />
 
@@ -327,9 +406,7 @@ export default function CandidateProfile({
           <button
             type="button"
             className="profile-sidebar-item"
-            onClick={() =>
-              setMobileMenuOpen(false)
-            }
+            onClick={closeMobileMenu}
           >
             <FileText size={19} />
 
@@ -378,6 +455,7 @@ export default function CandidateProfile({
           </div>
 
           <div>
+
             <strong>
               ¿Necesitas ayuda?
             </strong>
@@ -385,6 +463,7 @@ export default function CandidateProfile({
             <small>
               Estamos para apoyarte
             </small>
+
           </div>
 
           <ChevronRight size={16} />
@@ -399,12 +478,13 @@ export default function CandidateProfile({
       ===================================================== */}
 
       {mobileMenuOpen && (
+
         <div
           className="profile-sidebar-overlay"
-          onClick={() =>
-            setMobileMenuOpen(false)
-          }
+          onClick={closeMobileMenu}
+          aria-hidden="true"
         />
+
       )}
 
 
@@ -425,6 +505,7 @@ export default function CandidateProfile({
             setMobileMenuOpen(true)
           }
           aria-label="Abrir menú"
+          aria-expanded={mobileMenuOpen}
         >
           <span aria-hidden="true">
             ☰
@@ -466,6 +547,7 @@ export default function CandidateProfile({
                 </h1>
 
                 <p>
+
                   Candidato registrado
 
                   <span>
@@ -476,6 +558,7 @@ export default function CandidateProfile({
 
                   {currentUser?.email ||
                     'No disponible'}
+
                 </p>
 
               </div>
@@ -498,6 +581,7 @@ export default function CandidateProfile({
               </div>
 
               <div>
+
                 <strong>
                   {totalActive}
                 </strong>
@@ -505,6 +589,7 @@ export default function CandidateProfile({
                 <span>
                   Postulaciones activas
                 </span>
+
               </div>
 
               <ChevronRight size={17} />
@@ -519,6 +604,7 @@ export default function CandidateProfile({
               </div>
 
               <div>
+
                 <strong>
                   {myApplications.length}
                 </strong>
@@ -526,6 +612,7 @@ export default function CandidateProfile({
                 <span>
                   Empleos
                 </span>
+
               </div>
 
               <ChevronRight size={17} />
@@ -540,6 +627,7 @@ export default function CandidateProfile({
               </div>
 
               <div>
+
                 <strong>
                   {myVolunteerSpots.length}
                 </strong>
@@ -547,6 +635,7 @@ export default function CandidateProfile({
                 <span>
                   Voluntariados
                 </span>
+
               </div>
 
               <ChevronRight size={17} />
@@ -561,6 +650,7 @@ export default function CandidateProfile({
               </div>
 
               <div>
+
                 <strong>
                   {myStudentSpots.length}
                 </strong>
@@ -568,6 +658,7 @@ export default function CandidateProfile({
                 <span>
                   Estudiantes
                 </span>
+
               </div>
 
               <ChevronRight size={17} />
@@ -582,6 +673,7 @@ export default function CandidateProfile({
               </div>
 
               <div>
+
                 <strong>
                   {mySavedJobs.length}
                 </strong>
@@ -589,6 +681,7 @@ export default function CandidateProfile({
                 <span>
                   Guardadas
                 </span>
+
               </div>
 
               <ChevronRight size={17} />
@@ -615,9 +708,11 @@ export default function CandidateProfile({
                 setActiveTab('jobs')
               }
             >
+
               <BriefcaseBusiness size={16} />
 
               Empleos ({myApplications.length})
+
             </button>
 
 
@@ -632,11 +727,13 @@ export default function CandidateProfile({
                 setActiveTab('volunteer')
               }
             >
+
               <Heart size={16} />
 
               Voluntariado (
               {myVolunteerSpots.length}
               )
+
             </button>
 
 
@@ -651,11 +748,13 @@ export default function CandidateProfile({
                 setActiveTab('student')
               }
             >
+
               <GraduationCap size={16} />
 
               Estudiantes (
               {myStudentSpots.length}
               )
+
             </button>
 
 
@@ -670,9 +769,11 @@ export default function CandidateProfile({
                 setActiveTab('saved')
               }
             >
+
               <Star size={16} />
 
               Guardadas ({mySavedJobs.length})
+
             </button>
 
           </nav>
@@ -688,12 +789,21 @@ export default function CandidateProfile({
                 POSTULACIONES
             =============================================== */}
 
-            <section className="profile-card profile-applications-card">
+            <section
+              className="
+                profile-card
+                profile-applications-card
+              "
+            >
 
-              {/* EMPLEOS */}
+              {/* =============================================
+                  EMPLEOS
+              ============================================= */}
 
               {activeTab === 'jobs' && (
+
                 <>
+
                   <div className="profile-card-heading">
 
                     <div>
@@ -804,9 +914,7 @@ export default function CandidateProfile({
 
                           Explorar vacantes
 
-                          <ChevronRight
-                            size={15}
-                          />
+                          <ChevronRight size={15} />
                         </button>
 
                       </div>
@@ -831,7 +939,9 @@ export default function CandidateProfile({
                     </div>
 
                   )}
+
                 </>
+
               )}
 
 
@@ -840,7 +950,9 @@ export default function CandidateProfile({
               ============================================= */}
 
               {activeTab === 'volunteer' && (
+
                 <>
+
                   <div className="profile-card-heading">
 
                     <div>
@@ -927,7 +1039,9 @@ export default function CandidateProfile({
                     </div>
 
                   )}
+
                 </>
+
               )}
 
 
@@ -936,7 +1050,9 @@ export default function CandidateProfile({
               ============================================= */}
 
               {activeTab === 'student' && (
+
                 <>
+
                   <div className="profile-card-heading">
 
                     <div>
@@ -1030,7 +1146,9 @@ export default function CandidateProfile({
                     </div>
 
                   )}
+
                 </>
+
               )}
 
 
@@ -1039,7 +1157,9 @@ export default function CandidateProfile({
               ============================================= */}
 
               {activeTab === 'saved' && (
+
                 <>
+
                   <div className="profile-card-heading">
 
                     <div>
@@ -1101,7 +1221,10 @@ export default function CandidateProfile({
 
                             <button
                               type="button"
-                              className="profile-small-button profile-danger-outline"
+                              className="
+                                profile-small-button
+                                profile-danger-outline
+                              "
                               onClick={() => {
 
                                 toggleSaveJob(
@@ -1147,7 +1270,9 @@ export default function CandidateProfile({
                     </div>
 
                   )}
+
                 </>
+
               )}
 
             </section>
@@ -1157,7 +1282,12 @@ export default function CandidateProfile({
                 DOCUMENTOS
             =============================================== */}
 
-            <section className="profile-card profile-documents-card">
+            <section
+              className="
+                profile-card
+                profile-documents-card
+              "
+            >
 
               <div className="profile-card-heading">
 
@@ -1232,6 +1362,7 @@ export default function CandidateProfile({
                   </button>
 
                   <small>
+
                     Formato aceptado:
                     PDF
 
@@ -1240,6 +1371,7 @@ export default function CandidateProfile({
                     </span>
 
                     Máx. 5 MB
+
                   </small>
 
                 </div>
@@ -1319,6 +1451,7 @@ export default function CandidateProfile({
             </h3>
 
             <p>
+
               ¿Estás seguro de que deseas
               retirar tu postulación a
 
@@ -1327,6 +1460,7 @@ export default function CandidateProfile({
                 {confirmRetire.title}
               </strong>
               ?
+
             </p>
 
             <small>
