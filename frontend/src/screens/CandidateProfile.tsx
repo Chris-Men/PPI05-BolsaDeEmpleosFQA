@@ -9,21 +9,20 @@ import {
   Heart,
   HelpCircle,
   House,
-  LogOut,
-  Menu,
   Search,
   ShieldCheck,
   Star,
   Trash2,
   Upload,
   UserRound,
-  UsersRound,
   X,
 } from 'lucide-react';
 
 import { DeleteOwnAccount } from '../components/users/DeleteOwnAccount';
 
 import '../styles/users/profileuser.css';
+
+import logoWeb from '../components/imagenes/logo/logo 1.png';
 
 import type {
   CandidateApplication,
@@ -38,7 +37,6 @@ import type {
 
 interface CandidateProfileProps {
   currentUser: CurrentUser | null;
-  handleLogout: () => void;
 
   applications: CandidateApplication[];
   setApplications: StateSetter<CandidateApplication[]>;
@@ -74,7 +72,6 @@ type ProfileTab =
 
 export default function CandidateProfile({
   currentUser,
-  handleLogout,
 
   applications,
   setApplications,
@@ -108,9 +105,6 @@ export default function CandidateProfile({
 
   const [confirmRetire, setConfirmRetire] =
     useState<RetireSelection | null>(null);
-
-  const [confirmLogout, setConfirmLogout] =
-    useState(false);
 
   const [mobileMenuOpen, setMobileMenuOpen] =
     useState(false);
@@ -147,7 +141,7 @@ export default function CandidateProfile({
 
 
   /* =========================================================
-     NAVEGACIÓN DEL SIDEBAR
+     NAVEGACIÓN
   ========================================================= */
 
   const goToJobs = () => {
@@ -164,6 +158,11 @@ export default function CandidateProfile({
     navigateTo('students');
     setMobileMenuOpen(false);
   };
+
+ const goToHelp = () => {
+    navigateTo('help');
+    setMobileMenuOpen(false);
+};
 
 
   /* =========================================================
@@ -238,27 +237,14 @@ export default function CandidateProfile({
 
 
   /* =========================================================
-     CERRAR SESIÓN
-  ========================================================= */
-
-  const handleConfirmLogout = () => {
-    setConfirmLogout(false);
-    setMobileMenuOpen(false);
-
-    handleLogout();
-  };
-
-
-  /* =========================================================
      RENDER
   ========================================================= */
 
   return (
     <div className="profile-user-screen">
 
-
       {/* =====================================================
-          SIDEBAR DESKTOP
+          SIDEBAR
       ===================================================== */}
 
       <aside
@@ -269,28 +255,28 @@ export default function CandidateProfile({
         }`}
       >
 
+        {/* ===================================================
+            LOGO
+        =================================================== */}
+
         <div className="profile-brand">
 
           <div className="profile-brand-mark">
-            <div className="profile-brand-leaf">
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
 
-          <div>
-            <strong>
-              FQA Empleos
-            </strong>
+            <img
+              src={logoWeb}
+              alt="FQA Empleos"
+              className="profile-brand-logo"
+            />
 
-            <small>
-              Más oportunidades, un mejor futuro
-            </small>
           </div>
 
         </div>
 
+
+        {/* ===================================================
+            CERRAR SIDEBAR MOBILE
+        =================================================== */}
 
         <button
           type="button"
@@ -303,6 +289,10 @@ export default function CandidateProfile({
           <X size={20} />
         </button>
 
+
+        {/* ===================================================
+            NAVEGACIÓN
+        =================================================== */}
 
         <nav className="profile-sidebar-nav">
 
@@ -372,7 +362,16 @@ export default function CandidateProfile({
         </nav>
 
 
-        <div className="profile-sidebar-help">
+        {/* ===================================================
+            AYUDA
+        =================================================== */}
+
+        <button
+          type="button"
+          className="profile-sidebar-help"
+          onClick={goToHelp}
+          aria-label="Abrir ayuda"
+        >
 
           <div className="profile-help-icon">
             <HelpCircle size={19} />
@@ -390,7 +389,7 @@ export default function CandidateProfile({
 
           <ChevronRight size={16} />
 
-        </div>
+        </button>
 
       </aside>
 
@@ -415,59 +414,22 @@ export default function CandidateProfile({
 
       <main className="profile-main">
 
-
         {/* ===================================================
-            TOPBAR
+            BOTÓN MOBILE
         =================================================== */}
 
-        <header className="profile-topbar">
-
-          <button
-            type="button"
-            className="profile-mobile-menu"
-            onClick={() =>
-              setMobileMenuOpen(true)
-            }
-            aria-label="Abrir menú"
-          >
-            <Menu size={22} />
-          </button>
-
-
-          <div className="profile-topbar-spacer" />
-
-
-          <div className="profile-topbar-actions">
-
-            <button
-              type="button"
-              className="profile-topbar-icon"
-              onClick={() =>
-                showToast(
-                  'No tienes nuevas notificaciones'
-                )
-              }
-              aria-label="Notificaciones"
-            >
-              <Bell size={20} />
-
-              <span className="profile-notification-dot" />
-            </button>
-
-
-            <div className="profile-topbar-avatar">
-              {currentUser?.initial || 'U'}
-            </div>
-
-
-            <ChevronRight
-              className="profile-topbar-chevron"
-              size={18}
-            />
-
-          </div>
-
-        </header>
+        <button
+          type="button"
+          className="profile-mobile-menu"
+          onClick={() =>
+            setMobileMenuOpen(true)
+          }
+          aria-label="Abrir menú"
+        >
+          <span aria-hidden="true">
+            ☰
+          </span>
+        </button>
 
 
         {/* ===================================================
@@ -476,9 +438,8 @@ export default function CandidateProfile({
 
         <div className="profile-content">
 
-
           {/* =================================================
-              HEADER DEL CANDIDATO
+              HEADER CANDIDATO
           ================================================= */}
 
           <section className="profile-welcome">
@@ -499,15 +460,20 @@ export default function CandidateProfile({
               <div className="profile-welcome-text">
 
                 <h1>
-                  Hola, {currentUser?.name || 'Candidato'}
+                  Hola,{' '}
+                  {currentUser?.name ||
+                    'Candidato'}
                 </h1>
 
                 <p>
                   Candidato registrado
+
                   <span>
                     ·
                   </span>
+
                   Correo:{' '}
+
                   {currentUser?.email ||
                     'No disponible'}
                 </p>
@@ -515,21 +481,6 @@ export default function CandidateProfile({
               </div>
 
             </div>
-
-
-            <button
-              type="button"
-              className="profile-logout-button"
-              onClick={() =>
-                setConfirmLogout(true)
-              }
-            >
-              <LogOut size={17} />
-
-              <span>
-                Cerrar Sesión
-              </span>
-            </button>
 
           </section>
 
@@ -728,11 +679,10 @@ export default function CandidateProfile({
 
 
           {/* =================================================
-              GRID DE CONTENIDO
+              GRID
           ================================================= */}
 
           <div className="profile-dashboard-grid">
-
 
             {/* ===============================================
                 POSTULACIONES
@@ -740,11 +690,14 @@ export default function CandidateProfile({
 
             <section className="profile-card profile-applications-card">
 
+              {/* EMPLEOS */}
+
               {activeTab === 'jobs' && (
                 <>
                   <div className="profile-card-heading">
 
                     <div>
+
                       <div className="profile-heading-icon">
                         <BriefcaseBusiness size={19} />
                       </div>
@@ -754,6 +707,7 @@ export default function CandidateProfile({
                           Mis Postulaciones a Empleos
                         </h2>
                       </div>
+
                     </div>
 
                   </div>
@@ -859,15 +813,19 @@ export default function CandidateProfile({
 
 
                       <div className="profile-empty-illustration">
+
                         <div className="profile-document-illustration">
+
                           <div />
                           <div />
                           <div />
+
                         </div>
 
                         <span>
                           ✓
                         </span>
+
                       </div>
 
                     </div>
@@ -886,6 +844,7 @@ export default function CandidateProfile({
                   <div className="profile-card-heading">
 
                     <div>
+
                       <div className="profile-heading-icon">
                         <Heart size={19} />
                       </div>
@@ -893,6 +852,7 @@ export default function CandidateProfile({
                       <h2>
                         Mis Voluntariados Activos
                       </h2>
+
                     </div>
 
                   </div>
@@ -980,6 +940,7 @@ export default function CandidateProfile({
                   <div className="profile-card-heading">
 
                     <div>
+
                       <div className="profile-heading-icon">
                         <GraduationCap size={19} />
                       </div>
@@ -987,6 +948,7 @@ export default function CandidateProfile({
                       <h2>
                         Mis Postulaciones Estudiantiles
                       </h2>
+
                     </div>
 
                   </div>
@@ -1081,6 +1043,7 @@ export default function CandidateProfile({
                   <div className="profile-card-heading">
 
                     <div>
+
                       <div className="profile-heading-icon">
                         <Star size={19} />
                       </div>
@@ -1088,6 +1051,7 @@ export default function CandidateProfile({
                       <h2>
                         Vacantes Guardadas
                       </h2>
+
                     </div>
 
                   </div>
@@ -1134,10 +1098,12 @@ export default function CandidateProfile({
                               Ver vacante
                             </button>
 
+
                             <button
                               type="button"
                               className="profile-small-button profile-danger-outline"
                               onClick={() => {
+
                                 toggleSaveJob(
                                   job.id
                                 );
@@ -1145,6 +1111,7 @@ export default function CandidateProfile({
                                 showToast(
                                   '✓ Vacante eliminada de guardadas'
                                 );
+
                               }}
                             >
                               Quitar
@@ -1195,6 +1162,7 @@ export default function CandidateProfile({
               <div className="profile-card-heading">
 
                 <div>
+
                   <div className="profile-heading-icon">
                     <FileText size={19} />
                   </div>
@@ -1202,6 +1170,7 @@ export default function CandidateProfile({
                   <h2>
                     Mis Documentos
                   </h2>
+
                 </div>
 
               </div>
@@ -1265,7 +1234,11 @@ export default function CandidateProfile({
                   <small>
                     Formato aceptado:
                     PDF
-                    <span>·</span>
+
+                    <span>
+                      ·
+                    </span>
+
                     Máx. 5 MB
                   </small>
 
@@ -1318,7 +1291,7 @@ export default function CandidateProfile({
 
 
       {/* =====================================================
-          MODAL RETIRAR
+          MODAL RETIRAR POSTULACIÓN
       ===================================================== */}
 
       {confirmRetire && (
@@ -1348,6 +1321,7 @@ export default function CandidateProfile({
             <p>
               ¿Estás seguro de que deseas
               retirar tu postulación a
+
               <strong>
                 {' '}
                 {confirmRetire.title}
@@ -1377,68 +1351,6 @@ export default function CandidateProfile({
                 onClick={handleConfirmRetire}
               >
                 Sí, retirar
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-      {/* =====================================================
-          MODAL CERRAR SESIÓN
-      ===================================================== */}
-
-      {confirmLogout && (
-
-        <div
-          className="profile-modal-overlay"
-          onClick={() =>
-            setConfirmLogout(false)
-          }
-        >
-
-          <div
-            className="profile-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            <div className="profile-modal-logout-icon">
-              <LogOut size={22} />
-            </div>
-
-            <h3>
-              Cerrar sesión
-            </h3>
-
-            <p>
-              ¿Estás seguro de que deseas
-              cerrar tu sesión?
-            </p>
-
-            <div className="profile-modal-actions">
-
-              <button
-                type="button"
-                className="profile-modal-cancel"
-                onClick={() =>
-                  setConfirmLogout(false)
-                }
-              >
-                Permanecer aquí
-              </button>
-
-              <button
-                type="button"
-                className="profile-modal-primary"
-                onClick={handleConfirmLogout}
-              >
-                Sí, cerrar sesión
               </button>
 
             </div>
