@@ -12,6 +12,8 @@ import type {
 } from './types/models';
 
 import { useAuth } from './hooks/useAuth';
+import { useCandidateProfile } from './hooks/useCandidateProfile';
+import { profileToPersonalForm } from './utils/profileForm';
 import { AuthenticatedDashboard } from './components/admin/AuthenticatedDashboard';
 import Home from './screens/Home';
 import JobsListing from './screens/JobsListing';
@@ -351,6 +353,8 @@ function PublicApp() {
         email: session.user.email, role: 'candidate', name: session.user.fullName,
         initial: session.user.fullName.charAt(0).toUpperCase(),
     } : null;
+    const candidateState = useCandidateProfile(Boolean(currentUser));
+    const [formInitialized, setFormInitialized] = useState(false);
 
 
     // ==========================================================
@@ -451,8 +455,17 @@ function PublicApp() {
         lastRole: '', lastOrg: '', years: '', salary: '', motivation: '', skills: ''
     });
 
-    const [uploadedCVName, setUploadedCVName] =
-        useState('');
+    const uploadedCVName = candidateState.resume?.originalName ?? '';
+
+    useEffect(() => {
+        if (screen !== 'form' || formInitialized || !candidateState.profile) return;
+        const profile = candidateState.profile;
+        setFormPersonal(profileToPersonalForm(profile));
+        const experience = profile.workExperiences[0];
+        setFormExp({ lastRole: experience?.position ?? '', lastOrg: experience?.companyName ?? '',
+            years: '', salary: '', motivation: '', skills: profile.skills.join(', ') });
+        setFormInitialized(true);
+    }, [screen, formInitialized, candidateState.profile]);
 
 
     // ==========================================================
@@ -471,6 +484,7 @@ function PublicApp() {
     // ==========================================================
 
     const navigateTo = (nextScreen: ScreenName, data: Job | null = null) => {
+        if (nextScreen === 'form') setFormInitialized(false);
 
         setScreenHistory(prev => [
             ...prev,
@@ -666,8 +680,7 @@ function PublicApp() {
                     formPersonal.phone,
 
                 cvName:
-                    uploadedCVName ||
-                    'María_López_CV.pdf',
+                    uploadedCVName,
 
                 status: 'Pendiente',
 
@@ -1035,7 +1048,7 @@ function PublicApp() {
 
                 {screen === 'form' && (
 
-                    <FormFlow
+                    formInitialized ? <FormFlow
                         applyingTo={applyFlowTarget}
                         formStep={formStep}
                         setFormStep={setFormStep}
@@ -1044,10 +1057,13 @@ function PublicApp() {
                         formExp={formExp}
                         setFormExp={setFormExp}
                         uploadedCVName={uploadedCVName}
-                        setUploadedCVName={setUploadedCVName}
+                        candidateState={candidateState}
                         onSubmitApplication={handleSubmitApplication}
                         showToast={showToast}
-                    />
+                    /> : <div role={candidateState.error ? 'alert' : 'status'}>
+                        {candidateState.error || 'Cargando los datos de tu perfil…'}
+                        {candidateState.error && <button type="button" onClick={() => void candidateState.reload()}>Reintentar</button>}
+                    </div>
 
                 )}
 
@@ -1124,8 +1140,7 @@ function PublicApp() {
                         jobs={jobs}
                         toggleSaveJob={toggleSaveJob}
                         navigateTo={navigateTo}
-                        uploadedCVName={uploadedCVName}
-                        setUploadedCVName={setUploadedCVName}
+                        candidateState={candidateState}
                         showToast={showToast}
                     />
 
