@@ -16,49 +16,76 @@ services:
       - backend
 
   frontend:
-    image: ghcr.io/${GHCR_OWNER}/fqa-empleos-frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/${GHCR_OWNER}/fqa-empleos-backend:${IMAGE_TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
-      CORS_ORIGIN: https://${DOMAIN}
+
+      CORS_ORIGIN: http://localhost:5173
+
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
+
       SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_PORT: ${SMTP_PORT:-1025}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM}
-      RESET_PASSWORD_URL: https://${DOMAIN}/reset-password
+
+      RESET_PASSWORD_URL: ${RESET_PASSWORD_URL}
       MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY}
+
     depends_on:
       postgres:
         condition: service_healthy
+
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
 
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 10s
 
 volumes:
   caddy_data:
