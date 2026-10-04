@@ -1185,3 +1185,13 @@
     }
 
 }
+/* API feedback and native modal retain the existing organization visual language. */
+.organizations-dialog { position: fixed; margin: auto; padding: 0; border: 0; width: min(600px, calc(100vw - 32px)); max-height: 90vh; overflow-y: auto; }
+.organizations-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.organizaciones-form-field textarea { font: inherit; padding: 12px; min-height: 110px; border: 1px solid #ddd; border-radius: 8px; resize: vertical; }
+.organizations-error { color: #a32121; padding: 12px; background: #fff0f0; border-radius: 8px; }
+.organizations-notice { color: #276315; padding: 12px; background: #eef8e9; border-radius: 8px; }
+.organizations-pagination, .organizations-confirm { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; flex-wrap: wrap; }
+.organizations-pagination button, .organizations-confirm button { font: inherit; margin: 4px; padding: 8px 14px; border: 1px solid #ccc; border-radius: 8px; background: white; cursor: pointer; }
+.organizaciones-screen button:disabled { opacity: .55; cursor: wait; }
+.organizaciones-screen .status-inactive { color: #666; background: #eee; }

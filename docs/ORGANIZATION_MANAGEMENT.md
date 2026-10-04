@@ -18,7 +18,16 @@ permite gestionar organizaciones. Super Admin también necesita el permiso corre
 
 No se crean cuentas, sesiones ni vinculaciones con usuarios. La relación histórica
 `OrganizationUsers` se conserva sin exponerla en la API. No hay eliminación de
-organizaciones, aprobación, administración de publicaciones ni integración con frontend.
+organizaciones, aprobación ni administración de publicaciones.
+
+## Interfaz administrativa (PB-89)
+
+La pantalla Organizaciones consume esta API para buscar, paginar, consultar, crear,
+editar y activar/desactivar. Los botones respetan los permisos vigentes y los errores
+permiten reintentar sin perder el formulario. Nombre es obligatorio; descripción y
+correo son opcionales. El estado cambia con una confirmación independiente.
+Se retiraron las organizaciones de ejemplo, el estado Pendiente y el contador
+editable de oportunidades, que no pertenece al contrato actual.
 
 ## Contrato HTTP
 
