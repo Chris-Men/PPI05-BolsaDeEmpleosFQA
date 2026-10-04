@@ -71,7 +71,8 @@ type ProfileTab =
   | 'student'
   | 'saved';
 
-type ProfileSection = 'overview' | 'settings';
+/** Sidebar destinations keep personal editing separate from the candidate overview. */
+type ProfileSection = 'overview' | 'personal' | 'settings';
 
 export default function CandidateProfile({
   currentUser,
@@ -302,6 +303,19 @@ export default function CandidateProfile({
             </span>
           </button>
 
+          <button
+            type="button"
+            className={`profile-sidebar-item ${activeSection === 'personal' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSection('personal');
+              setMobileMenuOpen(false);
+            }}
+            aria-current={activeSection === 'personal' ? 'page' : undefined}
+          >
+            <UserRound size={19} />
+            <span>Datos Personales</span>
+          </button>
+
 
           <button
             type="button"
@@ -469,7 +483,15 @@ export default function CandidateProfile({
 
         <div className="profile-content">
 
-          {activeSection === 'settings' ? <CandidateSettings /> : <>
+          {activeSection === 'settings' ? <CandidateSettings /> : activeSection === 'personal' ? <>
+            <section className="profile-welcome">
+              <div className="profile-welcome-text">
+                <h1>Datos Personales</h1>
+                <p>Consulta y actualiza tu información personal y profesional.</p>
+              </div>
+            </section>
+            <CandidateProfileEditor state={candidateState} />
+          </> : <>
 
 
           {/* =================================================
@@ -532,8 +554,6 @@ export default function CandidateProfile({
           {/* =================================================
               ESTADÍSTICAS
           ================================================= */}
-
-          <CandidateProfileEditor state={candidateState} />
 
           <section className="profile-stats">
 
