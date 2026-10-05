@@ -1,9 +1,10 @@
 ﻿import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { canManageOrganizations } from '../../utils/organizationManagement';
-import { changeOrganizationStatus, getOrganization, getOrganizations } from '../../services/organizationService';
+import { getOrganization, getOrganizations } from '../../services/organizationService';
 import type { ManagedOrganization, OrganizationFilters, OrganizationListResponse } from '../../types/organization';
 import { OrganizationDialog } from '../../components/admin/OrganizationDialog';
+import { OrganizationStatusDialog } from '../../components/admin/OrganizationStatusDialog';
 import '../../styles/admin/organizaciones.css';
 
 interface OrganizationProps { search?: string }
@@ -54,16 +55,6 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
     catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No fue posible consultar la organización.'); }
     finally { setBusy(false); }
   };
-  /** Confirms a lifecycle change and refreshes the current server-side page. */
-  const toggleStatus = async (): Promise<void> => {
-    if (!transition || busy) return;
-    setBusy(true); setError('');
-    try {
-      await changeOrganizationStatus(transition.id, transition.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE');
-      setNotice('Estado actualizado correctamente.'); setTransition(null); setRevision((value) => value + 1);
-    } catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No fue posible cambiar el estado.'); }
-    finally { setBusy(false); }
-  };
   const pages = Math.max(1, Math.ceil((data?.total ?? 0) / filters.pageSize));
   return <section className="organizaciones-screen">
     <div className="screen-header"><div><h2>Organizaciones</h2><p>Administra las organizaciones registradas.</p></div>
@@ -92,7 +83,7 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
               {permissions.includes('organizations.update') && <button className="edit-button" type="button" disabled={busy}
                 onClick={() => void open(organization, 'edit')}>Editar</button>}
               {permissions.includes('organizations.status.update') && <button className="edit-button" type="button" disabled={busy}
-                onClick={() => setTransition(organization)}>{organization.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}</button>}
+                onClick={() => { setNotice(''); setTransition(organization); }}>{organization.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}</button>}
             </div></td>
           </tr>) : !error && <tr><td colSpan={4} className="organizaciones-empty">No se encontraron organizaciones.</td></tr>}
       </tbody></table>
@@ -103,11 +94,8 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
         <button type="button" disabled={loading || Boolean(error) || filters.page >= pages} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>Siguiente</button>
       </div>
     </nav>
-    {transition && <div className="organizations-confirm" role="region" aria-label="Confirmar cambio de estado">
-      <p>¿Deseas {transition.status === 'ACTIVE' ? 'desactivar' : 'activar'} {transition.name}?</p>
-      <button type="button" disabled={busy} onClick={() => setTransition(null)}>Cancelar</button>
-      <button type="button" disabled={busy} onClick={() => void toggleStatus()}>{busy ? 'Actualizando…' : 'Confirmar'}</button>
-    </div>}
+    {transition && <OrganizationStatusDialog organization={transition} onClose={() => setTransition(null)}
+      onSaved={() => { setTransition(null); setNotice('Estado actualizado correctamente.'); setRevision((value) => value + 1); }} />}
     {dialog && <OrganizationDialog mode={dialog.mode} organization={dialog.organization} onClose={() => setDialog(null)}
       onSaved={() => { setDialog(null); setNotice('Organización guardada correctamente.'); setRevision((value) => value + 1); }} />}
   </section>;

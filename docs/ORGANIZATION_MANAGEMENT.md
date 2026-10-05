@@ -25,7 +25,9 @@ organizaciones, aprobación ni administración de publicaciones.
 La pantalla Organizaciones consume esta API para buscar, paginar, consultar, crear,
 editar y activar/desactivar. Los botones respetan los permisos vigentes y los errores
 permiten reintentar sin perder el formulario. Nombre es obligatorio; descripción y
-correo son opcionales. El estado cambia con una confirmación independiente.
+correo son opcionales. El estado cambia con un modal de confirmación centrado sobre
+la pantalla. Cancelar o Escape cierran sin modificar el estado; durante la petición
+se bloquea el cierre y los errores recuperables se muestran dentro del modal.
 Se retiraron las organizaciones de ejemplo, el estado Pendiente y el contador
 editable de oportunidades, que no pertenece al contrato actual.
 
