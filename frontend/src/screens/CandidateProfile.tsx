@@ -333,20 +333,6 @@ export default function CandidateProfile({
             type="button"
             className="profile-sidebar-item"
             onClick={() =>
-              setMobileMenuOpen(false)
-            }
-          >
-            <FileText size={19} />
-
-            <span>
-              Mis documentos
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className="profile-sidebar-item"
-            onClick={() =>
               showToast(
                 'No tienes nuevas notificaciones'
               )
