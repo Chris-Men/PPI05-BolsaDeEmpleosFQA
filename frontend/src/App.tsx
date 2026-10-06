@@ -12,6 +12,8 @@ import type {
 } from './types/models';
 
 import { useAuth } from './hooks/useAuth';
+import { useCandidateProfile } from './hooks/useCandidateProfile';
+import { profileToPersonalForm } from './utils/profileForm';
 import { AuthenticatedDashboard } from './components/admin/AuthenticatedDashboard';
 import Home from './screens/Home';
 import JobsListing from './screens/JobsListing';
@@ -555,8 +557,17 @@ function PublicApp() {
         });
 
 
-    const [uploadedCVName, setUploadedCVName] =
-        useState('');
+    const uploadedCVName = candidateState.resume?.originalName ?? '';
+
+    useEffect(() => {
+        if (screen !== 'form' || formInitialized || !candidateState.profile) return;
+        const profile = candidateState.profile;
+        setFormPersonal(profileToPersonalForm(profile));
+        const experience = profile.workExperiences[0];
+        setFormExp({ lastRole: experience?.position ?? '', lastOrg: experience?.companyName ?? '',
+            years: '', salary: '', motivation: '', skills: profile.skills.join(', ') });
+        setFormInitialized(true);
+    }, [screen, formInitialized, candidateState.profile]);
 
 
     // ==========================================================
@@ -818,8 +829,7 @@ function PublicApp() {
                     formPersonal.phone,
 
                 cvName:
-                    uploadedCVName ||
-                    'María_López_CV.pdf',
+                    uploadedCVName,
 
                 status: 'Pendiente',
 
@@ -1364,41 +1374,22 @@ function PublicApp() {
 
                 {screen === 'form' && (
 
-                    <FormFlow
-                        applyingTo={
-                            applyFlowTarget
-                        }
-                        formStep={
-                            formStep
-                        }
-                        setFormStep={
-                            setFormStep
-                        }
-                        formPersonal={
-                            formPersonal
-                        }
-                        setFormPersonal={
-                            setFormPersonal
-                        }
-                        formExp={
-                            formExp
-                        }
-                        setFormExp={
-                            setFormExp
-                        }
-                        uploadedCVName={
-                            uploadedCVName
-                        }
-                        setUploadedCVName={
-                            setUploadedCVName
-                        }
-                        onSubmitApplication={
-                            handleSubmitApplication
-                        }
-                        showToast={
-                            showToast
-                        }
-                    />
+                    formInitialized ? <FormFlow
+                        applyingTo={applyFlowTarget}
+                        formStep={formStep}
+                        setFormStep={setFormStep}
+                        formPersonal={formPersonal}
+                        setFormPersonal={setFormPersonal}
+                        formExp={formExp}
+                        setFormExp={setFormExp}
+                        uploadedCVName={uploadedCVName}
+                        candidateState={candidateState}
+                        onSubmitApplication={handleSubmitApplication}
+                        showToast={showToast}
+                    /> : <div role={candidateState.error ? 'alert' : 'status'}>
+                        {candidateState.error || 'Cargando los datos de tu perfil…'}
+                        {candidateState.error && <button type="button" onClick={() => void candidateState.reload()}>Reintentar</button>}
+                    </div>
 
                 )}
 
@@ -1500,57 +1491,22 @@ function PublicApp() {
                 {screen === 'profile' && (
 
                     <CandidateProfile
-                        currentUser={
-                            currentUser
-                        }
-                        handleLogout={
-                            handleLogout
-                        }
-                        applications={
-                            applications
-                        }
-                        setApplications={
-                            setApplications
-                        }
-                        volunteerApps={
-                            volunteerApps
-                        }
-                        setVolunteerApps={
-                            setVolunteerApps
-                        }
-                        volunteerSpots={
-                            volunteerSpots
-                        }
-                        studentApps={
-                            studentApps
-                        }
-                        setStudentApps={
-                            setStudentApps
-                        }
-                        studentSpots={
-                            studentSpots
-                        }
-                        savedJobs={
-                            savedJobs
-                        }
-                        jobs={
-                            jobs
-                        }
-                        toggleSaveJob={
-                            toggleSaveJob
-                        }
-                        navigateTo={
-                            navigateTo
-                        }
-                        uploadedCVName={
-                            uploadedCVName
-                        }
-                        setUploadedCVName={
-                            setUploadedCVName
-                        }
-                        showToast={
-                            showToast
-                        }
+                        currentUser={currentUser}
+                        handleLogout={handleLogout}
+                        applications={applications}
+                        setApplications={setApplications}
+                        volunteerApps={volunteerApps}
+                        setVolunteerApps={setVolunteerApps}
+                        volunteerSpots={volunteerSpots}
+                        studentApps={studentApps}
+                        setStudentApps={setStudentApps}
+                        studentSpots={studentSpots}
+                        savedJobs={savedJobs}
+                        jobs={jobs}
+                        toggleSaveJob={toggleSaveJob}
+                        navigateTo={navigateTo}
+                        candidateState={candidateState}
+                        showToast={showToast}
                     />
 
                 )}

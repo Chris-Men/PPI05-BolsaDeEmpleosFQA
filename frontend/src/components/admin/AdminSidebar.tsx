@@ -1,4 +1,5 @@
 import { canManageUsers } from '../../utils/userManagement';
+import { canManageOrganizations } from '../../utils/organizationManagement';
 import { useAuth } from '../../hooks/useAuth';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
@@ -45,7 +46,8 @@ export default function AdminSidebar({
         </picture>
       </button>
       <nav className="menu">
-        {menuItems.filter((item) => item.name !== 'Usuarios' || canManageUsers(session)).map((item) => (
+        {menuItems.filter((item) => (item.name !== 'Usuarios' || canManageUsers(session)) &&
+          (item.name !== 'Organizaciones' || canManageOrganizations(session))).map((item) => (
           <button
             key={item.name}
             aria-label={item.name}

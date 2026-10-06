@@ -15,7 +15,12 @@ const envSchema = z.object({
   SMTP_FROM: z.string().email().optional(),
   RESET_PASSWORD_URL: z.string().url().optional(),
   MAIL_OUTBOX_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/).optional(),
+  RESUME_STORAGE_DRIVER: z.enum(['filesystem']).optional(),
+  RESUME_STORAGE_DIRECTORY: z.string().min(1).optional(),
 }).superRefine((values, context) => {
+  if (Boolean(values.RESUME_STORAGE_DRIVER) !== Boolean(values.RESUME_STORAGE_DIRECTORY)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'Configura juntos el proveedor y directorio de CV.' });
+  }
   if (Boolean(values.SMTP_USER) !== Boolean(values.SMTP_PASS)) {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'SMTP_USER y SMTP_PASS deben configurarse juntos.' });
   }

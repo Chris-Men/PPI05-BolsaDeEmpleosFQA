@@ -11,7 +11,7 @@ export class ApiError extends Error {
 }
 
 /** Authentication is explicit; public failures must not trigger token renewal. */
-interface ApiRequestOptions extends RequestInit { authenticated?: boolean; retryAuthentication?: boolean }
+interface ApiRequestOptions extends RequestInit { authenticated?: boolean; retryAuthentication?: boolean; responseType?: 'json' | 'blob' }
 
 /** Callbacks avoid coupling the HTTP transport to React or the session store. */
 interface AuthenticationTransport {
@@ -35,10 +35,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export async function apiRequest<TResponse>(
   path: string, options: ApiRequestOptions = {},
 ): Promise<TResponse> {
-  const { authenticated = false, retryAuthentication = true, ...requestOptions } = options;
+  const { authenticated = false, retryAuthentication = true, responseType = 'json', ...requestOptions } = options;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const headers = new Headers(requestOptions.headers);
-    headers.set('Content-Type', 'application/json');
+    if (!(requestOptions.body instanceof FormData)) headers.set('Content-Type', 'application/json');
     headers.set('X-FQA-Request', '1');
     const requestToken = authenticated ? authentication?.getToken() : undefined;
     if (requestToken) headers.set('Authorization', 'Bearer ' + requestToken);
@@ -54,6 +54,7 @@ export async function apiRequest<TResponse>(
       continue;
     }
     if (response.status === 204) return undefined as TResponse;
+    if (response.ok && responseType === 'blob') return await response.blob() as TResponse;
     const payload: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       if (response.status === 401 && authenticated && authentication?.getToken() === requestToken) {
