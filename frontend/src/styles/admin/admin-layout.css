@@ -1,0 +1,92 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMIN LAYOUT
+===================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #82BA2E;
+    --primary-dark: #5BA222;
+
+    --dark: #193007;
+    --dark-2: #0D1B04;
+
+    --background: #F6F9F1;
+
+    --white: #FFFFFF;
+
+    --gray: #E5E7EB;
+
+    --text: #374151;
+
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+    --radius: 14px;
+
+    --transition: 0.25s;
+}
+
+/* =====================================================
+   ADMIN CONTAINER
+===================================================== */
+
+.admin-container {
+    width: 100%;
+    height: 100vh;
+
+    display: flex;
+
+    background: var(--background);
+
+    overflow: hidden;
+}
+
+/* =====================================================
+   ADMIN MAIN
+===================================================== */
+
+.admin-main {
+    flex: 1;
+
+    min-width: 0;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    background: var(--background);
+}
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.admin-main::-webkit-scrollbar {
+    width: 7px;
+}
+
+.admin-main::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-main::-webkit-scrollbar-thumb {
+    background: #C8D9B0;
+    border-radius: 10px;
+}
+
+.admin-main::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Ocultar navbar pública cuando estamos en el panel administrativo */
+body:has(.admin-container) .nav {
+    display: none !important;
+}

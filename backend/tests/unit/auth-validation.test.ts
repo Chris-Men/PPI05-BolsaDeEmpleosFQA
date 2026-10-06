@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { registerCandidateSchema } from '../../src/validation/auth.schema.js';
+import { changePasswordSchema, registerCandidateSchema } from '../../src/validation/auth.schema.js';
 
 const validInput = {
   fullName: 'Ana Rivera',
@@ -41,6 +41,10 @@ describe('Validación del registro', () => {
     { label: 'nombre de un carácter', input: { ...validInput, fullName: 'A' } },
     { label: 'nombre superior a 150 caracteres', input: { ...validInput, fullName: 'a'.repeat(151) } },
     { label: 'correo inválido', input: { ...validInput, email: 'sin-arroba' } },
+    { label: 'nombre simple superior a la columna', input: { ...validInput, fullName: 'a'.repeat(101) } },
+    { label: 'nombre compuesto superior a la columna', input: { ...validInput, fullName: 'a'.repeat(101) + ' Rivera' } },
+    { label: 'apellido superior a la columna', input: { ...validInput, fullName: 'Ana ' + 'b'.repeat(101) } },
+    { label: 'correo superior a la columna', input: { ...validInput, email: 'a'.repeat(64) + '@' + ['b'.repeat(63), 'c'.repeat(63), 'd'.repeat(63)].join('.') } },
     { label: 'contraseña de 11 caracteres', input: { ...validInput, password: 'a'.repeat(11) } },
     { label: 'contraseña superior a 72 bytes', input: { ...validInput, password: 'a'.repeat(73) } },
     { label: 'contraseña Unicode superior a 72 bytes', input: { ...validInput, password: 'é'.repeat(37) } },
@@ -73,4 +77,13 @@ describe('Validación del registro', () => {
       }
     });
   }
+});
+
+describe('Validación del cambio autenticado de contraseña', () => {
+  it('exige contraseña actual y una nueva que cumpla las reglas de registro', () => {
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'Nueva clave segura 2026' }).success, true);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: '', newPassword: 'Nueva clave segura 2026' }).success, false);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'corta' }).success, false);
+    assert.equal(changePasswordSchema.safeParse({ currentPassword: 'actual', newPassword: 'Nueva clave segura 2026', role: 'SUPER_ADMIN' }).success, false);
+  });
 });

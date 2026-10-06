@@ -1,11 +1,6 @@
 import { z } from 'zod';
-
-/** Builds a required text field with localized missing/type validation messages. */
-const requiredText = (label: string): z.ZodString =>
-  z.string({
-    required_error: `El campo ${label} es obligatorio.`,
-    invalid_type_error: `El campo ${label} debe ser texto.`,
-  });
+import { splitProfileName } from '../utils/profile-name.js';
+import { emailSchema, requiredText } from './common.schema.js';
 
 /** Strict public registration contract; privilege fields are never accepted. */
 export const registerCandidateSchema = z
@@ -14,11 +9,12 @@ export const registerCandidateSchema = z
       fullName: requiredText('nombre completo')
         .trim()
         .min(2, 'El nombre completo debe tener al menos 2 caracteres.')
-        .max(150, 'El nombre completo no puede superar los 150 caracteres.'),
-      email: requiredText('correo')
-        .trim()
-        .toLowerCase()
-        .email('El correo electrónico no es válido.'),
+        .max(150, 'El nombre completo no puede superar los 150 caracteres.')
+        .refine((value) => {
+          const { firstName, lastName } = splitProfileName(value);
+          return firstName.length <= 100 && lastName.length <= 100;
+        }, 'El nombre y el apellido no pueden superar los 100 caracteres cada uno.'),
+      email: emailSchema,
       password: requiredText('contraseña')
         .refine(
           (value) => Array.from(value).length >= 12,
@@ -38,3 +34,52 @@ export const registerCandidateSchema = z
 
 /** Input inferred from the validated registration contract. */
 export type RegisterCandidateDTO = z.infer<typeof registerCandidateSchema>;
+
+/** Login validates existing credentials without reapplying registration strength rules. */
+export const loginSchema = z.object({
+  email: requiredText('correo').trim().toLowerCase().max(255, 'El correo es demasiado largo.')
+    .email('El correo electrónico no es válido.'),
+  password: requiredText('contraseña').min(1, 'La contraseña es obligatoria.')
+    .refine((value) => Buffer.byteLength(value, 'utf8') <= 72,
+      'La contraseña no puede superar los 72 bytes en UTF-8.'),
+}).strict('La solicitud contiene campos no permitidos.');
+
+/** Validated credential input. */
+export type LoginDTO = z.infer<typeof loginSchema>;
+
+/**
+ * Payload used to request a password reset link.
+ */
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ForgotPasswordDTO = z.infer<typeof forgotPasswordSchema>;
+
+/**
+ * Payload used to reset the password with a valid recovery token.
+ */
+export const resetPasswordSchema = z.object({
+  token: requiredText('token')
+    .min(1, 'El token de recuperación es obligatorio.'),
+
+  password: requiredText('contraseña')
+    .refine(
+      (value) => Array.from(value).length >= 12,
+      'La contraseña debe tener al menos 12 caracteres.',
+    )
+    .refine(
+      (value) => Buffer.byteLength(value, 'utf8') <= 72,
+      'La contraseña no puede superar los 72 bytes en UTF-8.',
+    ),
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
+
+/** Authenticated password change requires the current credential and registration-strength replacement. */
+export const changePasswordSchema = z.object({
+  currentPassword: loginSchema.shape.password,
+  newPassword: registerCandidateSchema.shape.password,
+}).strict('La solicitud contiene campos no permitidos.');
+
+export type ChangePasswordDTO = z.infer<typeof changePasswordSchema>;

@@ -1,0 +1,844 @@
+import { useState, type FormEvent } from 'react';
+import type { StateSetter } from '../../types/models';
+
+export interface NewJobForm {
+    title: string;
+    org: string;
+    location: string;
+    area: string;
+    type: string;
+    salary: string;
+    deadline: string;
+    desc: string;
+    responsibilities: string;
+    requirements: string;
+    offers: string;
+}
+
+type PreviewMode = 'publish' | 'draft';
+
+interface NewApplicationProps {
+    newJobForm: NewJobForm;
+    setNewJobForm: StateSetter<NewJobForm>;
+    onPublish?: () => void;
+    onSaveDraft?: () => void;
+    onBack?: () => void;
+}
+
+interface JobPreviewProps {
+    newJobForm: NewJobForm;
+    mode: PreviewMode | null;
+    onEdit: () => void;
+    onConfirmPublish: () => void;
+    onConfirmDraft: () => void;
+    onBack?: () => void;
+}
+
+import "../../styles/admin/nuevapostulacion.css";
+
+/** Preserved local form for creating an opportunity. */
+function NuevaPostulacion({
+    newJobForm,
+    setNewJobForm,
+    onPublish,
+    onSaveDraft,
+    onBack,
+}: NewApplicationProps) {
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewMode, setPreviewMode] = useState<PreviewMode | null>(null);
+
+    // =====================================================
+    // ACTUALIZAR CAMPOS
+    // =====================================================
+
+    const updateField = (field: keyof NewJobForm, value: string) => {
+        if (typeof setNewJobForm !== "function") {
+            console.error(
+                "NuevaPostulacion: setNewJobForm no fue proporcionado."
+            );
+            return;
+        }
+
+        setNewJobForm((prev) => ({
+            ...(prev || {}),
+            [field]: value,
+        }));
+    };
+
+    // =====================================================
+    // VALIDAR FORMULARIO
+    // =====================================================
+
+    const validateForm = () => {
+        if (!newJobForm.title?.trim()) {
+            return false;
+        }
+
+        if (!newJobForm.org?.trim()) {
+            return false;
+        }
+
+        if (!newJobForm.location?.trim()) {
+            return false;
+        }
+
+        if (!newJobForm.deadline) {
+            return false;
+        }
+
+        if (!newJobForm.desc?.trim()) {
+            return false;
+        }
+
+        return true;
+    };
+
+    // =====================================================
+    // VISTA PREVIA PARA PUBLICAR
+    // =====================================================
+
+    const handlePreviewPublish = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!validateForm()) {
+            alert(
+                "Completa los campos obligatorios: título, organización, ubicación, fecha límite y descripción."
+            );
+            return;
+        }
+
+        setPreviewMode("publish");
+        setShowPreview(true);
+    };
+
+    // =====================================================
+    // VISTA PREVIA PARA BORRADOR
+    // =====================================================
+
+    const handlePreviewDraft = () => {
+        if (!newJobForm.title?.trim()) {
+            alert("Ingresa al menos el título de la vacante.");
+            return;
+        }
+
+        setPreviewMode("draft");
+        setShowPreview(true);
+    };
+
+    // =====================================================
+    // VOLVER A EDITAR
+    // =====================================================
+
+    const handleEdit = () => {
+        setShowPreview(false);
+        setPreviewMode(null);
+    };
+
+    // =====================================================
+    // CONFIRMAR PUBLICACIÓN
+    // =====================================================
+
+    const handleConfirmPublish = () => {
+        setShowPreview(false);
+        setPreviewMode(null);
+
+        if (typeof onPublish === "function") {
+            onPublish();
+        }
+    };
+
+    // =====================================================
+    // CONFIRMAR BORRADOR
+    // =====================================================
+
+    const handleConfirmDraft = () => {
+        setShowPreview(false);
+        setPreviewMode(null);
+
+        if (typeof onSaveDraft === "function") {
+            onSaveDraft();
+        }
+    };
+
+    // =====================================================
+    // VISTA PREVIA
+    // =====================================================
+
+    if (showPreview) {
+        return (
+            <VistaPreviaVacante
+                newJobForm={newJobForm}
+                mode={previewMode}
+                onEdit={handleEdit}
+                onConfirmPublish={handleConfirmPublish}
+                onConfirmDraft={handleConfirmDraft}
+                onBack={onBack}
+            />
+        );
+    }
+
+    // =====================================================
+    // FORMULARIO
+    // =====================================================
+
+    return (
+        <main className="nv-screen">
+
+            {/* =================================================
+                HEADER
+            ================================================= */}
+
+
+
+            {/* =================================================
+                FORMULARIO
+            ================================================= */}
+
+            <form
+                className="nv-form"
+                onSubmit={handlePreviewPublish}
+            >
+
+                {/* =================================================
+                    INFORMACIÓN GENERAL
+                ================================================= */}
+
+                <section className="nv-section">
+
+                    <div className="nv-section-title">
+                        <h3>Información general</h3>
+
+                        <span>
+                            Información principal de la oportunidad.
+                        </span>
+                    </div>
+
+                    <div className="nv-grid">
+
+                        {/* TÍTULO */}
+
+                        <div className="nv-field nv-full">
+                            <label htmlFor="nv-title">
+                                Título de la vacante
+                            </label>
+
+                            <input
+                                id="nv-title"
+                                type="text"
+                                value={newJobForm.title || ""}
+                                onChange={(event) =>
+                                    updateField(
+                                        "title",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. Coordinador de Programas"
+                                required
+                            />
+                        </div>
+
+                        {/* ORGANIZACIÓN */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-org">
+                                Organización
+                            </label>
+
+                            <input
+                                id="nv-org"
+                                type="text"
+                                value={newJobForm.org || ""}
+                                onChange={(event) =>
+                                    updateField(
+                                        "org",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. Fundación FQA"
+                                required
+                            />
+                        </div>
+
+                        {/* UBICACIÓN */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-location">
+                                Ubicación
+                            </label>
+
+                            <input
+                                id="nv-location"
+                                type="text"
+                                value={newJobForm.location || ""}
+                                onChange={(event) =>
+                                    updateField(
+                                        "location",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. San Salvador"
+                                required
+                            />
+                        </div>
+
+                        {/* ÁREA */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-area">
+                                Área de impacto
+                            </label>
+
+                            <select
+                                id="nv-area"
+                                value={
+                                    newJobForm.area ||
+                                    "Educación"
+                                }
+                                onChange={(event) =>
+                                    updateField(
+                                        "area",
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="Educación">
+                                    Educación
+                                </option>
+
+                                <option value="Desarrollo y Bienestar Social">
+                                    Desarrollo y Bienestar Social
+                                </option>
+
+                                <option value="Medioambiente y Sostenibilidad">
+                                    Medioambiente y Sostenibilidad
+                                </option>
+
+                                <option value="Autonomía Económica">
+                                    Autonomía Económica
+                                </option>
+
+                                <option value="Salud y Bienestar">
+                                    Salud y Bienestar
+                                </option>
+                            </select>
+                        </div>
+
+                        {/* TIPO */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-type">
+                                Tipo de jornada
+                            </label>
+
+                            <select
+                                id="nv-type"
+                                value={
+                                    newJobForm.type ||
+                                    "Tiempo completo"
+                                }
+                                onChange={(event) =>
+                                    updateField(
+                                        "type",
+                                        event.target.value
+                                    )
+                                }
+                            >
+                                <option value="Tiempo completo">
+                                    Tiempo completo
+                                </option>
+
+                                <option value="Medio tiempo">
+                                    Medio tiempo
+                                </option>
+
+                                <option value="Contrato">
+                                    Contrato
+                                </option>
+
+                                <option value="Remoto">
+                                    Remoto
+                                </option>
+
+                                <option value="Voluntariado">
+                                    Voluntariado
+                                </option>
+
+                                <option value="Horas sociales">
+                                    Horas sociales
+                                </option>
+
+                                <option value="Prácticas profesionales">
+                                    Prácticas profesionales
+                                </option>
+                            </select>
+                        </div>
+
+                        {/* SALARIO */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-salary">
+                                Salario / remuneración
+                            </label>
+
+                            <input
+                                id="nv-salary"
+                                type="text"
+                                value={newJobForm.salary || ""}
+                                onChange={(event) => {
+                                    let value = event.target.value;
+
+                                    // Si empieza con un número, agregar $ automáticamente
+                                    if (
+                                        value &&
+                                        !value.startsWith("$") &&
+                                        /^\d/.test(value)
+                                    ) {
+                                        value = "$" + value;
+                                    }
+
+                                    updateField("salary", value);
+                                }}
+                                placeholder="Ej. $600-$800/mes"
+                                pattern="(\$?[0-9]+.*)"
+                                title="Ingresa un salario que comience con un número, por ejemplo: $600 o $600-$800/mes."
+                                required
+                            />
+                        </div>
+
+                        {/* FECHA LÍMITE */}
+
+                        <div className="nv-field">
+                            <label htmlFor="nv-deadline">
+                                Fecha límite de aplicación
+                            </label>
+
+                            <input
+                                id="nv-deadline"
+                                type="date"
+                                value={newJobForm.deadline || ""}
+                                onChange={(event) =>
+                                    updateField(
+                                        "deadline",
+                                        event.target.value
+                                    )
+                                }
+                                min={
+                                    new Date()
+                                        .toISOString()
+                                        .split("T")[0]
+                                }
+                                required
+                            />
+
+                            <small>
+                                Después de esta fecha ya no se
+                                podrán recibir postulaciones.
+                            </small>
+                        </div>
+
+                    </div>
+                </section>
+
+                {/* =================================================
+                    DESCRIPCIÓN
+                ================================================= */}
+
+                <section className="nv-section">
+
+                    <div className="nv-section-title">
+                        <h3>
+                            Descripción de la vacante
+                        </h3>
+
+                        <span>
+                            Describe claramente la oportunidad.
+                        </span>
+                    </div>
+
+                    <div className="nv-grid">
+
+                        <div className="nv-field nv-full">
+
+                            <label htmlFor="nv-desc">
+                                Descripción
+                            </label>
+
+                            <textarea
+                                id="nv-desc"
+                                value={newJobForm.desc || ""}
+                                onChange={(event) =>
+                                    updateField(
+                                        "desc",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Describe la finalidad de la posición..."
+                                required
+                            />
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                {/* =================================================
+                    RESPONSABILIDADES
+                ================================================= */}
+
+                <section className="nv-section">
+
+                    <div className="nv-section-title">
+                        <h3>
+                            Responsabilidades
+                        </h3>
+
+                        <span>
+                            Separa cada responsabilidad mediante una coma.
+                        </span>
+                    </div>
+
+                    <div className="nv-grid">
+
+                        <div className="nv-field nv-full">
+
+                            <label htmlFor="nv-responsibilities">
+                                Responsabilidades principales
+                            </label>
+
+                            <textarea
+                                id="nv-responsibilities"
+                                value={
+                                    newJobForm.responsibilities || ""
+                                }
+                                onChange={(event) =>
+                                    updateField(
+                                        "responsibilities",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. Coordinar proyectos, elaborar informes, supervisar personal"
+                                required
+                            />
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                {/* =================================================
+                    REQUISITOS
+                ================================================= */}
+
+                <section className="nv-section">
+
+                    <div className="nv-section-title">
+                        <h3>
+                            Requisitos
+                        </h3>
+
+                        <span>
+                            Define las condiciones necesarias para aplicar.
+                        </span>
+                    </div>
+
+                    <div className="nv-grid">
+
+                        <div className="nv-field nv-full">
+
+                            <label htmlFor="nv-requirements">
+                                Requisitos mínimos
+                            </label>
+
+                            <textarea
+                                id="nv-requirements"
+                                value={
+                                    newJobForm.requirements || ""
+                                }
+                                onChange={(event) =>
+                                    updateField(
+                                        "requirements",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. Licenciatura, 2 años de experiencia, disponibilidad de campo"
+                                required
+                            />
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                {/* =================================================
+                    BENEFICIOS
+                ================================================= */}
+
+                <section className="nv-section">
+
+                    <div className="nv-section-title">
+                        <h3>
+                            Beneficios y oferta
+                        </h3>
+
+                        <span>
+                            Información adicional que ofrece la organización.
+                        </span>
+                    </div>
+
+                    <div className="nv-grid">
+
+                        <div className="nv-field nv-full">
+
+                            <label htmlFor="nv-offers">
+                                Beneficios / ofertas
+                            </label>
+
+                            <textarea
+                                id="nv-offers"
+                                value={
+                                    newJobForm.offers || ""
+                                }
+                                onChange={(event) =>
+                                    updateField(
+                                        "offers",
+                                        event.target.value
+                                    )
+                                }
+                                placeholder="Ej. Prestaciones de ley, capacitaciones, viáticos"
+                            />
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                {/* =================================================
+                    ACCIONES
+                ================================================= */}
+
+                <div className="nv-actions">
+
+                    <button
+                        type="button"
+                        className="nv-button nv-button-secondary"
+                        onClick={onBack}
+                    >
+                        ← Regresar
+                    </button>
+
+                    <button
+                        type="button"
+                        className="nv-button nv-button-secondary"
+                        onClick={handlePreviewDraft}
+                    >
+                        Guardar borrador
+                    </button>
+
+                    <button
+                        type="submit"
+                        className="nv-button nv-button-primary"
+                    >
+                        Vista previa y publicar
+                    </button>
+
+                </div>
+
+            </form>
+        </main>
+    );
+}
+
+
+// =====================================================
+// VISTA PREVIA
+// =====================================================
+
+/** Preview for a locally composed opportunity. */
+function VistaPreviaVacante({
+    newJobForm,
+    mode,
+    onEdit,
+    onConfirmPublish,
+    onConfirmDraft,
+    onBack,
+}: JobPreviewProps) {
+    return (
+        <main className="nv-screen">
+
+            <header className="nv-header">
+                <div>
+                    <h2>
+                        Vista previa de la vacante
+                    </h2>
+
+                    <p>
+                        Revisa la información antes de continuar.
+                    </p>
+                </div>
+            </header>
+
+            <section className="nv-section">
+
+                <div className="nv-section-title">
+
+                    <h3>
+                        {newJobForm.title || "Sin título"}
+                    </h3>
+
+                    <span>
+                        {newJobForm.org || "Sin organización"}
+                    </span>
+
+                </div>
+
+                <div className="nv-grid">
+
+                    <div className="nv-field">
+                        <label>
+                            Ubicación
+                        </label>
+
+                        <div>
+                            {newJobForm.location ||
+                                "No especificada"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field">
+                        <label>
+                            Área
+                        </label>
+
+                        <div>
+                            {newJobForm.area ||
+                                "No especificada"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field">
+                        <label>
+                            Tipo de jornada
+                        </label>
+
+                        <div>
+                            {newJobForm.type ||
+                                "No especificado"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field">
+                        <label>
+                            Salario / remuneración
+                        </label>
+
+                        <div>
+                            {newJobForm.salary ||
+                                "No especificado"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field">
+                        <label>
+                            Fecha límite
+                        </label>
+
+                        <div>
+                            {newJobForm.deadline ||
+                                "No especificada"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field nv-full">
+                        <label>
+                            Descripción
+                        </label>
+
+                        <div>
+                            {newJobForm.desc ||
+                                "Sin descripción"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field nv-full">
+                        <label>
+                            Responsabilidades
+                        </label>
+
+                        <div>
+                            {newJobForm.responsibilities ||
+                                "No especificadas"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field nv-full">
+                        <label>
+                            Requisitos
+                        </label>
+
+                        <div>
+                            {newJobForm.requirements ||
+                                "No especificados"}
+                        </div>
+                    </div>
+
+                    <div className="nv-field nv-full">
+                        <label>
+                            Beneficios / ofertas
+                        </label>
+
+                        <div>
+                            {newJobForm.offers ||
+                                "No especificados"}
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <div className="nv-actions">
+
+                <button
+                    type="button"
+                    className="nv-button nv-button-secondary"
+                    onClick={onBack}
+                >
+                    ← Regresar
+                </button>
+
+                <button
+                    type="button"
+                    className="nv-button nv-button-secondary"
+                    onClick={onEdit}
+                >
+                    ← Editar
+                </button>
+
+                {mode === "draft" ? (
+                    <button
+                        type="button"
+                        className="nv-button nv-button-primary"
+                        onClick={onConfirmDraft}
+                    >
+                        Guardar borrador
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="nv-button nv-button-primary"
+                        onClick={onConfirmPublish}
+                    >
+                        Confirmar publicación
+                    </button>
+                )}
+
+            </div>
+
+        </main>
+    );
+}
+
+export default NuevaPostulacion;    

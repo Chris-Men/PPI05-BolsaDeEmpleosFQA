@@ -41,7 +41,9 @@ jobs:
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
             cd /opt/fqa-empleos
+            git pull --ff-only origin main
             export IMAGE_TAG=${{ github.sha }}
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml run --rm backend npx prisma migrate deploy
+            docker compose -f docker-compose.yml run --rm backend npm run prisma:seed:production
             docker compose -f docker-compose.yml up -d --remove-orphans

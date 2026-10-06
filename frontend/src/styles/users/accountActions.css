@@ -1,0 +1,18 @@
+/* Shared native confirmation modal for profile and administrative lifecycle actions. */
+.account-action-dialog { border: 0; border-radius: 16px; padding: 26px; margin: auto; width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; background: #fff; color: #283824; box-shadow: 0 20px 65px #0004; box-sizing: border-box; }
+.account-action-dialog::backdrop { background: #19300799; backdrop-filter: blur(3px); }
+.account-action-dialog h2 { font-size: 22px; margin: 0 0 18px; }
+.account-action-dialog p { margin: 12px 0; line-height: 1.55; overflow-wrap: anywhere; }
+.account-action-note { font-size: 13px; color: #52604e; }
+.account-action-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap; }
+.account-action-buttons button, .account-danger-zone button { border: 1px solid #ccc; border-radius: 8px; padding: 11px 16px; cursor: pointer; font: inherit; }
+.account-action-danger { background: #a82924; color: white; border-color: #a82924 !important; }
+.account-action-confirm { background: #487b18; color: white; }
+.account-action-dialog button:disabled { opacity: .6; cursor: wait; }
+.account-action-error { background: #fff0ee; padding: 12px; color: #91251f; border-radius: 8px; }
+.account-danger-zone { margin: 24px 0; padding: 22px; border: 1px solid #e6c6c2; border-radius: 12px; background: white; }
+.account-danger-zone p { margin: 12px 0 18px; }
+.users-lifecycle-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.users-lifecycle-actions button { border: 1px solid #ccd3c6; padding: 7px 10px; border-radius: 7px; cursor: pointer; background: white; }
+.users-lifecycle-actions button[data-action="DELETE"] { color: #a82924; border-color: #dfb8b5; }
+@media (max-width: 500px) { .account-action-buttons { flex-direction: column; } .account-action-buttons button { width: 100%; } }

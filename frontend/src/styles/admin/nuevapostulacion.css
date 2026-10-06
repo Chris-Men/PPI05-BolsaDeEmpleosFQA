@@ -1,0 +1,1061 @@
+/* =====================================================
+   FQA EMPLEOS
+   NUEVA VACANTE
+   CSS EXCLUSIVO
+   PREFIJO: nv-
+===================================================== */
+
+
+/* =====================================================
+   PANTALLA
+===================================================== */
+
+.nv-screen {
+    width: 100%;
+    max-width: 1400px;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 0;
+    overflow: visible;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.nv-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.nv-header h2 {
+    margin: 0;
+    color: var(--dark);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.nv-header p {
+    margin: 6px 0 0;
+    color: #777;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   FORMULARIO
+===================================================== */
+
+.nv-form {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 30px;
+    overflow: visible;
+}
+
+
+/* =====================================================
+   SECCIONES
+===================================================== */
+
+.nv-section {
+    width: 100%;
+    margin: 0 0 25px;
+    padding: 30px;
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: visible;
+}
+
+
+/* =====================================================
+   TITULO DE SECCIÓN
+===================================================== */
+
+.nv-section-title {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 0 0 25px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid #ECECEC;
+}
+
+.nv-section-title h3 {
+    margin: 0;
+    color: var(--dark);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.nv-section-title span {
+    display: block;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.nv-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 25px;
+    min-width: 0;
+}
+
+
+/* =====================================================
+   CAMPO
+===================================================== */
+
+.nv-field {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nv-full {
+    grid-column: 1 / -1;
+}
+
+
+/* =====================================================
+   LABEL
+===================================================== */
+
+.nv-field>label {
+    display: block;
+    margin: 0;
+    color: var(--dark);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
+
+.nv-field input[type="text"],
+.nv-field input[type="email"],
+.nv-field input[type="number"],
+.nv-field input[type="date"],
+.nv-field select,
+.nv-field textarea {
+    width: 100%;
+    min-width: 0;
+
+    border: 1px solid #E5E7EB;
+    outline: none;
+
+    background: #F8FAFC;
+    color: var(--text);
+
+    border-radius: 10px;
+
+    padding: 13px 15px;
+
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =====================================================
+   TEXTAREA
+===================================================== */
+
+.nv-field textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.nv-field input::placeholder,
+.nv-field textarea::placeholder {
+    color: #9CA3AF;
+    opacity: 1;
+}
+
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.nv-field input:focus,
+.nv-field select:focus,
+.nv-field textarea:focus {
+    background: var(--white);
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 2px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   SELECT / DATE
+===================================================== */
+
+.nv-field select,
+.nv-field input[type="date"] {
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   VALIDACIÓN
+===================================================== */
+
+.nv-error {
+    display: block;
+    margin-top: -2px;
+
+    color: #B42318;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   CAMPO CON ERROR
+===================================================== */
+
+.nv-field:has(.nv-error) input,
+.nv-field:has(.nv-error) select,
+.nv-field:has(.nv-error) textarea {
+    border-color: #E5A5A0;
+    background: #FFF8F7;
+}
+
+
+/* =====================================================
+   SWITCH
+===================================================== */
+
+.nv-switch {
+    width: 100%;
+    min-height: 58px;
+
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 12px 15px;
+
+    background: #F8FAFC;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.nv-switch:hover {
+    background: #F5F9EF;
+    border-color: #D7E7C2;
+}
+
+.nv-switch>div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.nv-switch strong {
+    display: block;
+
+    color: var(--dark);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.nv-switch small {
+    display: block;
+
+    color: #888;
+
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   CHECKBOX
+===================================================== */
+
+.nv-switch input[type="checkbox"] {
+    width: 19px;
+    height: 19px;
+
+    min-width: 19px;
+
+    margin: 0;
+
+    accent-color: var(--primary);
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+
+.nv-actions {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 25px;
+    margin-bottom: 30px;
+
+    padding: 20px 0 30px;
+
+    border-top: 1px solid #E5E7EB;
+
+    position: relative;
+
+    z-index: 50;
+
+    overflow: visible;
+
+    visibility: visible;
+    opacity: 1;
+}
+
+
+/* =====================================================
+   BOTÓN BASE
+===================================================== */
+
+.nv-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    height: 46px;
+
+    margin: 0;
+    padding: 0 22px;
+
+    border-radius: 10px;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    visibility: visible;
+    opacity: 1;
+
+    position: relative;
+
+    transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* =====================================================
+   BOTONES SECUNDARIOS
+===================================================== */
+
+.nv-button-secondary {
+    min-width: 145px;
+
+    border: 1px solid #D1D5DB;
+
+    background: #FFFFFF;
+
+    color: var(--dark);
+}
+
+.nv-button-secondary:hover {
+    background: #F8FAFC;
+
+    border-color: var(--primary);
+
+    color: var(--primary-dark);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.nv-button-secondary:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   BOTÓN PRINCIPAL
+===================================================== */
+
+.nv-button-primary {
+    min-width: 180px;
+
+    border: 1px solid var(--primary);
+
+    background: var(--primary);
+
+    color: #FFFFFF;
+}
+
+.nv-button-primary:hover {
+    background: var(--primary-dark);
+
+    border-color: var(--primary-dark);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 16px rgba(91, 162, 34, 0.25);
+}
+
+.nv-button-primary:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+
+/* =====================================================
+   FOCUS BOTONES
+===================================================== */
+
+.nv-button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   TABLET GRANDE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .nv-section {
+        padding: 27px;
+    }
+
+    .nv-grid {
+        gap: 20px;
+    }
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .nv-header {
+        margin-bottom: 25px;
+    }
+
+    .nv-header h2 {
+        font-size: 24px;
+    }
+
+    .nv-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nv-full {
+        grid-column: auto;
+    }
+
+    .nv-section {
+        padding: 25px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .nv-screen {
+        width: 100%;
+    }
+
+    .nv-header {
+        margin-bottom: 20px;
+    }
+
+    .nv-header h2 {
+        font-size: 22px;
+    }
+
+    .nv-header p {
+        font-size: 11px;
+    }
+
+    .nv-section {
+        margin-bottom: 18px;
+        padding: 20px;
+        border-radius: 14px;
+    }
+
+    .nv-section-title {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+
+    .nv-section-title h3 {
+        font-size: 16px;
+    }
+
+    .nv-section-title span {
+        font-size: 11px;
+    }
+
+    .nv-grid {
+        gap: 18px;
+    }
+
+    .nv-field textarea {
+        min-height: 110px;
+    }
+
+    .nv-switch {
+        padding: 12px;
+    }
+
+    .nv-actions {
+        flex-direction: column;
+
+        align-items: stretch;
+        justify-content: stretch;
+
+        gap: 10px;
+
+        padding: 20px 0 30px;
+    }
+
+    .nv-button {
+        width: 100%;
+
+        min-width: 0;
+
+        height: 46px;
+    }
+}
+
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 450px) {
+
+    .nv-section {
+        padding: 17px;
+    }
+
+    .nv-header h2 {
+        font-size: 20px;
+    }
+
+    .nv-field input[type="text"],
+    .nv-field input[type="email"],
+    .nv-field input[type="number"],
+    .nv-field input[type="date"],
+    .nv-field select,
+    .nv-field textarea {
+        padding: 12px;
+    }
+}
+
+/* =====================================================
+   VISTA PREVIA DE VACANTE
+===================================================== */
+
+.nv-preview-screen {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+/* =====================================================
+   AVISO DE VISTA PREVIA
+===================================================== */
+
+.nv-preview-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    margin-bottom: 25px;
+    padding: 18px 22px;
+
+    background: #f8faf5;
+    border: 1px solid #dfe8d2;
+    border-left: 5px solid #82BA2E;
+
+    border-radius: 12px;
+}
+
+.nv-preview-notice strong {
+    display: block;
+
+    color: #193007;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.nv-preview-notice span {
+    color: #777;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   TARJETA PRINCIPAL
+===================================================== */
+
+.nv-preview-card {
+    width: 100%;
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.08);
+
+    overflow: hidden;
+
+    border: 1px solid #e9ece5;
+}
+
+
+/* =====================================================
+   CABECERA DE LA VACANTE
+===================================================== */
+
+.nv-preview-card-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 30px;
+
+    padding: 35px;
+
+    background:
+        linear-gradient(135deg,
+            #193007 0%,
+            #29480d 100%);
+
+    color: white;
+}
+
+.nv-preview-card-header>div:first-child {
+    min-width: 0;
+}
+
+.nv-preview-label {
+    display: inline-block;
+
+    margin-bottom: 12px;
+
+    padding: 6px 12px;
+
+    background: rgba(130, 186, 46, 0.18);
+
+    border: 1px solid rgba(130, 186, 46, 0.35);
+
+    border-radius: 20px;
+
+    color: #b8df79;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+}
+
+.nv-preview-card-header h1 {
+    margin: 0;
+
+    color: white;
+
+    font-size: 30px;
+    font-weight: 700;
+
+    line-height: 1.25;
+}
+
+.nv-preview-company {
+    margin-top: 8px;
+
+    color: rgba(255, 255, 255, 0.75);
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   ESTADO
+===================================================== */
+
+.nv-preview-status {
+    flex-shrink: 0;
+}
+
+.nv-preview-status span {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 9px 14px;
+
+    border-radius: 20px;
+
+    background: rgba(255, 255, 255, 0.12);
+
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    color: white;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   INFORMACIÓN RÁPIDA
+===================================================== */
+
+.nv-preview-info-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 0;
+
+    border-bottom: 1px solid #e8ece5;
+}
+
+.nv-preview-info {
+    padding: 22px 25px;
+
+    border-right: 1px solid #e8ece5;
+}
+
+.nv-preview-info:last-child {
+    border-right: none;
+}
+
+.nv-preview-info span {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #8a8f85;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
+}
+
+.nv-preview-info strong {
+    display: block;
+
+    color: #193007;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   SECCIONES
+===================================================== */
+
+.nv-preview-section {
+    padding: 28px 35px;
+
+    border-bottom: 1px solid #edf0eb;
+}
+
+.nv-preview-section:last-of-type {
+    border-bottom: none;
+}
+
+.nv-preview-section h3 {
+    margin: 0 0 12px;
+
+    color: #193007;
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.nv-preview-section p {
+    margin: 0;
+
+    color: #4b5563;
+
+    font-size: 14px;
+
+    line-height: 1.8;
+
+    white-space: pre-line;
+}
+
+
+/* =====================================================
+   LISTAS
+===================================================== */
+
+.nv-preview-section ul {
+    margin: 0;
+
+    padding-left: 22px;
+}
+
+.nv-preview-section li {
+    margin-bottom: 9px;
+
+    color: #4b5563;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+.nv-preview-section li:last-child {
+    margin-bottom: 0;
+}
+
+.nv-preview-section li::marker {
+    color: #82BA2E;
+}
+
+
+/* =====================================================
+   CONTENIDO VACÍO
+===================================================== */
+
+.nv-preview-empty {
+    color: #9ca3af !important;
+
+    font-style: italic;
+
+    font-size: 13px !important;
+}
+
+
+/* =====================================================
+   PIE DE LA VACANTE
+===================================================== */
+
+.nv-preview-footer {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 20px 35px;
+
+    background: #f8faf5;
+
+    border-top: 1px solid #e5eadf;
+}
+
+.nv-preview-footer span {
+    color: #8a8f85;
+
+    font-size: 12px;
+}
+
+.nv-preview-footer strong {
+    color: #193007;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   BOTONES DE LA VISTA PREVIA
+===================================================== */
+
+.nv-preview-actions {
+    margin-top: 25px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .nv-preview-card-header {
+        padding: 28px;
+    }
+
+    .nv-preview-info-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .nv-preview-info:nth-child(2) {
+        border-right: none;
+    }
+
+    .nv-preview-info:nth-child(-n + 2) {
+        border-bottom: 1px solid #e8ece5;
+    }
+
+    .nv-preview-section {
+        padding: 25px 28px;
+    }
+
+    .nv-preview-footer {
+        padding: 18px 28px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .nv-preview-notice {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 6px;
+    }
+
+    .nv-preview-card-header {
+        flex-direction: column;
+
+        padding: 25px;
+
+        gap: 18px;
+    }
+
+    .nv-preview-card-header h1 {
+        font-size: 24px;
+    }
+
+    .nv-preview-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nv-preview-info {
+        border-right: none;
+
+        border-bottom: 1px solid #e8ece5;
+    }
+
+    .nv-preview-info:last-child {
+        border-bottom: none;
+    }
+
+    .nv-preview-section {
+        padding: 22px;
+    }
+
+    .nv-preview-footer {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding: 18px 22px;
+    }
+
+    .nv-preview-actions {
+        flex-direction: column;
+    }
+
+    .nv-preview-actions .nv-button {
+        width: 100%;
+    }
+
+}

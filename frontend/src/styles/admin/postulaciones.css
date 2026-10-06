@@ -1,0 +1,1334 @@
+/* =====================================================
+   FQA EMPLEOS
+   ADMINISTRACIÓN
+   ADMINISTRAR VACANTES
+   ESTILOS DE SCREEN
+===================================================== */
+
+
+/* =====================================================
+   SCREEN
+===================================================== */
+
+.admin-postulaciones-screen {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+    padding: 0;
+
+    min-width: 0;
+
+    overflow: visible;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.admin-postulaciones-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 25px;
+
+    min-width: 0;
+}
+
+.admin-postulaciones-title {
+    min-width: 0;
+}
+
+.admin-postulaciones-title h2 {
+    margin: 0;
+
+    color: var(--dark);
+
+    font-size: 28px;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.admin-postulaciones-title p {
+    margin: 7px 0 0;
+
+    color: #777;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================================
+   BOTÓN NUEVA VACANTE
+===================================================== */
+
+.admin-postulaciones-new-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    min-width: 165px;
+    min-height: 44px;
+
+    padding: 0 20px;
+
+    border: none;
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--primary);
+
+    color: var(--white);
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s,
+        transform 0.25s,
+        box-shadow 0.25s;
+}
+
+.admin-postulaciones-new-button:hover {
+    background: var(--primary-dark);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 16px rgba(91, 162, 34, 0.25);
+}
+
+.admin-postulaciones-new-button:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+.admin-postulaciones-new-button:focus-visible {
+    outline: 2px solid var(--primary);
+
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   TOOLBAR
+===================================================== */
+
+.admin-postulaciones-toolbar {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(240px, 1fr) 210px 210px;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+
+    min-width: 0;
+}
+
+
+/* =====================================================
+   BUSCADOR
+===================================================== */
+
+.admin-postulaciones-search {
+    width: 100%;
+
+    min-width: 0;
+    min-height: 44px;
+
+    padding: 0 15px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.25s,
+        box-shadow 0.25s,
+        background 0.25s;
+}
+
+.admin-postulaciones-search::placeholder {
+    color: #9CA3AF;
+
+    opacity: 1;
+}
+
+.admin-postulaciones-search:focus {
+    background: var(--white);
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 2px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   SELECTS
+===================================================== */
+
+.admin-postulaciones-select {
+    width: 100%;
+
+    min-width: 0;
+    min-height: 44px;
+
+    padding: 0 13px;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.25s,
+        box-shadow 0.25s,
+        background 0.25s;
+}
+
+.admin-postulaciones-select:hover {
+    border-color: #D7E7C2;
+}
+
+.admin-postulaciones-select:focus {
+    background: var(--white);
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 2px rgba(130, 186, 46, 0.12);
+}
+
+
+/* =====================================================
+   CONTENEDOR DE TABLA
+===================================================== */
+
+.admin-postulaciones-table-box {
+    width: 100%;
+
+    min-width: 0;
+
+    background: var(--white);
+
+    border-radius: 18px;
+
+    box-shadow: var(--shadow);
+
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+
+/* =====================================================
+   TABLA
+===================================================== */
+
+.admin-postulaciones-table-box table {
+    width: 100%;
+
+    min-width: 900px;
+
+    border-collapse: collapse;
+
+    border-spacing: 0;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   ENCABEZADO TABLA
+===================================================== */
+
+.admin-postulaciones-table-box thead {
+    background: #F8FAFC;
+}
+
+.admin-postulaciones-table-box th {
+    height: 54px;
+
+    padding: 0 18px;
+
+    color: #667085;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-align: left;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.04em;
+
+    white-space: nowrap;
+
+    border-bottom: 1px solid #E5E7EB;
+}
+
+
+/* =====================================================
+   CELDAS
+===================================================== */
+
+.admin-postulaciones-table-box td {
+    height: 68px;
+
+    padding: 12px 18px;
+
+    color: var(--text);
+
+    font-size: 13px;
+
+    vertical-align: middle;
+
+    border-bottom: 1px solid #F0F1F3;
+
+    white-space: nowrap;
+}
+
+.admin-postulaciones-table-box tbody tr {
+    transition:
+        background 0.2s;
+}
+
+.admin-postulaciones-table-box tbody tr:hover {
+    background: #FAFCF7;
+}
+
+.admin-postulaciones-table-box tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =====================================================
+   TÍTULO DE VACANTE
+===================================================== */
+
+.admin-postulaciones-table-box td strong {
+    color: var(--dark);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   TIPO DE VACANTE
+===================================================== */
+
+.admin-postulaciones-type {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 28px;
+
+    padding: 0 10px;
+
+    border-radius: 7px;
+
+    background: #F1F6E9;
+
+    color: var(--primary-dark);
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   ESTADOS
+===================================================== */
+
+.admin-postulaciones-status {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 65px;
+    min-height: 27px;
+
+    padding: 0 10px;
+
+    border-radius: 20px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   ESTADO ACTIVO
+===================================================== */
+
+.admin-postulaciones-status.active {
+    background: #EAF6DC;
+
+    color: #4E8B1B;
+}
+
+
+/* =====================================================
+   ESTADO CERRADO
+===================================================== */
+
+.admin-postulaciones-status.closed {
+    background: #F1F1F1;
+
+    color: #777;
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+
+.admin-postulaciones-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   BOTONES DE ACCIÓN
+===================================================== */
+
+.admin-postulaciones-action {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 58px;
+    min-height: 32px;
+
+    padding: 0 11px;
+
+    border: 1px solid #DDE2E7;
+
+    border-radius: 7px;
+
+    outline: none;
+
+    background: var(--white);
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.admin-postulaciones-action:hover {
+    background: #F5F9EF;
+
+    border-color: var(--primary);
+
+    color: var(--primary-dark);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+.admin-postulaciones-action:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+.admin-postulaciones-action:focus-visible {
+    outline: 2px solid var(--primary);
+
+    outline-offset: 2px;
+}
+
+
+/* =====================================================
+   ESTADO VACÍO
+===================================================== */
+
+.admin-postulaciones-empty {
+    height: 180px !important;
+
+    padding: 30px !important;
+
+    color: #888 !important;
+
+    font-size: 13px !important;
+
+    text-align: center !important;
+
+    vertical-align: middle !important;
+}
+
+
+/* =====================================================
+   SCROLL HORIZONTAL DE TABLA
+===================================================== */
+
+.admin-postulaciones-table-box::-webkit-scrollbar {
+    height: 8px;
+}
+
+.admin-postulaciones-table-box::-webkit-scrollbar-track {
+    background: #F4F5F6;
+
+    border-radius: 10px;
+}
+
+.admin-postulaciones-table-box::-webkit-scrollbar-thumb {
+    background: #D2D8CC;
+
+    border-radius: 10px;
+}
+
+.admin-postulaciones-table-box::-webkit-scrollbar-thumb:hover {
+    background: #B8C2B0;
+}
+
+
+/* =====================================================
+   TABLET GRANDE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .admin-postulaciones-header {
+        gap: 20px;
+    }
+
+    .admin-postulaciones-title h2 {
+        font-size: 26px;
+    }
+
+    .admin-postulaciones-toolbar {
+        grid-template-columns:
+            minmax(200px, 1fr) 190px 190px;
+    }
+
+    .admin-postulaciones-table-box th {
+        padding: 0 15px;
+    }
+
+    .admin-postulaciones-table-box td {
+        padding: 11px 15px;
+    }
+
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .admin-postulaciones-header {
+        align-items: flex-start;
+    }
+
+    .admin-postulaciones-title h2 {
+        font-size: 24px;
+    }
+
+    .admin-postulaciones-title p {
+        font-size: 12px;
+    }
+
+    .admin-postulaciones-toolbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-postulaciones-search {
+        grid-column: 1 / -1;
+    }
+
+    .admin-postulaciones-table-box {
+        border-radius: 15px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    .admin-postulaciones-screen {
+        width: 100%;
+    }
+
+
+    /* HEADER */
+
+    .admin-postulaciones-header {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 15px;
+
+        margin-bottom: 20px;
+    }
+
+    .admin-postulaciones-title h2 {
+        font-size: 22px;
+    }
+
+    .admin-postulaciones-title p {
+        margin-top: 5px;
+
+        font-size: 11px;
+    }
+
+    .admin-postulaciones-new-button {
+        width: 100%;
+
+        min-width: 0;
+
+        min-height: 44px;
+    }
+
+
+    /* TOOLBAR */
+
+    .admin-postulaciones-toolbar {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        margin-bottom: 15px;
+    }
+
+    .admin-postulaciones-search,
+    .admin-postulaciones-select {
+        width: 100%;
+
+        min-height: 44px;
+    }
+
+
+    /* TABLE */
+
+    .admin-postulaciones-table-box {
+        width: 100%;
+
+        border-radius: 14px;
+
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .admin-postulaciones-table-box table {
+        min-width: 900px;
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 450px) {
+
+    .admin-postulaciones-title h2 {
+        font-size: 20px;
+    }
+
+    .admin-postulaciones-title p {
+        font-size: 11px;
+    }
+
+    .admin-postulaciones-new-button {
+        font-size: 12px;
+    }
+
+    .admin-postulaciones-search,
+    .admin-postulaciones-select {
+        min-height: 42px;
+
+        padding-left: 12px;
+        padding-right: 12px;
+
+        font-size: 12px;
+    }
+
+    .admin-postulaciones-table-box {
+        border-radius: 12px;
+    }
+
+}
+
+
+/* =====================================================
+   CORRECCIÓN DE CONTENEDOR PRINCIPAL
+   PERMITE SCROLL VERTICAL DE LA SCREEN
+===================================================== */
+
+.main {
+    height: 100vh;
+
+    min-height: 0;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.content {
+    height: auto;
+
+    min-height: max-content;
+
+    overflow: visible;
+}
+
+.admin-postulaciones-screen {
+    height: auto;
+
+    min-height: max-content;
+
+    overflow: visible;
+}
+
+
+/* =====================================================
+   VISTA PREVIA DE VACANTE
+===================================================== */
+
+.admin-vacante-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(13, 27, 4, 0.68);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    z-index: 9999;
+
+    backdrop-filter: blur(4px);
+
+    animation: adminVacanteOverlayIn 0.2s ease;
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.admin-vacante-modal {
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+
+    background: #FFFFFF;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.25);
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    animation: adminVacanteModalIn 0.25s ease;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.admin-vacante-modal-header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    padding: 30px 35px;
+
+    background: #193007;
+
+    color: #FFFFFF;
+}
+
+
+.admin-vacante-modal-header>div {
+    min-width: 0;
+}
+
+
+.admin-vacante-modal-label {
+    display: inline-block;
+
+    margin-bottom: 10px;
+
+    color: #82BA2E;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+}
+
+
+.admin-vacante-modal-header h2 {
+    margin: 0;
+
+    color: #FFFFFF;
+
+    font-size: 26px;
+    font-weight: 700;
+
+    line-height: 1.25;
+}
+
+
+.admin-vacante-modal-header p {
+    margin: 7px 0 0;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   BOTÓN CERRAR
+===================================================== */
+
+.admin-vacante-modal-close {
+    width: 42px;
+    height: 42px;
+
+    min-width: 42px;
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.08);
+
+    color: #FFFFFF;
+
+    font-family: inherit;
+
+    font-size: 27px;
+
+    font-weight: 300;
+
+    line-height: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+
+.admin-vacante-modal-close:hover {
+    background: #82BA2E;
+
+    border-color: #82BA2E;
+
+    transform: rotate(90deg);
+}
+
+
+/* =====================================================
+   INFORMACIÓN PRINCIPAL
+===================================================== */
+
+.admin-vacante-modal-info {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 0;
+
+    background: #F6F9F1;
+
+    border-bottom: 1px solid #E5E7EB;
+}
+
+
+.admin-vacante-modal-info>div {
+    padding: 20px 24px;
+
+    border-right: 1px solid #E5E7EB;
+}
+
+
+.admin-vacante-modal-info>div:last-child {
+    border-right: none;
+}
+
+
+.admin-vacante-modal-info span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #8A8F86;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+}
+
+
+.admin-vacante-modal-info strong {
+    display: block;
+
+    color: #193007;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    line-height: 1.4;
+}
+
+
+/* =====================================================
+   CONTENIDO
+===================================================== */
+
+.admin-vacante-modal-content {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 30px 35px;
+
+    background: #FFFFFF;
+}
+
+
+/* =====================================================
+   SECCIONES
+===================================================== */
+
+.admin-vacante-modal-section {
+    padding-bottom: 25px;
+
+    margin-bottom: 25px;
+
+    border-bottom: 1px solid #ECECEC;
+}
+
+
+.admin-vacante-modal-section:last-child {
+    margin-bottom: 0;
+
+    border-bottom: none;
+}
+
+
+.admin-vacante-modal-section h3 {
+    margin: 0 0 10px;
+
+    color: #193007;
+
+    font-size: 17px;
+
+    font-weight: 600;
+}
+
+
+.admin-vacante-modal-section h3::before {
+    content: "";
+
+    display: inline-block;
+
+    width: 4px;
+    height: 17px;
+
+    margin-right: 9px;
+
+    vertical-align: -2px;
+
+    background: #82BA2E;
+
+    border-radius: 3px;
+}
+
+
+.admin-vacante-modal-section p {
+    margin: 0;
+
+    color: #4B5563;
+
+    font-size: 14px;
+
+    line-height: 1.75;
+
+    white-space: pre-line;
+}
+
+
+/* =====================================================
+   ACCIONES
+===================================================== */
+
+.admin-vacante-modal-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 20px 35px;
+
+    background: #FAFBF8;
+
+    border-top: 1px solid #E5E7EB;
+}
+
+
+.admin-vacante-modal-actions button {
+    min-height: 44px;
+
+    padding: 11px 22px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+
+/* =====================================================
+   BOTÓN SECUNDARIO
+===================================================== */
+
+.admin-vacante-modal-secondary {
+    border: 1px solid #D1D5DB;
+
+    background: #FFFFFF;
+
+    color: #4B5563;
+}
+
+
+.admin-vacante-modal-secondary:hover {
+    background: #F3F4F6;
+
+    border-color: #BFC4C9;
+}
+
+
+/* =====================================================
+   BOTÓN PRINCIPAL
+===================================================== */
+
+.admin-vacante-modal-primary {
+    border: 1px solid #82BA2E;
+
+    background: #82BA2E;
+
+    color: #FFFFFF;
+}
+
+
+.admin-vacante-modal-primary:hover {
+    background: #5BA222;
+
+    border-color: #5BA222;
+
+    transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   SCROLLBAR DEL MODAL
+===================================================== */
+
+.admin-vacante-modal-content::-webkit-scrollbar {
+    width: 7px;
+}
+
+
+.admin-vacante-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.admin-vacante-modal-content::-webkit-scrollbar-thumb {
+    background: #82BA2E;
+
+    border-radius: 10px;
+}
+
+
+/* =====================================================
+   ANIMACIONES
+===================================================== */
+
+@keyframes adminVacanteOverlayIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+@keyframes adminVacanteModalIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 800px) {
+
+    .admin-vacante-modal-overlay {
+        padding: 15px;
+    }
+
+
+    .admin-vacante-modal {
+        max-height: 94vh;
+
+        border-radius: 16px;
+    }
+
+
+    .admin-vacante-modal-header {
+        padding: 25px;
+    }
+
+
+    .admin-vacante-modal-header h2 {
+        font-size: 21px;
+    }
+
+
+    .admin-vacante-modal-info {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .admin-vacante-modal-info>div {
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+
+    .admin-vacante-modal-info>div:nth-child(2) {
+        border-right: none;
+    }
+
+
+    .admin-vacante-modal-info>div:nth-child(3),
+    .admin-vacante-modal-info>div:nth-child(4) {
+        border-bottom: none;
+    }
+
+
+    .admin-vacante-modal-content {
+        padding: 25px;
+    }
+
+
+    .admin-vacante-modal-actions {
+        padding: 18px 25px;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .admin-vacante-modal-overlay {
+        padding: 8px;
+    }
+
+
+    .admin-vacante-modal {
+        max-height: 96vh;
+
+        border-radius: 14px;
+    }
+
+
+    .admin-vacante-modal-header {
+        padding: 20px;
+    }
+
+
+    .admin-vacante-modal-header h2 {
+        font-size: 18px;
+    }
+
+
+    .admin-vacante-modal-header p {
+        font-size: 12px;
+    }
+
+
+    .admin-vacante-modal-close {
+        width: 36px;
+        height: 36px;
+
+        min-width: 36px;
+
+        font-size: 23px;
+    }
+
+
+    .admin-vacante-modal-info {
+        grid-template-columns: 1fr;
+    }
+
+
+    .admin-vacante-modal-info>div {
+        border-right: none !important;
+        border-bottom: 1px solid #E5E7EB !important;
+    }
+
+
+    .admin-vacante-modal-info>div:last-child {
+        border-bottom: none !important;
+    }
+
+
+    .admin-vacante-modal-content {
+        padding: 20px;
+    }
+
+
+    .admin-vacante-modal-actions {
+        flex-direction: column-reverse;
+
+        padding: 15px 20px;
+    }
+
+
+    .admin-vacante-modal-actions button {
+        width: 100%;
+    }
+
+}

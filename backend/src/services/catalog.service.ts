@@ -1,30 +1,49 @@
+import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
+import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import type { PrismaClient } from '@prisma/client';
 import {
-  ACTIVE_USER_STATUS_CODE,
-  CANDIDATE_ROLE_CODE,
-} from '../constants/auth.constants.js';
+  PERMISSIONS, ROLE_NAMES, ROLE_PERMISSIONS, type RoleCode,
+} from '../constants/authorization.constants.js';
 
-/** Creates or updates the initial account catalogs without duplicating records. */
+/** Synchronizes canonical role grants atomically, retaining catalog identifiers. */
 export const seedAccountCatalogs = async (database: PrismaClient): Promise<void> => {
-  const roles = [
-    { code: CANDIDATE_ROLE_CODE, name: 'Candidato' },
-    { code: 'ORGANIZATION', name: 'Organización' },
-    { code: 'ADMINISTRATOR', name: 'Administrador' },
-  ];
-
   await database.$transaction(async (transaction) => {
-    for (const role of roles) {
-      await transaction.role.upsert({
-        where: { code: role.code },
-        update: { name: role.name },
-        create: role,
+    for (const name of Object.values(PERMISSIONS)) {
+      await transaction.permissions.upsert({ where: { name }, update: {}, create: { name } });
+    }
+
+    for (const code of Object.keys(ROLE_NAMES) as RoleCode[]) {
+      const name = ROLE_NAMES[code];
+      const role = await transaction.role.upsert({
+        where: { name }, update: {}, create: { name },
+      });
+      const permissions = await transaction.permissions.findMany({
+        where: { name: { in: [...ROLE_PERMISSIONS[code]] } }, select: { id: true },
+      });
+      // Canonical roles must not retain obsolete or accidentally elevated grants.
+      await transaction.rolePermissions.deleteMany({
+        where: { roleId: role.id, permissionId: { notIn: permissions.map(({ id }) => id) } },
+      });
+      await transaction.rolePermissions.createMany({
+        data: permissions.map(({ id }) => ({ roleId: role.id, permissionId: id })),
+        skipDuplicates: true,
       });
     }
 
-    await transaction.userStatus.upsert({
-      where: { code: ACTIVE_USER_STATUS_CODE },
-      update: { name: 'Activo' },
-      create: { code: ACTIVE_USER_STATUS_CODE, name: 'Activo' },
-    });
+    // Retires only the login role and cascading grants, never users or organizations.
+    await transaction.role.deleteMany({ where: { name: 'Organización' } });
+
+    for (const name of Object.values(USER_STATUS_NAMES)) {
+      await transaction.userStatus.upsert({ where: { name }, update: { name }, create: { name } });
+    }
+  });
+};
+
+/** Adds organization states without replacing identifiers or historical records. */
+export const seedOrganizationCatalogs = async (database: PrismaClient): Promise<void> => {
+  await database.$transaction(async (transaction) => {
+    for (const name of Object.values(ORGANIZATION_STATUS_NAMES)) {
+      await transaction.organizationStatuses.upsert({ where: { name }, update: {}, create: { name } });
+    }
   });
 };

@@ -21,7 +21,7 @@ describe('Contrato HTTP sin acceso a PostgreSQL', () => {
   it('rechaza JSON mal formado con un mensaje seguro en español', async () => {
     const response = await fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: '{"password":"sensitive-fixture",',
     });
     assert.equal(response.status, 400);
@@ -33,7 +33,7 @@ describe('Contrato HTTP sin acceso a PostgreSQL', () => {
   it('rechaza campos de privilegios antes de consultar la base', async () => {
     const response = await fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: JSON.stringify({
         fullName: 'Ana Rivera',
         email: 'ana@example.test',
@@ -44,7 +44,7 @@ describe('Contrato HTTP sin acceso a PostgreSQL', () => {
     });
     assert.equal(response.status, 400);
     assert.deepEqual(await response.json(), {
-      message: 'Los datos de registro no son válidos.',
+      message: 'Los datos de la solicitud no son válidos.',
       errors: [{ field: '', message: 'La solicitud contiene campos no permitidos.' }],
     });
   });
@@ -52,7 +52,7 @@ describe('Contrato HTTP sin acceso a PostgreSQL', () => {
   it('devuelve errores por campo sin incluir los valores recibidos', async () => {
     const response = await fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: JSON.stringify({ fullName: 'A', email: 'invalid-email', password: 'secret' }),
     });
     assert.equal(response.status, 400);
@@ -67,7 +67,7 @@ describe('Contrato HTTP sin acceso a PostgreSQL', () => {
   it('rechaza cuerpos excesivos sin revelar el contenido', async () => {
     const response = await fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: JSON.stringify({ password: 'x'.repeat(110_000) }),
     });
     assert.equal(response.status, 413);

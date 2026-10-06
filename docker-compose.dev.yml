@@ -24,6 +24,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
+      - resume_data:/app/private/resumes
     command: npm run dev
     environment:
       NODE_ENV: development
@@ -31,20 +32,36 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM: ${SMTP_FROM:-no-reply@fqa.local}
+      RESET_PASSWORD_URL: ${RESET_PASSWORD_URL:-http://localhost:5173/reset-password}
+      MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY}
+      RESUME_STORAGE_DRIVER: filesystem
+      RESUME_STORAGE_DIRECTORY: /app/private/resumes
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -58,6 +75,7 @@ services:
       retries: 5
 
 volumes:
+  resume_data:
   backend_node_modules:
   frontend_node_modules:
   postgres_data:

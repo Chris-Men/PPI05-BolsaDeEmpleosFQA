@@ -1,53 +1,102 @@
 # FQA Empleos
 
-Monorepo de la bolsa de empleo de FQA. Incluye una aplicación React, una API REST Express con Prisma y PostgreSQL, y la configuración de contenedores para DigitalOcean.
+Monorepo de la bolsa de oportunidades de la Fundación Quintanilla Amaya. Contiene una aplicación React, una API REST con Express y Prisma, PostgreSQL y configuraciones Docker para desarrollo y producción.
 
-## Requisitos
+## Estado actual
 
-- Node.js 22 y npm 10, o Docker Desktop.
-- Copiar `.env.example` a `.env` en la raíz y sustituir todos los valores de ejemplo por valores seguros.
-- `JWT_SECRET` debe ser un secreto aleatorio de al menos 32 caracteres. Los archivos `.env` nunca se incluyen en Git.
+- El frontend público incluye empleos, voluntariados, horas sociales y prácticas con datos de demostración.
+- El registro público consume `POST /api/auth/register` y siempre crea una cuenta con rol `CANDIDATE`.
+- El inicio de sesión autentica los tres roles y conserva sesiones revocables durante un máximo de 30 días.
+- Administrador y Super Admin acceden al panel existente con identidad real; el módulo Usuarios usa la API y PostgreSQL. Administrador puede consultar, crear, deshabilitar y eliminar candidatos; Super Admin también gestiona administradores y restaura cuentas eliminadas. Los demás módulos de negocio conservan datos de demostración.
+- Los permisos de Candidato, Administrador y Super Admin se validan en el backend.
+- El perfil profesional y el CV del candidato usan la API y PostgreSQL; los documentos de desarrollo se guardan en un volumen privado persistente. Consulta [Perfil y CV](docs/CANDIDATE_PROFILE_CV.md).
 
-## Desarrollo con Docker Compose
+## Arquitectura
 
-El archivo `docker-compose.dev.yml` configura el desarrollo local. El archivo predeterminado `docker-compose.yml` configura producción.
+```text
+Navegador
+   │
+   ▼
+React 19 + TypeScript + Vite
+   │ HTTP / JSON
+   ▼
+Express 5 + TypeScript + JWT
+   │ Prisma ORM
+   ▼
+PostgreSQL 17
+```
 
-Ejecutar desde la raíz, con Docker Desktop iniciado. La primera instalación requiere preparar la base, generar el cliente y cargar los catálogos antes de registrar usuarios:
+En desarrollo, el navegador accede directamente a Vite en el puerto `5173` y a la API en el `3000`. La configuración de producción usa Caddy como proxy HTTPS y descarga las imágenes desde GitHub Container Registry.
+
+## Estructura del repositorio
+
+| Ruta | Contenido |
+| --- | --- |
+| `frontend/` | Aplicación React, componentes, pantallas, servicios HTTP y estilos. |
+| `backend/src/` | Rutas, controllers, services, middleware, validación y configuración de la API. |
+| `backend/prisma/` | Esquema Prisma, migraciones y seed de catálogos. |
+| `infrastructure/caddy/` | Configuración del proxy de producción. |
+| `.github/workflows/` | Jobs de CI y despliegue. |
+| `docker-compose.dev.yml` | Entorno local con recarga automática. |
+| `docker-compose.yml` | Servicios e imágenes de producción. |
+| `docs/SETUP.md` | Instalación completa, variables y operación con Docker Compose. |
+
+## Archivos locales que se deben crear
+
+Los archivos con secretos están ignorados por Git. Nunca se deben confirmar en un commit.
+
+| Archivo local | Cuándo se necesita | Plantilla |
+| --- | --- | --- |
+| `.env` | Siempre que se use Docker Compose, en desarrollo o producción. | `.env.example` |
+| `backend/.env` | Solo al ejecutar el backend directamente en el equipo. | `backend/.env.example` |
+| `frontend/.env.local` | Solo al ejecutar Vite directamente en el equipo. | `frontend/.env.example` |
+
+Los valores completos y la forma de generar `JWT_SECRET` están documentados en [Instalación y operación](docs/SETUP.md#archivos-locales-y-variables-de-entorno).
+
+## Inicio rápido en desarrollo
+
+Con Docker Desktop iniciado, desde la raíz del repositorio en PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1
+```
+
+El script crea `.env` con credenciales aleatorias si no existe, construye las imágenes, aplica las migraciones, carga los catálogos e inicia los servicios. Si `.env` ya existe, conserva sus valores. Para configurar tus propias credenciales, créalo antes de ejecutar el script:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edita `.env` antes de continuar. El procedimiento manual equivalente es:
 
 ```bash
+docker compose -f docker-compose.dev.yml build
 docker compose -f docker-compose.dev.yml up -d --wait postgres
-docker compose -f docker-compose.dev.yml run --build --rm --no-deps backend npm ci
 docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:generate
 docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:deploy
 docker compose -f docker-compose.dev.yml run --rm --no-deps backend npm run prisma:seed
-docker compose -f docker-compose.dev.yml up --build -d backend frontend
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-La interfaz queda disponible en `http://localhost:5173`, la API en `http://localhost:3000/api` y la comprobación de salud en `http://localhost:3000/api/health`.
+Servicios disponibles:
 
-La migración inicial corresponde a una base nueva. No ejecutar resets para adaptar una base que ya contenga datos: primero se debe revisar su compatibilidad. La carga de catálogos es idempotente y conserva los identificadores al volver a ejecutarse.
+| Servicio | URL |
+| --- | --- |
+| Frontend | `http://localhost:5173` |
+| API | `http://localhost:3000/api` |
+| Salud de la API | `http://localhost:3000/api/health` |
 
-En posteriores arranques, usar `docker compose -f docker-compose.dev.yml up --build`. Si cambian dependencias, volver a ejecutar `npm ci` en el servicio backend; si cambia Prisma, regenerar el cliente y aplicar las migraciones.
-
-## Backend ejecutado en el equipo
-
-Copiar `backend/.env.example` a `backend/.env` y ajustar las credenciales a las de PostgreSQL. La conexión local usa `localhost`; dentro de Compose utiliza el nombre de servicio `postgres`.
-
-Desde `backend`:
+En los siguientes arranques, si no cambiaron dependencias ni migraciones:
 
 ```bash
-npm ci
-npm run prisma:generate
-npm run prisma:deploy
-npm run prisma:seed
-npm run dev
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-Para futuras modificaciones del modelo, generar migraciones con `npm run prisma:migrate -- --name descripcion_del_cambio`. No editar manualmente el histórico de `prisma/migrations`.
+Consulta [Instalación y operación](docs/SETUP.md) para actualizaciones después de `git pull`, ejecución fuera de Docker, solución del error `Outdated Optimize Dep`, detención segura y producción.
 
-## Registro de candidatos
+## Registro público de candidatos
 
-`POST /api/auth/register` recibe JSON y no requiere autenticación previa:
+`POST /api/auth/register` requiere la cabecera `X-FQA-Request: 1` y recibe únicamente:
 
 ```json
 {
@@ -59,110 +108,60 @@ Para futuras modificaciones del modelo, generar migraciones con `npm run prisma:
 
 | Campo | Regla |
 | --- | --- |
-| `fullName` | Obligatorio, entre 2 y 150 caracteres después de recortar espacios exteriores. |
-| `email` | Obligatorio y válido; se recorta y convierte a minúsculas antes de guardar. |
-| `password` | Obligatoria, al menos 12 caracteres Unicode y como máximo 72 bytes UTF-8; no se recorta ni transforma. |
+| `fullName` | Entre 2 y 150 caracteres. |
+| `email` | Formato válido y máximo de 255 caracteres; se normaliza a minúsculas. |
+| `password` | Entre 12 caracteres Unicode y 72 bytes UTF-8. |
 
-No se aceptan otros campos. El backend asigna siempre el rol `CANDIDATE` y el estado `ACTIVE`. La contraseña se almacena exclusivamente como hash bcrypt con coste 12.
+Los campos adicionales se rechazan. El backend aplica bcrypt y asigna exclusivamente el rol Candidato y el estado Activo. Un correo repetido devuelve HTTP `409`.
 
-Ejemplo con PowerShell:
+## Roles
 
-```powershell
-$registration = @{
-  fullName = 'Ana Rivera'
-  email = 'ana@example.com'
-  password = 'Una clave de ejemplo 2026'
-} | ConvertTo-Json
+| Capacidad | Candidato | Administrador | Super Admin |
+| --- | :---: | :---: | :---: |
+| Administrar su perfil, CV y postulaciones | Sí | — | — |
+| Crear candidatos y gestionar oportunidades, organizaciones y postulaciones | — | Sí | Sí |
+| Crear o eliminar administradores | — | — | Sí |
+| Backup y restore de la base de datos | — | — | Sí |
 
-$result = Invoke-RestMethod -Method Post `
-  -Uri 'http://localhost:3000/api/auth/register' `
-  -ContentType 'application/json' `
-  -Body $registration
-```
+La matriz canónica está en `backend/src/constants/authorization.constants.ts`. Las organizaciones no tienen cuentas propias.
 
-Respuesta **201 Created** (identificador, fecha y token ilustrativos):
+## Validación local
 
-```json
-{
-  "user": {
-    "id": "cmexamplecandidate",
-    "fullName": "Ana Rivera",
-    "email": "ana@example.com",
-    "role": "CANDIDATE",
-    "status": "ACTIVE",
-    "createdAt": "2026-09-10T00:00:00.000Z"
-  },
-  "accessToken": "<JWT>",
-  "tokenType": "Bearer",
-  "expiresIn": 3600
-}
-```
-
-El JWT usa HS256 y contiene `sub` (identificador del usuario), `role`, `iat` y `exp`. Su vigencia es de una hora; `expiresIn` se expresa en segundos. La respuesta lleva `Cache-Control: no-store`. No registrar ni compartir el token.
-
-La creación del usuario, el perfil y la preparación del JWT ocurren en una transacción. Si falla un paso, no se confirma la cuenta. Los correos duplicados se resuelven con la restricción única de PostgreSQL, incluso ante solicitudes simultáneas.
-
-| Estado HTTP | Significado |
-| --- | --- |
-| 400 | Campos ausentes o inválidos, campos adicionales o JSON mal formado. |
-| 409 | Ya existe una cuenta con el correo normalizado. |
-| 413 | El cuerpo supera el límite JSON de Express de 100 KB. |
-| 500 | Error interno; se devuelve un mensaje genérico sin detalles sensibles. |
-
-Ejemplo de validación:
-
-```json
-{
-  "message": "Los datos de registro no son válidos.",
-  "errors": [
-    {
-      "field": "email",
-      "message": "El correo electrónico no es válido."
-    }
-  ]
-}
-```
-
-Para errores generales, la respuesta contiene únicamente `message`. Los mensajes están en español y nunca incluyen la contraseña ni su hash.
-
-Esta historia incorpora las tablas `users`, `user_profiles`, `roles` y `user_statuses`. Los identificadores son `cuid`; cada cuenta tiene un rol y un estado. El registro crea un perfil con nombre completo. Los catálogos iniciales contienen los roles candidato, organización y administrador, y el estado activo.
-
-El registro público de organizaciones, verificación de correo, inicio de sesión independiente, renovación de tokens, permisos y edición del perfil se implementarán en otras historias.
-
-## Pruebas y comprobaciones
-
-Desde `backend`:
+Los jobs de CI ejecutan `npm ci`, typecheck, lint y build de frontend y backend. Para reproducirlos:
 
 ```bash
+cd frontend
+npm ci
+npm run typecheck
+npm run lint
+npm test
+npm run build
+
+cd ../backend
+npm ci
 npm run prisma:generate
 npm run typecheck
 npm run lint
-npm run build
 npm test
+npm run build
 ```
 
-Las pruebas unitarias usan `node:test` con `tsx` y no necesitan PostgreSQL. El chequeo de tipos y lint también incluyen pruebas, scripts y carga de catálogos.
+Las pruebas de integración del backend necesitan una base separada cuyo nombre termine en `_test`. Su preparación se explica en [Pruebas de integración](docs/SETUP.md#pruebas-de-integración-del-backend).
 
-Las pruebas de integración requieren una base PostgreSQL **exclusiva de pruebas**. Por ejemplo, con el usuario de ejemplo de Compose:
+## Flujo Git
 
-```bash
-docker compose -f docker-compose.dev.yml exec postgres createdb -U fqa_user fqa_empleos_test
-```
+- Las ramas de trabajo nacen desde `dev`.
+- Usar `feature/`, `fix/`, `hotfix/` o `chore/` según el tipo de cambio.
+- No confirmar `.env`, tokens, contraseñas, certificados ni respaldos.
+- La integración a `main` se realiza mediante squash merge.
+## Autenticación
 
-Adaptar el usuario si `POSTGRES_USER` tiene otro valor. Esta creación se ejecuta una sola vez. Configurar `TEST_DATABASE_URL` en `backend/.env` o como variable del proceso, y ejecutar desde `backend`:
+Consulta [inicio de sesión y sesiones revocables](docs/AUTHENTICATION.md) para contratos, migración, persistencia, revocación y pruebas de PB-02.
 
-```bash
-npm run test:integration
-```
+## Correo y recuperación de contraseña
 
-El script exige un nombre de base terminado en `_test` y distinto del configurado en `DATABASE_URL`. No usa la base de desarrollo como alternativa. Aplica las migraciones existentes, carga los catálogos y crea un secreto JWT temporal para las pruebas.
+El backend permite solicitar y completar la recuperación de contraseña por correo para cualquier rol. El correo se encola cifrado en PostgreSQL y se entrega por SMTP con reintentos. En desarrollo, Mailpit muestra los mensajes en `http://localhost:8025`. Las plantillas de postulaciones están preparadas para conectarse cuando existan APIs reales de postulaciones. Consulta [correo y recuperación de contraseña](docs/EMAIL_PASSWORD_RECOVERY.md).
 
-La suite comprueba persistencia real, hash, JWT, catálogos idempotentes, duplicados, concurrencia, rechazo de privilegios y reversión ante un fallo de firma. Elimina únicamente las cuentas creadas por esa ejecución y sus perfiles; no reinicia ni vacía la base.
+## Gestión de usuarios
 
-## Git
-
-La rama de producción es `main`; las ramas de trabajo nacen desde `dev` con formato `feature/JIRA-123-descripcion` o `fix/JIRA-123-descripcion`. Esta entrega es local en `feature/candidate-registration`; aún no existe repositorio GitHub ni una base de commits.
-
-## Producción
-
-El Droplet debe contener el repositorio en `/opt/fqa-empleos`, un archivo `.env` exclusivo del servidor y acceso de lectura a GHCR. El workflow de producción requiere los secretos `DROPLET_HOST`, `DROPLET_USER` y `DROPLET_SSH_KEY` antes de habilitarse.
+Consulta [gestión y ciclo de vida de usuarios](docs/USER_MANAGEMENT.md) para endpoints, permisos, restricciones y preparación del entorno.

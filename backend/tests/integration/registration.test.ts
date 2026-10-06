@@ -54,21 +54,21 @@ describe('Registro contra PostgreSQL', () => {
   const register = (body: unknown): Promise<Response> =>
     fetch(`${api.baseUrl}/api/auth/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1' },
       body: JSON.stringify(body),
     });
 
   it('la carga repetida de catálogos conserva los mismos identificadores', async () => {
-    const beforeRoles = await prisma.role.findMany({ orderBy: { code: 'asc' } });
-    const beforeStatuses = await prisma.userStatus.findMany({ orderBy: { code: 'asc' } });
+    const beforeRoles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
+    const beforeStatuses = await prisma.userStatus.findMany({ orderBy: { name: 'asc' } });
     await seedAccountCatalogs(prisma);
     await seedAccountCatalogs(prisma);
-    assert.deepEqual(await prisma.role.findMany({ orderBy: { code: 'asc' } }), beforeRoles);
-    assert.deepEqual(await prisma.userStatus.findMany({ orderBy: { code: 'asc' } }), beforeStatuses);
-    assert.deepEqual(beforeRoles.map((role) => role.code), [
-      'ADMINISTRATOR', 'CANDIDATE', 'ORGANIZATION',
+    assert.deepEqual(await prisma.role.findMany({ orderBy: { name: 'asc' } }), beforeRoles);
+    assert.deepEqual(await prisma.userStatus.findMany({ orderBy: { name: 'asc' } }), beforeStatuses);
+    assert.deepEqual(beforeRoles.map((role) => role.name), [
+      'Administrador', 'Candidato', 'Super Admin',
     ]);
-    assert.deepEqual(beforeStatuses.map((status) => status.code), ['ACTIVE']);
+    assert.deepEqual(beforeStatuses.map((status) => status.name), ['Activo', 'Deshabilitado']);
   });
 
   it('crea cuenta y perfil normalizados, hash bcrypt y JWT válido', async () => {
@@ -81,7 +81,7 @@ describe('Registro contra PostgreSQL', () => {
     assert.equal(response.status, 201);
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const body = await response.json() as RegistrationResponse;
-    assert.deepEqual(Object.keys(body).sort(), ['accessToken', 'expiresIn', 'tokenType', 'user']);
+    assert.deepEqual(Object.keys(body).sort(), ['accessToken', 'expiresIn', 'permissions', 'roles', 'sessionExpiresAt', 'tokenType', 'user', 'userId']);
     assert.deepEqual(Object.keys(body.user).sort(), [
       'createdAt', 'email', 'fullName', 'id', 'role', 'status',
     ]);
@@ -94,12 +94,12 @@ describe('Registro contra PostgreSQL', () => {
 
     const account = await prisma.user.findUniqueOrThrow({
       where: { id: body.user.id },
-      include: { profile: true, role: true, status: true },
+      include: { profile: true, status: true, userRoles: { include: { roles: true } } },
     });
-    assert.equal(account.profile?.fullName, 'Ana Rivera');
-    assert.equal(account.role.code, 'CANDIDATE');
-    assert.equal(account.status.code, 'ACTIVE');
-    assert.equal(account.createdAt.toISOString(), body.user.createdAt);
+    assert.equal(`${account.profile?.firstName} ${account.profile?.lastName}`, 'Ana Rivera');
+    assert.equal(account.userRoles[0]?.roles.name, 'Candidato');
+    assert.equal(account.status.name, 'Activo');
+    assert.equal(account.createdAt?.toISOString(), body.user.createdAt);
     assert.notEqual(account.passwordHash, password);
     assert.equal(bcrypt.getRounds(account.passwordHash), 12);
     assert.equal(await bcrypt.compare(password, account.passwordHash), true);
@@ -108,16 +108,54 @@ describe('Registro contra PostgreSQL', () => {
 
     const claims = jwt.verify(body.accessToken, env.JWT_SECRET, { algorithms: ['HS256'] });
     assert.ok(typeof claims === 'object');
-    assert.equal(claims.sub, account.id);
+    assert.equal(claims.sub, String(account.id));
     assert.equal(claims.role, 'CANDIDATE');
     assert.equal(claims.exp! - claims.iat!, 3600);
-    assert.deepEqual(Object.keys(claims).sort(), ['exp', 'iat', 'role', 'sub']);
+    assert.deepEqual(Object.keys(claims).sort(), ['exp', 'iat', 'role', 'sid', 'sub']);
     assert.throws(
       () => jwt.verify(body.accessToken, env.JWT_SECRET, {
         algorithms: ['HS256'], clockTimestamp: claims.exp,
       }),
       jwt.TokenExpiredError,
     );
+  });
+
+  it('guarda nombres de una palabra sin duplicarlos y normaliza los espacios internos', async () => {
+    for (const [input, expected, firstName, lastName] of [
+      ['  Ana  ', 'Ana', 'Ana', ''],
+      ['  Ana   María  Rivera  ', 'Ana María Rivera', 'Ana María', 'Rivera'],
+      ['a'.repeat(100) + ' ' + 'b'.repeat(49), 'a'.repeat(100) + ' ' + 'b'.repeat(49), 'a'.repeat(100), 'b'.repeat(49)],
+      ['Ana ' + 'b'.repeat(100), 'Ana ' + 'b'.repeat(100), 'Ana', 'b'.repeat(100)],
+    ]) {
+      const email = emailFor(randomUUID());
+      const response = await register({ fullName: input, email, password });
+      assert.equal(response.status, 201);
+      const body = await response.json() as RegistrationResponse;
+      assert.equal(body.user.fullName, expected);
+      const profile = await prisma.userProfile.findUniqueOrThrow({ where: { userId: body.user.id } });
+      assert.equal(profile.firstName, firstName);
+      assert.equal(profile.lastName, lastName);
+    }
+  });
+
+  it('rechaza excesos de columna con 400 antes de crear la cuenta o su perfil', async () => {
+    const longEmail = 'a'.repeat(64) + '@' +
+      ['b'.repeat(63), 'c'.repeat(63), 'd'.repeat(63)].join('.');
+    for (const extra of [
+      { fullName: 'a'.repeat(101) },
+      { fullName: 'a'.repeat(101) + ' Rivera' },
+      { fullName: 'Ana ' + 'b'.repeat(101) },
+      { email: longEmail },
+    ]) {
+      const input = { fullName: 'Ana Rivera', email: emailFor(randomUUID()), password, ...extra };
+      emails.add(input.email);
+      const response = await register(input);
+      assert.equal(response.status, 400);
+      const body = await response.json() as { errors: { field: string; message: string }[] };
+      assert.ok(body.errors.some(({ field }) => field === ('email' in extra ? 'email' : 'fullName')));
+      assert.equal(await prisma.user.count({ where: { email: input.email } }), 0);
+      assert.equal(await prisma.userProfile.count({ where: { user: { email: input.email } } }), 0);
+    }
   });
 
   it('rechaza correos repetidos aunque cambien mayúsculas y espacios', async () => {
