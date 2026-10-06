@@ -4,12 +4,13 @@ Monorepo de la bolsa de oportunidades de la Fundación Quintanilla Amaya. Contie
 
 ## Estado actual
 
-- El frontend público incluye empleos, voluntariados, horas sociales, prácticas y perfiles con datos de demostración.
+- El frontend público incluye empleos, voluntariados, horas sociales y prácticas con datos de demostración.
 - El registro público consume `POST /api/auth/register` y siempre crea una cuenta con rol `CANDIDATE`.
 - El inicio de sesión autentica los tres roles y conserva sesiones revocables durante un máximo de 30 días.
 - Administrador y Super Admin acceden al panel existente con identidad real; el módulo Usuarios usa la API y PostgreSQL. Administrador puede consultar, crear, deshabilitar y eliminar candidatos; Super Admin también gestiona administradores y restaura cuentas eliminadas. Los demás módulos de negocio conservan datos de demostración.
 - El módulo Organizaciones usa la API y PostgreSQL para listar, buscar, crear, consultar, editar y activar/desactivar organizaciones.
 - Los permisos de Candidato, Administrador y Super Admin se validan en el backend.
+- El perfil profesional y el CV del candidato usan la API y PostgreSQL; los documentos de desarrollo se guardan en un volumen privado persistente. Consulta [Perfil y CV](docs/CANDIDATE_PROFILE_CV.md).
 
 ## Arquitectura
 

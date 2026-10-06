@@ -79,6 +79,12 @@ configureAuthentication({
 
 /** Framework-independent session lifecycle used by the auth provider. */
 export const sessionStore = {
+  /** Updates server-confirmed candidate identity without replacing credentials or expiry. */
+  updateCandidateName(firstName: string, lastName: string): void {
+    if (!snapshot.session?.roles.includes('CANDIDATE')) return;
+    publish({ ...snapshot, session: { ...snapshot.session,
+      user: { ...snapshot.session.user, fullName: [firstName, lastName].filter(Boolean).join(' ') } } });
+  },
   /** Reads the stable snapshot expected by useSyncExternalStore. */
   getSnapshot: (): SessionSnapshot => snapshot,
   /** Registers a state observer. */

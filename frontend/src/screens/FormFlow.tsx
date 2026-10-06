@@ -1,6 +1,9 @@
 import type {
   ApplicationTarget, ExperienceFormData, PersonalFormData, StateSetter,
 } from '../types/models';
+import type { CandidateProfileState } from '../hooks/useCandidateProfile';
+import { ResumeManager } from '../components/users/ResumeManager';
+import '../styles/users/candidateEditor.css';
 
 interface FormFlowProps {
   applyingTo: ApplicationTarget | null;
@@ -11,7 +14,7 @@ interface FormFlowProps {
   formExp: ExperienceFormData;
   setFormExp: StateSetter<ExperienceFormData>;
   uploadedCVName: string;
-  setUploadedCVName: StateSetter<string>;
+  candidateState: CandidateProfileState;
   onSubmitApplication: () => void;
   showToast: (message: string) => void;
 }
@@ -19,9 +22,13 @@ interface FormFlowProps {
 /** Multi-step demonstration application form. */
 export default function FormFlow({
   applyingTo, formStep, setFormStep, formPersonal, setFormPersonal, formExp,
-  setFormExp, uploadedCVName, setUploadedCVName, onSubmitApplication, showToast,
+  setFormExp, uploadedCVName, candidateState, onSubmitApplication, showToast,
 }: FormFlowProps) {
   const handleNextFormStep = () => {
+    if (candidateState.busy || candidateState.resumeLoading) return;
+    if (formStep >= 3 && (!candidateState.resume || candidateState.resumeError)) {
+      showToast('Sube un CV válido antes de continuar.'); return;
+    }
     if (formStep < 4) {
       setFormStep(prev => prev + 1);
     } else {
@@ -195,27 +202,7 @@ export default function FormFlow({
                   <h3>Documentos de aplicación</h3>
                   <p>Adjunta tu Currículum Vitae (CV) para finalizar la postulación.</p>
                 </div>
-                <div className="fg2">
-                  <div className="ff full">
-                    <label>Curriculum Vitae (PDF o Word) *</label>
-                    <div 
-                      className={`upload-zone ${uploadedCVName ? 'has-file' : ''}`}
-                      onClick={() => { setUploadedCVName('Curriculum_Bolsa_FQA.pdf'); showToast('✓ CV simulado cargado correctamente'); }}
-                    >
-                      <div className="uz-icon">📄</div>
-                      <div className="uz-text">
-                        <p>Arrastra tu CV aquí o <strong>haz clic para simular subida</strong></p>
-                        <small>PDF o Word · máx. 5 MB</small>
-                      </div>
-                      {uploadedCVName && (
-                        <div className="uz-file">
-                          <span>✅</span>
-                          <span className="uz-fname">{uploadedCVName}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ResumeManager state={candidateState} />
               </div>
             )}
 

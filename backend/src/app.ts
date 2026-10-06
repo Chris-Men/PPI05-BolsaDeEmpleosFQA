@@ -7,6 +7,7 @@ import { organizationRouter } from './routes/organization.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { profileRouter } from './routes/profile.routes.js';
 
 /** Creates the configured Express application without binding a network port. */
 export const createApp = (): express.Express => {
@@ -16,6 +17,7 @@ export const createApp = (): express.Express => {
   app.use(express.json());
   app.use('/api', healthRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/profile', profileRouter);
   app.use('/api/admin/users', adminUserRouter);
   app.use('/api/admin/organizations', organizationRouter);
   // Temporary local diagnostics must never be mounted in production.

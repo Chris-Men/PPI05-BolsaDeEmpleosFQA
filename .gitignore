@@ -13,6 +13,7 @@ coverage/
 # Database data and backups
 postgres-data/
 backups/
+private/
 
 # IDE and operating system files
 .DS_Store

@@ -14,13 +14,14 @@ import {
   Search,
   Settings,
   Star,
-  Trash2,
-  Upload,
   UserRound,
   X,
 } from 'lucide-react';
 
 import { CandidateSettings } from '../components/users/CandidateSettings';
+import { CandidateProfileEditor } from '../components/users/CandidateProfileEditor';
+import { ResumeManager } from '../components/users/ResumeManager';
+import type { CandidateProfileState } from '../hooks/useCandidateProfile';
 
 import '../styles/users/profileuser.css';
 
@@ -59,8 +60,7 @@ interface CandidateProfileProps {
 
   navigateTo: NavigateTo;
 
-  uploadedCVName: string;
-  setUploadedCVName: StateSetter<string>;
+  candidateState: CandidateProfileState;
 
   showToast: (message: string) => void;
 }
@@ -71,7 +71,8 @@ type ProfileTab =
   | 'student'
   | 'saved';
 
-type ProfileSection = 'overview' | 'settings';
+/** Sidebar destinations keep personal editing separate from the candidate overview. */
+type ProfileSection = 'overview' | 'personal' | 'settings';
 
 export default function CandidateProfile({
   currentUser,
@@ -95,8 +96,7 @@ export default function CandidateProfile({
 
   navigateTo,
 
-  uploadedCVName,
-  setUploadedCVName,
+  candidateState,
 
   showToast,
 }: CandidateProfileProps) {
@@ -222,29 +222,6 @@ export default function CandidateProfile({
      CV
   ========================================================= */
 
-  const handleUploadCV = () => {
-    setUploadedCVName(
-      'Curriculum_Bolsa_FQA.pdf'
-    );
-
-    showToast(
-      '✓ CV subido correctamente'
-    );
-  };
-
-  const handleRemoveCV = () => {
-    setUploadedCVName('');
-
-    showToast(
-      '✓ CV eliminado del sistema'
-    );
-  };
-
-
-  /* =========================================================
-     CERRAR SESIÓN
-  ========================================================= */
-
   const handleConfirmLogout = () => {
     setConfirmLogout(false);
     setMobileMenuOpen(false);
@@ -326,6 +303,19 @@ export default function CandidateProfile({
             </span>
           </button>
 
+          <button
+            type="button"
+            className={`profile-sidebar-item ${activeSection === 'personal' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveSection('personal');
+              setMobileMenuOpen(false);
+            }}
+            aria-current={activeSection === 'personal' ? 'page' : undefined}
+          >
+            <UserRound size={19} />
+            <span>Datos Personales</span>
+          </button>
+
 
           <button
             type="button"
@@ -336,20 +326,6 @@ export default function CandidateProfile({
 
             <span>
               Mis postulaciones
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className="profile-sidebar-item"
-            onClick={() =>
-              setMobileMenuOpen(false)
-            }
-          >
-            <FileText size={19} />
-
-            <span>
-              Mis documentos
             </span>
           </button>
 
@@ -493,7 +469,15 @@ export default function CandidateProfile({
 
         <div className="profile-content">
 
-          {activeSection === 'settings' ? <CandidateSettings /> : <>
+          {activeSection === 'settings' ? <CandidateSettings /> : activeSection === 'personal' ? <>
+            <section className="profile-welcome">
+              <div className="profile-welcome-text">
+                <h1>Datos Personales</h1>
+                <p>Consulta y actualiza tu información personal y profesional.</p>
+              </div>
+            </section>
+            <CandidateProfileEditor state={candidateState} />
+          </> : <>
 
 
           {/* =================================================
@@ -1226,71 +1210,7 @@ export default function CandidateProfile({
               </div>
 
 
-              {uploadedCVName ? (
-
-                <div className="profile-cv-active">
-
-                  <div className="profile-cv-icon">
-                    <FileText size={22} />
-                  </div>
-
-                  <div className="profile-cv-data">
-
-                    <strong>
-                      {uploadedCVName}
-                    </strong>
-
-                    <span>
-                      Cargado automáticamente
-                    </span>
-
-                  </div>
-
-
-                  <button
-                    type="button"
-                    className="profile-cv-remove"
-                    onClick={handleRemoveCV}
-                    aria-label="Eliminar currículum"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-
-                </div>
-
-              ) : (
-
-                <div className="profile-upload-area">
-
-                  <div className="profile-upload-icon">
-                    <Upload size={24} />
-                  </div>
-
-                  <p>
-                    No tienes ningún
-                    currículum activo.
-                  </p>
-
-                  <button
-                    type="button"
-                    className="profile-primary-button"
-                    onClick={handleUploadCV}
-                  >
-                    <Upload size={15} />
-
-                    Subir CV temporal
-                  </button>
-
-                  <small>
-                    Formato aceptado:
-                    PDF
-                    <span>·</span>
-                    Máx. 5 MB
-                  </small>
-
-                </div>
-
-              )}
+              <ResumeManager state={candidateState} />
 
             </section>
 
