@@ -76,6 +76,7 @@ type ProfileTab =
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
 type ProfileSection = 'overview' | 'personal' | 'settings';
 
+/** Renders the candidate overview, personal editor, and account settings. */
 export default function CandidateProfile({
   currentUser,
   handleLogout,
@@ -473,6 +474,16 @@ export default function CandidateProfile({
 
           {activeSection === 'settings' ? (
             <CandidateSettings />
+          ) : activeSection === 'personal' ? (
+            <>
+              <section className="profile-welcome">
+                <div className="profile-welcome-text">
+                  <h1>Datos Personales</h1>
+                  <p>Consulta y actualiza tu información personal y profesional.</p>
+                </div>
+              </section>
+              <CandidateProfileEditor state={candidateState} />
+            </>
           ) : (
             <>
 
@@ -511,15 +522,9 @@ export default function CandidateProfile({
                         'No disponible'}
                     </p>
 
-          {activeSection === 'settings' ? <CandidateSettings /> : activeSection === 'personal' ? <>
-            <section className="profile-welcome">
-              <div className="profile-welcome-text">
-                <h1>Datos Personales</h1>
-                <p>Consulta y actualiza tu información personal y profesional.</p>
-              </div>
-            </section>
-            <CandidateProfileEditor state={candidateState} />
-          </> : <>
+                  </div>
+
+                </div>
 
 
                 <button
@@ -1232,11 +1237,9 @@ export default function CandidateProfile({
 
                     </div>
 
-              <ResumeManager state={candidateState} />
+                  </div>
 
-                    </div>
-
-                  )}
+                  <ResumeManager state={candidateState} />
 
                 </section>
 

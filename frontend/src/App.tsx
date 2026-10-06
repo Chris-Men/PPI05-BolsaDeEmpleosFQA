@@ -363,7 +363,7 @@ export default function App() {
 }
 
 
-/** Public navigation and candidate prototype, scoped to one authenticated account. */
+/** Keeps public navigation, candidate profile, and applications scoped to one account. */
 function PublicApp() {
     const { session, logout } = useAuth();
 
@@ -414,6 +414,8 @@ function PublicApp() {
                         .toUpperCase(),
             }
             : null;
+
+    const candidateState = useCandidateProfile(Boolean(currentUser));
 
 
     // ==========================================================
@@ -532,6 +534,9 @@ function PublicApp() {
     const [formStep, setFormStep] =
         useState(1);
 
+    const [formInitialized, setFormInitialized] =
+        useState(false);
+
 
     const [formPersonal, setFormPersonal] =
         useState({
@@ -590,6 +595,10 @@ function PublicApp() {
         nextScreen: ScreenName,
         data: Job | null = null
     ) => {
+
+        if (nextScreen === 'form') {
+            setFormInitialized(false);
+        }
 
         setScreenHistory(prev => [
             ...prev,
