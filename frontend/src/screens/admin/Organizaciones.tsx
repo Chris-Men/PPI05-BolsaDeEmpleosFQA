@@ -1,759 +1,102 @@
-import { useState, type FormEvent } from 'react';
+﻿import { useEffect, useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { canManageOrganizations } from '../../utils/organizationManagement';
+import { getOrganization, getOrganizations } from '../../services/organizationService';
+import type { ManagedOrganization, OrganizationFilters, OrganizationListResponse } from '../../types/organization';
+import { OrganizationDialog } from '../../components/admin/OrganizationDialog';
+import { OrganizationStatusDialog } from '../../components/admin/OrganizationStatusDialog';
+import '../../styles/admin/organizaciones.css';
 
-interface Organization {
-  id: number;
-  nombre: string;
-  contacto: string;
-  oportunidades: number;
-  estado: string;
+interface OrganizationProps { search?: string }
+interface OrganizationManagementProps extends OrganizationProps { permissions: string[] }
+
+/** Guards direct rendering as well as navigation; authorization remains server-side. */
+export default function Organizaciones({ search = '' }: OrganizationProps) {
+  const { session } = useAuth();
+  if (!canManageOrganizations(session)) return <p role="alert">No tienes permiso para gestionar organizaciones.</p>;
+  return <OrganizationManagement search={search} permissions={session?.permissions ?? []} />;
 }
 
-interface OrganizationProps {
-  search?: string;
+/** Replaces local mock mutations with the existing API while preserving table and modal styling. */
+function OrganizationManagement({ search = '', permissions }: OrganizationManagementProps) {
+  const [filters, setFilters] = useState<OrganizationFilters>({ search, status: '', page: 1, pageSize: 20 });
+  const [data, setData] = useState<OrganizationListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [dialog, setDialog] = useState<{ mode: 'create' | 'view' | 'edit'; organization: ManagedOrganization | null } | null>(null);
+  const [transition, setTransition] = useState<ManagedOrganization | null>(null);
+
+  useEffect(() => { setFilters((current) => ({ ...current, search, page: 1 })); }, [search]);
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setLoading(true); setError('');
+    const timer = window.setTimeout(() => {
+      void getOrganizations(filters, controller.signal).then((result) => {
+        if (!active) return;
+        const pages = Math.max(1, Math.ceil(result.total / result.pageSize));
+        if (filters.page > pages) { setFilters((current) => ({ ...current, page: pages })); return; }
+        setData(result);
+      }).catch((failure: unknown) => {
+        if (active) { setData(null); setError(failure instanceof Error ? failure.message : 'No fue posible cargar las organizaciones.'); }
+      }).finally(() => { if (active) setLoading(false); });
+    }, 250);
+    return () => { active = false; window.clearTimeout(timer); controller.abort(); };
+  }, [filters, revision]);
+
+  /** Loads authoritative details before viewing or editing. */
+  const open = async (organization: ManagedOrganization, mode: 'view' | 'edit'): Promise<void> => {
+    if (busy) return;
+    setBusy(true); setError('');
+    try { setDialog({ mode, organization: await getOrganization(organization.id) }); }
+    catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No fue posible consultar la organización.'); }
+    finally { setBusy(false); }
+  };
+  const pages = Math.max(1, Math.ceil((data?.total ?? 0) / filters.pageSize));
+  return <section className="organizaciones-screen">
+    <div className="screen-header"><div><h2>Organizaciones</h2><p>Administra las organizaciones registradas.</p></div>
+      {permissions.includes('organizations.create') && <button className="primary-button" type="button" disabled={busy}
+        onClick={() => { setNotice(''); setDialog({ mode: 'create', organization: null }); }}>+ Nueva organización</button>}
+    </div>
+    {notice && <p role="status" className="organizations-notice">{notice}</p>}
+    <div className="admin-toolbar">
+      <input type="search" aria-label="Buscar por nombre o correo" placeholder="Buscar por nombre o correo…" maxLength={255}
+        value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value, page: 1 })} />
+      <select aria-label="Filtrar por estado" value={filters.status}
+        onChange={(event) => setFilters({ ...filters, status: event.target.value as OrganizationFilters['status'], page: 1 })}>
+        <option value="">Todos los estados</option><option value="ACTIVE">Activa</option><option value="INACTIVE">Inactiva</option>
+      </select>
+    </div>
+    {error && <p role="alert" className="organizations-error">{error} <button type="button" onClick={() => setRevision((value) => value + 1)}>Reintentar</button></p>}
+    <div className="admin-table-box" aria-busy={loading} tabIndex={0} role="region" aria-label="Listado de organizaciones">
+      <table><thead><tr><th>Organización</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+        {loading ? <tr><td colSpan={4} role="status">Cargando organizaciones…</td></tr>
+          : data?.items.length ? data.items.map((organization) => <tr key={organization.id}>
+            <td><strong>{organization.name}</strong></td><td>{organization.email ?? 'Sin correo'}</td>
+            <td><span className={'status ' + (organization.status === 'ACTIVE' ? 'status-active' : 'status-inactive')}>
+              {organization.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}</span></td>
+            <td><div className="table-actions">
+              <button className="edit-button" type="button" disabled={busy} onClick={() => void open(organization, 'view')}>Ver</button>
+              {permissions.includes('organizations.update') && <button className="edit-button" type="button" disabled={busy}
+                onClick={() => void open(organization, 'edit')}>Editar</button>}
+              {permissions.includes('organizations.status.update') && <button className="edit-button" type="button" disabled={busy}
+                onClick={() => { setNotice(''); setTransition(organization); }}>{organization.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}</button>}
+            </div></td>
+          </tr>) : !error && <tr><td colSpan={4} className="organizaciones-empty">No se encontraron organizaciones.</td></tr>}
+      </tbody></table>
+    </div>
+    <nav className="organizations-pagination" aria-label="Paginación de organizaciones">
+      <span>{data?.total ?? 0} organizaciones · Página {filters.page} de {pages}</span><div>
+        <button type="button" disabled={loading || filters.page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>Anterior</button>
+        <button type="button" disabled={loading || Boolean(error) || filters.page >= pages} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>Siguiente</button>
+      </div>
+    </nav>
+    {transition && <OrganizationStatusDialog organization={transition} onClose={() => setTransition(null)}
+      onSaved={() => { setTransition(null); setNotice('Estado actualizado correctamente.'); setRevision((value) => value + 1); }} />}
+    {dialog && <OrganizationDialog mode={dialog.mode} organization={dialog.organization} onClose={() => setDialog(null)}
+      onSaved={() => { setDialog(null); setNotice('Organización guardada correctamente.'); setRevision((value) => value + 1); }} />}
+  </section>;
 }
-
-type OrganizationModal = 'nueva' | 'ver' | 'editar';
-type OrganizationForm = Omit<Organization, 'id'>;
-
-import "../../styles/admin/organizaciones.css";
-
-/** Preserved local organization management prototype. */
-function Organizaciones({ search = '' }: OrganizationProps) {
-    // =====================================================
-    // ESTADOS
-    // =====================================================
-
-    const [organizaciones, setOrganizaciones] = useState<Organization[]>([
-        {
-            id: 1,
-            nombre: "Fundación Quintanilla Amaya",
-            contacto: "administracion@fqa.org",
-            oportunidades: 8,
-            estado: "Activa",
-        },
-        {
-            id: 2,
-            nombre: "Universidad Luterana Salvadoreña",
-            contacto: "contacto@uls.edu.sv",
-            oportunidades: 5,
-            estado: "Activa",
-        },
-        {
-            id: 3,
-            nombre: "Organización Social",
-            contacto: "contacto@organizacion.org",
-            oportunidades: 2,
-            estado: "Pendiente",
-        },
-    ]);
-
-    const [busquedaLocal, setBusquedaLocal] = useState("");
-
-    const [estadoFiltro, setEstadoFiltro] = useState(
-        "Todos los estados"
-    );
-
-    const [modal, setModal] = useState<OrganizationModal | null>(null);
-
-    const [organizacionSeleccionada, setOrganizacionSeleccionada] =
-        useState<Organization | null>(null);
-
-    const [form, setForm] = useState<OrganizationForm>({
-        nombre: "",
-        contacto: "",
-        oportunidades: 0,
-        estado: "Activa",
-    });
-
-    // =====================================================
-    // BÚSQUEDA
-    // =====================================================
-
-    const textoBusqueda =
-        busquedaLocal || search || "";
-
-    const filtered = organizaciones.filter((item) => {
-        const texto = `
-            ${item.nombre}
-            ${item.contacto}
-            ${item.estado}
-        `.toLowerCase();
-
-        const coincideBusqueda = texto.includes(
-            textoBusqueda.toLowerCase()
-        );
-
-        const coincideEstado =
-            estadoFiltro === "Todos los estados" ||
-            item.estado === estadoFiltro;
-
-        return (
-            coincideBusqueda &&
-            coincideEstado
-        );
-    });
-
-    // =====================================================
-    // NUEVA ORGANIZACIÓN
-    // =====================================================
-
-    const abrirNuevaOrganizacion = () => {
-        setForm({
-            nombre: "",
-            contacto: "",
-            oportunidades: 0,
-            estado: "Activa",
-        });
-
-        setOrganizacionSeleccionada(null);
-
-        setModal("nueva");
-    };
-
-    // =====================================================
-    // VER ORGANIZACIÓN
-    // =====================================================
-
-    const handleVer = (organizacion: Organization) => {
-        setOrganizacionSeleccionada(organizacion);
-        setModal("ver");
-    };
-
-    // =====================================================
-    // EDITAR ORGANIZACIÓN
-    // =====================================================
-
-    const handleEditar = (organizacion: Organization) => {
-        setOrganizacionSeleccionada(organizacion);
-
-        setForm({
-            nombre: organizacion.nombre,
-            contacto: organizacion.contacto,
-            oportunidades: organizacion.oportunidades,
-            estado: organizacion.estado,
-        });
-
-        setModal("editar");
-    };
-
-    // =====================================================
-    // ACTUALIZAR FORMULARIO
-    // =====================================================
-
-    const updateField = (field: keyof OrganizationForm, value: string | number) => {
-        setForm((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-    // =====================================================
-    // GUARDAR ORGANIZACIÓN
-    // =====================================================
-
-    const handleGuardar = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        if (!form.nombre.trim()) {
-            return;
-        }
-
-        if (!form.contacto.trim()) {
-            return;
-        }
-
-        // =================================================
-        // EDITAR ORGANIZACIÓN
-        // =================================================
-
-        if (
-            modal === "editar" &&
-            organizacionSeleccionada
-        ) {
-            setOrganizaciones((prev) =>
-                prev.map((item) =>
-                    item.id ===
-                    organizacionSeleccionada.id
-                        ? {
-                              ...item,
-                              nombre:
-                                  form.nombre.trim(),
-                              contacto:
-                                  form.contacto.trim(),
-                              oportunidades:
-                                  Number(
-                                      form.oportunidades
-                                  ) || 0,
-                              estado:
-                                  form.estado,
-                          }
-                        : item
-                )
-            );
-        }
-
-        // =================================================
-        // NUEVA ORGANIZACIÓN
-        // =================================================
-
-        else {
-            const nuevaOrganizacion = {
-                id: Date.now(),
-                nombre: form.nombre.trim(),
-                contacto: form.contacto.trim(),
-                oportunidades:
-                    Number(form.oportunidades) || 0,
-                estado: form.estado,
-            };
-
-            setOrganizaciones((prev) => [
-                ...prev,
-                nuevaOrganizacion,
-            ]);
-        }
-
-        cerrarModal();
-    };
-
-    // =====================================================
-    // CERRAR MODAL
-    // =====================================================
-
-    const cerrarModal = () => {
-        setModal(null);
-        setOrganizacionSeleccionada(null);
-    };
-
-    // =====================================================
-    // RENDER
-    // =====================================================
-
-    return (
-        <section className="organizaciones-screen">
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
-            <div className="screen-header">
-
-
-                <button
-                    type="button"
-                    className="primary-button"
-                    onClick={
-                        abrirNuevaOrganizacion
-                    }
-                >
-                    + Nueva organización
-                </button>
-
-            </div>
-
-            {/* =================================================
-                TOOLBAR
-            ================================================= */}
-
-            <div className="admin-toolbar">
-
-                {/* BUSCADOR */}
-
-                <input
-                    type="text"
-                    placeholder="Buscar organización..."
-                    value={busquedaLocal}
-                    onChange={(e) =>
-                        setBusquedaLocal(
-                            e.target.value
-                        )
-                    }
-                />
-
-                {/* FILTRO ESTADO */}
-
-                <select
-                    value={estadoFiltro}
-                    onChange={(e) =>
-                        setEstadoFiltro(
-                            e.target.value
-                        )
-                    }
-                >
-                    <option value="Todos los estados">
-                        Todos los estados
-                    </option>
-
-                    <option value="Activa">
-                        Activa
-                    </option>
-
-                    <option value="Pendiente">
-                        Pendiente
-                    </option>
-                </select>
-
-            </div>
-
-            {/* =================================================
-                TABLA
-            ================================================= */}
-
-            <div className="admin-table-box">
-
-                <table>
-
-                    <thead>
-                        <tr>
-
-                            <th>
-                                Organización
-                            </th>
-
-                            <th>
-                                Contacto
-                            </th>
-
-                            <th>
-                                Oportunidades
-                            </th>
-
-                            <th>
-                                Estado
-                            </th>
-
-                            <th>
-                                Acciones
-                            </th>
-
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        {filtered.length > 0 ? (
-
-                            filtered.map((item) => (
-
-                                <tr
-                                    key={item.id}
-                                >
-
-                                    <td>
-                                        <strong>
-                                            {item.nombre}
-                                        </strong>
-                                    </td>
-
-                                    <td>
-                                        {item.contacto}
-                                    </td>
-
-                                    <td>
-                                        {item.oportunidades}
-                                    </td>
-
-                                    <td>
-
-                                        <span
-                                            className={
-                                                `status ${
-                                                    item.estado ===
-                                                    "Activa"
-                                                        ? "status-active"
-                                                        : "status-pending"
-                                                }`
-                                            }
-                                        >
-                                            {item.estado}
-                                        </span>
-
-                                    </td>
-
-                                    <td>
-
-                                        <div className="table-actions">
-
-                                            <button
-                                                type="button"
-                                                className="edit-button"
-                                                onClick={() =>
-                                                    handleVer(
-                                                        item
-                                                    )
-                                                }
-                                            >
-                                                Ver
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className="edit-button"
-                                                onClick={() =>
-                                                    handleEditar(
-                                                        item
-                                                    )
-                                                }
-                                            >
-                                                Editar
-                                            </button>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-
-                            ))
-
-                        ) : (
-
-                            <tr>
-
-                                <td
-                                    colSpan={5}
-                                    className="organizaciones-empty"
-                                >
-                                    No se encontraron
-                                    organizaciones.
-                                </td>
-
-                            </tr>
-
-                        )}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            {/* =================================================
-                MODAL
-            ================================================= */}
-
-            {modal && (
-
-                <div
-                    className="organizaciones-modal-overlay"
-                    onMouseDown={(e) => {
-
-                        if (
-                            e.currentTarget.classList.contains(
-                                "organizaciones-modal-overlay"
-                            )
-                        ) {
-                            cerrarModal();
-                        }
-
-                    }}
-                >
-
-                    <div className="organizaciones-modal">
-
-                        {/* =================================================
-                            MODAL VER
-                        ================================================= */}
-
-                        {modal === "ver" &&
-                            organizacionSeleccionada && (
-
-                                <>
-
-                                    <div className="organizaciones-modal-header">
-
-                                        <div>
-
-                                            <span>
-                                                ORGANIZACIÓN
-                                            </span>
-
-                                            <h2>
-                                                {
-                                                    organizacionSeleccionada.nombre
-                                                }
-                                            </h2>
-
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            className="organizaciones-modal-close"
-                                            onClick={
-                                                cerrarModal
-                                            }
-                                        >
-                                            ×
-                                        </button>
-
-                                    </div>
-
-                                    <div className="organizaciones-modal-body">
-
-                                        <div className="organizaciones-detail">
-
-                                            <span>
-                                                Contacto
-                                            </span>
-
-                                            <strong>
-                                                {
-                                                    organizacionSeleccionada.contacto
-                                                }
-                                            </strong>
-
-                                        </div>
-
-                                        <div className="organizaciones-detail">
-
-                                            <span>
-                                                Oportunidades
-                                            </span>
-
-                                            <strong>
-                                                {
-                                                    organizacionSeleccionada.oportunidades
-                                                }
-                                            </strong>
-
-                                        </div>
-
-                                        <div className="organizaciones-detail">
-
-                                            <span>
-                                                Estado
-                                            </span>
-
-                                            <strong>
-                                                {
-                                                    organizacionSeleccionada.estado
-                                                }
-                                            </strong>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div className="organizaciones-modal-footer">
-
-                                        <button
-                                            type="button"
-                                            className="modal-secondary-button"
-                                            onClick={
-                                                cerrarModal
-                                            }
-                                        >
-                                            Cerrar
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="modal-primary-button"
-                                            onClick={() =>
-                                                handleEditar(
-                                                    organizacionSeleccionada
-                                                )
-                                            }
-                                        >
-                                            Editar
-                                        </button>
-
-                                    </div>
-
-                                </>
-
-                            )}
-
-                        {/* =================================================
-                            MODAL NUEVA / EDITAR
-                        ================================================= */}
-
-                        {(modal === "nueva" ||
-                            modal === "editar") && (
-
-                            <form
-                                onSubmit={
-                                    handleGuardar
-                                }
-                            >
-
-                                <div className="organizaciones-modal-header">
-
-                                    <div>
-
-                                        <span>
-                                            {
-                                                modal ===
-                                                "nueva"
-                                                    ? "NUEVA ORGANIZACIÓN"
-                                                    : "EDITAR ORGANIZACIÓN"
-                                            }
-                                        </span>
-
-                                        <h2>
-                                            {
-                                                modal ===
-                                                "nueva"
-                                                    ? "Registrar organización"
-                                                    : "Modificar organización"
-                                            }
-                                        </h2>
-
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className="organizaciones-modal-close"
-                                        onClick={
-                                            cerrarModal
-                                        }
-                                    >
-                                        ×
-                                    </button>
-
-                                </div>
-
-                                <div className="organizaciones-modal-body">
-
-                                    <div className="organizaciones-form-field">
-
-                                        <label>
-                                            Nombre de la organización
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            value={
-                                                form.nombre
-                                            }
-                                            onChange={(e) =>
-                                                updateField(
-                                                    "nombre",
-                                                    e.target.value
-                                                )
-                                            }
-                                            required
-                                        />
-
-                                    </div>
-
-                                    <div className="organizaciones-form-field">
-
-                                        <label>
-                                            Correo de contacto
-                                        </label>
-
-                                        <input
-                                            type="email"
-                                            value={
-                                                form.contacto
-                                            }
-                                            onChange={(e) =>
-                                                updateField(
-                                                    "contacto",
-                                                    e.target.value
-                                                )
-                                            }
-                                            required
-                                        />
-
-                                    </div>
-
-                                    <div className="organizaciones-form-grid">
-
-                                        <div className="organizaciones-form-field">
-
-                                            <label>
-                                                Oportunidades
-                                            </label>
-
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={
-                                                    form.oportunidades
-                                                }
-                                                onChange={(e) =>
-                                                    updateField(
-                                                        "oportunidades",
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-
-                                        </div>
-
-                                        <div className="organizaciones-form-field">
-
-                                            <label>
-                                                Estado
-                                            </label>
-
-                                            <select
-                                                value={
-                                                    form.estado
-                                                }
-                                                onChange={(e) =>
-                                                    updateField(
-                                                        "estado",
-                                                        e.target.value
-                                                    )
-                                                }
-                                            >
-
-                                                <option value="Activa">
-                                                    Activa
-                                                </option>
-
-                                                <option value="Pendiente">
-                                                    Pendiente
-                                                </option>
-
-                                            </select>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                                <div className="organizaciones-modal-footer">
-
-                                    <button
-                                        type="button"
-                                        className="modal-secondary-button"
-                                        onClick={
-                                            cerrarModal
-                                        }
-                                    >
-                                        Cancelar
-                                    </button>
-
-                                    <button
-                                        type="submit"
-                                        className="modal-primary-button"
-                                    >
-                                        {
-                                            modal ===
-                                            "nueva"
-                                                ? "Guardar organización"
-                                                : "Guardar cambios"
-                                        }
-                                    </button>
-
-                                </div>
-
-                            </form>
-
-                        )}
-
-                    </div>
-
-                </div>
-
-            )}
-
-        </section>
-    );
-}
-
-export default Organizaciones;
