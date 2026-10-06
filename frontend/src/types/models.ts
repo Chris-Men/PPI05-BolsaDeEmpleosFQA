@@ -1,25 +1,26 @@
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from "react";
 
 /** Screens available from the public application navigation. */
 export type ScreenName =
-  | 'home'
-  | 'jobs'
-  | 'detail'
-  | 'form'
-  | 'confirm'
-  | 'volunteers'
-  | 'students'
-  | 'nosotros'
-  | 'profile'
-  | 'login'
-  | 'register'
-  | 'forgot-password'
-  | 'reset-password';
+  | "home"
+  | "jobs"
+  | "detail"
+  | "form"
+  | "confirm"
+  | "volunteers"
+  | "students"
+  | "nosotros"
+  | "profile"
+  | "help"
+  | "login"
+  | "register"
+  | "forgot-password"
+  | "reset-password";
 
 /** Candidate information used by the local profile demo. */
 export interface CurrentUser {
   email: string;
-  role: 'candidate';
+  role: "candidate";
   name: string;
   initial: string;
 }
@@ -61,7 +62,7 @@ export interface VolunteerSpot {
 }
 
 /** Category of a student opportunity. */
-export type StudentOpportunityType = 'social' | 'practica';
+export type StudentOpportunityType = "social" | "practica";
 
 /** Demonstration opportunity intended for students. */
 export interface StudentSpot {
@@ -125,7 +126,7 @@ export interface SuccessContact {
 
 /** Item selected for removal from the candidate profile. */
 export interface RetireSelection {
-  kind: 'job' | 'volunteer' | 'student';
+  kind: "job" | "volunteer" | "student";
   id: string | number;
   title: string;
 }

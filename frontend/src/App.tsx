@@ -23,6 +23,7 @@ import Confirmation from './screens/Confirmation';
 import Volunteers from './screens/Volunteers';
 import Students from './screens/student';
 import Nosotros from './screens/Nosotros';
+import Help from './screens/Help';
 import CandidateProfile from './screens/CandidateProfile';
 
 import Login from './screens/auth/Login';
@@ -221,6 +222,7 @@ const initialJobsData: Job[] = [
     }
 ];
 
+
 const initialVolunteersData: VolunteerSpot[] = [
     {
         id: 1,
@@ -275,6 +277,7 @@ const initialVolunteersData: VolunteerSpot[] = [
     }
 ];
 
+
 const initialStudentSpotsData: StudentSpot[] = [
     {
         id: 1,
@@ -306,21 +309,61 @@ const initialStudentSpotsData: StudentSpot[] = [
 // APP
 // ============================================================
 
-
 /** Remounts account-scoped demo state whenever the real identity changes. */
 export default function App() {
     const { status, session, error, retry } = useAuth();
-    if (status === 'loading') return <main className="session-status" role="status">Verificando sesión…</main>;
-    if (status === 'error') return <main className="session-status">
-        <p role="alert">{error}</p><button type="button" onClick={() => void retry()}>Reintentar</button>
-    </main>;
-    if (session?.roles.some((role) => role === 'SUPER_ADMIN' || role === 'ADMINISTRATOR')) {
-        return <AuthenticatedDashboard key={session.userId} />;
+
+    if (status === 'loading') {
+        return (
+            <main
+                className="session-status"
+                role="status"
+            >
+                Verificando sesión…
+            </main>
+        );
     }
-    return <PublicApp key={session?.userId ?? 'anonymous'} />;
+
+    if (status === 'error') {
+        return (
+            <main className="session-status">
+                <p role="alert">
+                    {error}
+                </p>
+
+                <button
+                    type="button"
+                    onClick={() => void retry()}
+                >
+                    Reintentar
+                </button>
+            </main>
+        );
+    }
+
+    if (
+        session?.roles.some(
+            (role) =>
+                role === 'SUPER_ADMIN' ||
+                role === 'ADMINISTRATOR'
+        )
+    ) {
+        return (
+            <AuthenticatedDashboard
+                key={session.userId}
+            />
+        );
+    }
+
+    return (
+        <PublicApp
+            key={session?.userId ?? 'anonymous'}
+        />
+    );
 }
 
-/** Public navigation and candidate prototype, scoped to one authenticated account. */
+
+/** Keeps public navigation, candidate profile, and applications scoped to one account. */
 function PublicApp() {
     const { session, logout } = useAuth();
 
@@ -334,7 +377,9 @@ function PublicApp() {
 
         if (
             path === '/reset-password' &&
-            new URLSearchParams(window.location.search).has('token')
+            new URLSearchParams(
+                window.location.search
+            ).has('token')
         ) {
             return 'reset-password';
         }
@@ -346,15 +391,31 @@ function PublicApp() {
         return 'home';
     };
 
-    const [screen, setScreen] = useState<ScreenName>(getInitialScreen());
-    const [screenHistory, setScreenHistory] = useState<ScreenName[]>([]);
 
-    const currentUser: CurrentUser | null = session?.roles.includes('CANDIDATE') ? {
-        email: session.user.email, role: 'candidate', name: session.user.fullName,
-        initial: session.user.fullName.charAt(0).toUpperCase(),
-    } : null;
+    const [screen, setScreen] =
+        useState<ScreenName>(
+            getInitialScreen()
+        );
+
+
+    const [screenHistory, setScreenHistory] =
+        useState<ScreenName[]>([]);
+
+
+    const currentUser: CurrentUser | null =
+        session?.roles.includes('CANDIDATE')
+            ? {
+                email: session.user.email,
+                role: 'candidate',
+                name: session.user.fullName,
+                initial:
+                    session.user.fullName
+                        .charAt(0)
+                        .toUpperCase(),
+            }
+            : null;
+
     const candidateState = useCandidateProfile(Boolean(currentUser));
-    const [formInitialized, setFormInitialized] = useState(false);
 
 
     // ==========================================================
@@ -363,19 +424,33 @@ function PublicApp() {
 
     const jobs = initialJobsData;
 
-    const volunteerSpots = initialVolunteersData;
+    const volunteerSpots =
+        initialVolunteersData;
 
-    const studentSpots = initialStudentSpotsData;
+    const studentSpots =
+        initialStudentSpotsData;
 
-    const [savedJobs, setSavedJobs] = useState<number[]>([]);
 
-    const [applications, setApplications] = useState<CandidateApplication[]>([]);
+    const [savedJobs, setSavedJobs] =
+        useState<number[]>([]);
 
-    const [volunteerApps, setVolunteerApps] = useState<number[]>([]);
-    const [studentApps, setStudentApps] = useState<number[]>([]);
+
+    const [applications, setApplications] =
+        useState<CandidateApplication[]>([]);
+
+
+    const [volunteerApps, setVolunteerApps] =
+        useState<number[]>([]);
+
+
+    const [studentApps, setStudentApps] =
+        useState<number[]>([]);
+
 
     const [activeStudentTab, setActiveStudentTab] =
-        useState<StudentOpportunityType>('social');
+        useState<StudentOpportunityType>(
+            'social'
+        );
 
 
     // ==========================================================
@@ -391,10 +466,14 @@ function PublicApp() {
     // ==========================================================
 
     const [selectedJob, setSelectedJob] =
-        useState<Job>(initialJobsData[0]);
+        useState<Job>(
+            initialJobsData[0]
+        );
+
 
     const [selectedOrg, setSelectedOrg] =
         useState<VolunteerSpot | null>(null);
+
 
     const [volSuccessContact, setVolSuccessContact] =
         useState<SuccessContact | null>(null);
@@ -405,10 +484,15 @@ function PublicApp() {
     // ==========================================================
 
     const [applyFlowType, setApplyFlowType] =
-        useState<'job' | 'volunteer' | 'student'>('job');
+        useState<
+            'job' | 'volunteer' | 'student'
+        >('job');
+
 
     const [applyFlowTarget, setApplyFlowTarget] =
-        useState<ApplicationTarget | null>(null);
+        useState<ApplicationTarget | null>(
+            null
+        );
 
 
     // ==========================================================
@@ -417,6 +501,7 @@ function PublicApp() {
 
     const [qvOpen, setQvOpen] =
         useState(false);
+
 
     const [qvJob, setQvJob] =
         useState<Job | null>(null);
@@ -429,11 +514,14 @@ function PublicApp() {
     const [searchQuery, setSearchQuery] =
         useState('');
 
+
     const [searchLocation, setSearchLocation] =
         useState('Todo el país');
 
+
     const [selectedArea, setSelectedArea] =
         useState('Todos');
+
 
     const [maxSalary, setMaxSalary] =
         useState(1500);
@@ -446,14 +534,33 @@ function PublicApp() {
     const [formStep, setFormStep] =
         useState(1);
 
-    const [formPersonal, setFormPersonal] = useState({
-        name: currentUser?.name ?? '', lastname: '', email: currentUser?.email ?? '',
-        phone: '', municipio: '', dept: '', level: '', profession: ''
-    });
+    const [formInitialized, setFormInitialized] =
+        useState(false);
 
-    const [formExp, setFormExp] = useState({
-        lastRole: '', lastOrg: '', years: '', salary: '', motivation: '', skills: ''
-    });
+
+    const [formPersonal, setFormPersonal] =
+        useState({
+            name: currentUser?.name ?? '',
+            lastname: '',
+            email: currentUser?.email ?? '',
+            phone: '',
+            municipio: '',
+            dept: '',
+            level: '',
+            profession: ''
+        });
+
+
+    const [formExp, setFormExp] =
+        useState({
+            lastRole: '',
+            lastOrg: '',
+            years: '',
+            salary: '',
+            motivation: '',
+            skills: ''
+        });
+
 
     const uploadedCVName = candidateState.resume?.originalName ?? '';
 
@@ -475,6 +582,7 @@ function PublicApp() {
     const [toastMsg, setToastMsg] =
         useState('');
 
+
     const [toastShow, setToastShow] =
         useState(false);
 
@@ -483,21 +591,33 @@ function PublicApp() {
     // NAVEGACIÓN
     // ==========================================================
 
-    const navigateTo = (nextScreen: ScreenName, data: Job | null = null) => {
-        if (nextScreen === 'form') setFormInitialized(false);
+    const navigateTo = (
+        nextScreen: ScreenName,
+        data: Job | null = null
+    ) => {
+
+        if (nextScreen === 'form') {
+            setFormInitialized(false);
+        }
 
         setScreenHistory(prev => [
             ...prev,
             screen
         ]);
 
+
         setScreen(nextScreen);
 
-        if (data && nextScreen === 'detail') {
+
+        if (
+            data &&
+            nextScreen === 'detail'
+        ) {
             setSelectedJob(data);
             setApplyFlowType('job');
             setApplyFlowTarget(data);
         }
+
 
         window.scrollTo({
             top: 0,
@@ -511,11 +631,15 @@ function PublicApp() {
         if (screenHistory.length > 0) {
 
             const previousScreen =
-                screenHistory[screenHistory.length - 1];
+                screenHistory[
+                    screenHistory.length - 1
+                ];
+
 
             setScreenHistory(prev =>
                 prev.slice(0, -1)
             );
+
 
             setScreen(previousScreen);
 
@@ -543,11 +667,14 @@ function PublicApp() {
 
         if (!toastShow) return;
 
+
         const timer = setTimeout(() => {
             setToastShow(false);
         }, 3000);
 
-        return () => clearTimeout(timer);
+
+        return () =>
+            clearTimeout(timer);
 
     }, [toastShow]);
 
@@ -560,13 +687,16 @@ function PublicApp() {
 
         if (!userMenuOpen) return;
 
+
         const closeMenu = () =>
             setUserMenuOpen(false);
+
 
         document.addEventListener(
             'click',
             closeMenu
         );
+
 
         return () =>
             document.removeEventListener(
@@ -582,9 +712,18 @@ function PublicApp() {
     // ==========================================================
 
     const handleLogout = () => {
-        void logout().catch((failure: unknown) => {
-            showToast(failure instanceof Error ? failure.message : 'No fue posible cerrar la sesión.');
-        });
+
+        void logout().catch(
+            (failure: unknown) => {
+
+                showToast(
+                    failure instanceof Error
+                        ? failure.message
+                        : 'No fue posible cerrar la sesión.'
+                );
+
+            }
+        );
     };
 
 
@@ -597,8 +736,11 @@ function PublicApp() {
         if (savedJobs.includes(id)) {
 
             setSavedJobs(prev =>
-                prev.filter(jobId => jobId !== id)
+                prev.filter(
+                    jobId => jobId !== id
+                )
             );
+
 
             showToast(
                 'Vacante removida de favoritos'
@@ -611,6 +753,7 @@ function PublicApp() {
                 id
             ]);
 
+
             showToast(
                 '💚 Vacante guardada en tu perfil'
             );
@@ -622,20 +765,28 @@ function PublicApp() {
     // POSTULACIONES
     // ==========================================================
 
-    const handleVolunteerApplyClick = (spot: VolunteerSpot) => {
+    const handleVolunteerApplyClick = (
+        spot: VolunteerSpot
+    ) => {
 
         setApplyFlowType('volunteer');
+
         setApplyFlowTarget(spot);
+
         setFormStep(1);
 
         navigateTo('form');
     };
 
 
-    const handleStudentApplyClick = (spot: StudentSpot) => {
+    const handleStudentApplyClick = (
+        spot: StudentSpot
+    ) => {
 
         setApplyFlowType('student');
+
         setApplyFlowTarget(spot);
+
         setFormStep(1);
 
         navigateTo('form');
@@ -648,7 +799,9 @@ function PublicApp() {
 
     const handleSubmitApplication = () => {
 
-        const target = applyFlowTarget;
+        const target =
+            applyFlowTarget;
+
 
         if (!target) return;
 
@@ -658,14 +811,19 @@ function PublicApp() {
             const refNum =
                 'FQA-2025-' +
                 Math.floor(
-                    Math.random() * 90000 + 10000
+                    Math.random() * 90000 +
+                    10000
                 );
+
 
             const newApp = {
 
                 id: refNum,
+
                 jobId: target.id,
+
                 jobTitle: target.title,
+
                 orgName: target.org,
 
                 candidateName:
@@ -687,10 +845,12 @@ function PublicApp() {
                 date: 'Hoy mismo'
             };
 
+
             setApplications(prev => [
                 newApp,
                 ...prev
             ]);
+
 
             navigateTo('confirm');
 
@@ -698,18 +858,26 @@ function PublicApp() {
         }
 
 
-        if (applyFlowType === 'volunteer') {
+        if (
+            applyFlowType ===
+            'volunteer'
+        ) {
 
             setVolunteerApps(prev => [
                 ...prev,
                 target.id
             ]);
 
+
             setVolSuccessContact({
                 title: target.title,
                 org: target.org,
-                contact: 'contact' in target ? target.contact : ''
+                contact:
+                    'contact' in target
+                        ? target.contact
+                        : ''
             });
+
 
             goBack();
 
@@ -717,18 +885,26 @@ function PublicApp() {
         }
 
 
-        if (applyFlowType === 'student') {
+        if (
+            applyFlowType ===
+            'student'
+        ) {
 
             setStudentApps(prev => [
                 ...prev,
                 target.id
             ]);
 
+
             setVolSuccessContact({
                 title: target.title,
                 org: target.org,
-                contact: 'contact' in target ? target.contact : ''
+                contact:
+                    'contact' in target
+                        ? target.contact
+                        : ''
             });
+
 
             goBack();
 
@@ -741,48 +917,60 @@ function PublicApp() {
     // FILTROS
     // ==========================================================
 
-    const filteredJobs = jobs.filter(job => {
+    const filteredJobs =
+        jobs.filter(job => {
 
-        const query =
-            searchQuery.toLowerCase();
-
-        const matchQuery =
-            job.title
-                .toLowerCase()
-                .includes(query) ||
-            job.org
-                .toLowerCase()
-                .includes(query);
+            const query =
+                searchQuery.toLowerCase();
 
 
-        const matchLoc =
-            searchLocation ===
-                'Todo el país'
-                ? true
-                : job.location ===
-                searchLocation;
+            const matchQuery =
+                job.title
+                    .toLowerCase()
+                    .includes(query) ||
+                job.org
+                    .toLowerCase()
+                    .includes(query);
 
 
-        const matchArea =
-            selectedArea === 'Todos'
-                ? true
-                : job.area ===
-                selectedArea;
+            const matchLoc =
+                searchLocation ===
+                    'Todo el país'
+                    ? true
+                    : job.location ===
+                    searchLocation;
 
 
-        return (
-            matchQuery &&
-            matchLoc &&
-            matchArea
-        );
-    });
+            const matchArea =
+                selectedArea === 'Todos'
+                    ? true
+                    : job.area ===
+                    selectedArea;
+
+
+            return (
+                matchQuery &&
+                matchLoc &&
+                matchArea
+            );
+        });
 
 
     // ==========================================================
     // LOGIN
     // ==========================================================
 
-    if (screen === 'login' || (!currentUser && ['profile', 'form', 'confirm'].includes(screen))) {
+    if (
+        screen === 'login' ||
+        (
+            !currentUser &&
+            [
+                'profile',
+                'form',
+                'confirm'
+            ].includes(screen)
+        )
+    ) {
 
         return (
             <Login
@@ -796,7 +984,9 @@ function PublicApp() {
     // REGISTRO
     // ==========================================================
 
-    if (screen === 'register') {
+    if (
+        screen === 'register'
+    ) {
 
         return (
             <Register
@@ -806,11 +996,15 @@ function PublicApp() {
         );
     }
 
+
     // ==========================================================
-    // RECUPERACION DE CONTRASEÑA
+    // RECUPERACIÓN DE CONTRASEÑA
     // ==========================================================
 
-    if (screen === 'forgot-password') {
+    if (
+        screen === 'forgot-password'
+    ) {
+
         return (
             <ForgotPassword
                 navigateTo={navigateTo}
@@ -818,7 +1012,11 @@ function PublicApp() {
         );
     }
 
-    if (screen === 'reset-password') {
+
+    if (
+        screen === 'reset-password'
+    ) {
+
         return (
             <ResetPassword
                 navigateTo={navigateTo}
@@ -867,102 +1065,178 @@ function PublicApp() {
                             Inicio
                         </span>
 
+
                         <span className="bsep">
                             ›
                         </span>
 
 
+                        {/* ================================
+                            EMPLEOS
+                        ================================= */}
+
                         {screen === 'jobs' && (
+
                             <span className="bcur">
                                 Bolsa de Empleo
                             </span>
+
                         )}
 
 
+                        {/* ================================
+                            DETALLE
+                        ================================= */}
+
                         {screen === 'detail' && (
+
                             <>
+
                                 <span
                                     onClick={() =>
-                                        navigateTo('jobs')
+                                        navigateTo(
+                                            'jobs'
+                                        )
                                     }
                                 >
                                     Empleos
                                 </span>
 
+
                                 <span className="bsep">
                                     ›
                                 </span>
 
+
                                 <span className="bcur">
                                     {selectedJob?.title}
                                 </span>
+
                             </>
+
                         )}
 
 
+                        {/* ================================
+                            FORMULARIO
+                        ================================= */}
+
                         {screen === 'form' && (
+
                             <>
+
                                 <span
                                     onClick={() =>
                                         navigateTo(
-                                            applyFlowType === 'volunteer'
+                                            applyFlowType ===
+                                                'volunteer'
                                                 ? 'volunteers'
-                                                : applyFlowType === 'student'
+                                                : applyFlowType ===
+                                                    'student'
                                                     ? 'students'
                                                     : 'jobs'
                                         )
                                     }
                                 >
-                                    {applyFlowType === 'volunteer'
+                                    {applyFlowType ===
+                                        'volunteer'
                                         ? 'Voluntariado'
-                                        : applyFlowType === 'student'
+                                        : applyFlowType ===
+                                            'student'
                                             ? 'Estudiantes'
                                             : 'Empleos'}
                                 </span>
+
 
                                 <span className="bsep">
                                     ›
                                 </span>
 
+
                                 <span className="bcur">
                                     Aplicar
                                 </span>
+
                             </>
+
                         )}
 
 
+                        {/* ================================
+                            CONFIRMACIÓN
+                        ================================= */}
+
                         {screen === 'confirm' && (
+
                             <span className="bcur">
                                 Confirmación
                             </span>
+
                         )}
 
 
+                        {/* ================================
+                            VOLUNTARIADO
+                        ================================= */}
+
                         {screen === 'volunteers' && (
+
                             <span className="bcur">
                                 Voluntariados disponibles
                             </span>
+
                         )}
 
 
+                        {/* ================================
+                            ESTUDIANTES
+                        ================================= */}
+
                         {screen === 'students' && (
+
                             <span className="bcur">
                                 Oportunidades para Estudiantes
                             </span>
+
                         )}
 
 
+                        {/* ================================
+                            NOSOTROS
+                        ================================= */}
+
                         {screen === 'nosotros' && (
+
                             <span className="bcur">
                                 Nuestra misión
                             </span>
+
                         )}
 
 
+                        {/* ================================
+                            AYUDA
+                        ================================= */}
+
+                        {screen === 'help' && (
+
+                            <span className="bcur">
+                                Ayuda
+                            </span>
+
+                        )}
+
+
+                        {/* ================================
+                            PERFIL
+                        ================================= */}
+
                         {screen === 'profile' && (
+
                             <span className="bcur">
                                 Mi perfil de candidato
                             </span>
+
                         )}
 
                     </div>
@@ -976,6 +1250,7 @@ function PublicApp() {
                     </button>
 
                 </div>
+
             )}
 
 
@@ -986,65 +1261,125 @@ function PublicApp() {
             <div className="screen-container">
 
 
-                {/* HOME */}
+                {/* ==================================================
+                    HOME
+                ================================================== */}
 
                 {screen === 'home' && (
 
                     <Home
                         jobs={jobs}
                         savedJobs={savedJobs}
-                        toggleSaveJob={toggleSaveJob}
-                        navigateTo={navigateTo}
-                        setQvJob={setQvJob}
-                        setQvOpen={setQvOpen}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        searchLocation={searchLocation}
-                        setSearchLocation={setSearchLocation}
-                        setSelectedArea={setSelectedArea}
+                        toggleSaveJob={
+                            toggleSaveJob
+                        }
+                        navigateTo={
+                            navigateTo
+                        }
+                        setQvJob={
+                            setQvJob
+                        }
+                        setQvOpen={
+                            setQvOpen
+                        }
+                        searchQuery={
+                            searchQuery
+                        }
+                        setSearchQuery={
+                            setSearchQuery
+                        }
+                        searchLocation={
+                            searchLocation
+                        }
+                        setSearchLocation={
+                            setSearchLocation
+                        }
+                        setSelectedArea={
+                            setSelectedArea
+                        }
                     />
 
                 )}
 
 
-                {/* EMPLEOS */}
+                {/* ==================================================
+                    EMPLEOS
+                ================================================== */}
 
                 {screen === 'jobs' && (
 
                     <JobsListing
-                        filteredJobs={filteredJobs}
-                        selectedJob={selectedJob}
-                        navigateTo={navigateTo}
-                        setQvJob={setQvJob}
-                        setQvOpen={setQvOpen}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        selectedArea={selectedArea}
-                        setSelectedArea={setSelectedArea}
-                        maxSalary={maxSalary}
-                        setMaxSalary={setMaxSalary}
-                        showToast={showToast}
+                        filteredJobs={
+                            filteredJobs
+                        }
+                        selectedJob={
+                            selectedJob
+                        }
+                        navigateTo={
+                            navigateTo
+                        }
+                        setQvJob={
+                            setQvJob
+                        }
+                        setQvOpen={
+                            setQvOpen
+                        }
+                        searchQuery={
+                            searchQuery
+                        }
+                        setSearchQuery={
+                            setSearchQuery
+                        }
+                        selectedArea={
+                            selectedArea
+                        }
+                        setSelectedArea={
+                            setSelectedArea
+                        }
+                        maxSalary={
+                            maxSalary
+                        }
+                        setMaxSalary={
+                            setMaxSalary
+                        }
+                        showToast={
+                            showToast
+                        }
                     />
 
                 )}
 
 
-                {/* DETALLE */}
+                {/* ==================================================
+                    DETALLE
+                ================================================== */}
 
                 {screen === 'detail' && (
 
                     <JobDetail
-                        selectedJob={selectedJob}
-                        savedJobs={savedJobs}
-                        toggleSaveJob={toggleSaveJob}
-                        navigateTo={navigateTo}
-                        setFormStep={setFormStep}
+                        selectedJob={
+                            selectedJob
+                        }
+                        savedJobs={
+                            savedJobs
+                        }
+                        toggleSaveJob={
+                            toggleSaveJob
+                        }
+                        navigateTo={
+                            navigateTo
+                        }
+                        setFormStep={
+                            setFormStep
+                        }
                     />
 
                 )}
 
 
-                {/* FORMULARIO */}
+                {/* ==================================================
+                    FORMULARIO
+                ================================================== */}
 
                 {screen === 'form' && (
 
@@ -1068,27 +1403,43 @@ function PublicApp() {
                 )}
 
 
-                {/* CONFIRMACIÓN */}
+                {/* ==================================================
+                    CONFIRMACIÓN
+                ================================================== */}
 
                 {screen === 'confirm' && (
 
                     <Confirmation
-                        applications={applications}
-                        navigateTo={navigateTo}
-                        formPersonal={formPersonal}
+                        applications={
+                            applications
+                        }
+                        navigateTo={
+                            navigateTo
+                        }
+                        formPersonal={
+                            formPersonal
+                        }
                     />
 
                 )}
 
 
-                {/* VOLUNTARIADO */}
+                {/* ==================================================
+                    VOLUNTARIADO
+                ================================================== */}
 
                 {screen === 'volunteers' && (
 
                     <Volunteers
-                        volunteerSpots={volunteerSpots}
-                        volunteerApps={volunteerApps}
-                        setSelectedOrg={setSelectedOrg}
+                        volunteerSpots={
+                            volunteerSpots
+                        }
+                        volunteerApps={
+                            volunteerApps
+                        }
+                        setSelectedOrg={
+                            setSelectedOrg
+                        }
                         handleVolunteerApplyClick={
                             handleVolunteerApplyClick
                         }
@@ -1097,15 +1448,25 @@ function PublicApp() {
                 )}
 
 
-                {/* ESTUDIANTES */}
+                {/* ==================================================
+                    ESTUDIANTES
+                ================================================== */}
 
                 {screen === 'students' && (
 
                     <Students
-                        studentSpots={studentSpots}
-                        studentApps={studentApps}
-                        activeStudentTab={activeStudentTab}
-                        setActiveStudentTab={setActiveStudentTab}
+                        studentSpots={
+                            studentSpots
+                        }
+                        studentApps={
+                            studentApps
+                        }
+                        activeStudentTab={
+                            activeStudentTab
+                        }
+                        setActiveStudentTab={
+                            setActiveStudentTab
+                        }
                         handleStudentApplyClick={
                             handleStudentApplyClick
                         }
@@ -1114,14 +1475,27 @@ function PublicApp() {
                 )}
 
 
-                {/* NOSOTROS */}
+                {/* ==================================================
+                    NOSOTROS
+                ================================================== */}
 
                 {screen === 'nosotros' && (
                     <Nosotros />
                 )}
 
 
-                {/* PERFIL */}
+                {/* ==================================================
+                    AYUDA
+                ================================================== */}
+
+                {screen === 'help' && (
+                    <Help />
+                )}
+
+
+                {/* ==================================================
+                    PERFIL
+                ================================================== */}
 
                 {screen === 'profile' && (
 
@@ -1145,7 +1519,6 @@ function PublicApp() {
                     />
 
                 )}
-
 
             </div>
 
@@ -1176,11 +1549,15 @@ function PublicApp() {
                                 {qvJob.title}
                             </h3>
 
+
                             <div className="qv-org">
+
                                 {qvJob.org}
                                 {' · '}
                                 {qvJob.location}
+
                             </div>
+
 
                             <div className="qv-badges">
 
@@ -1188,9 +1565,11 @@ function PublicApp() {
                                     📚 {qvJob.area}
                                 </span>
 
+
                                 <span className="qv-badge">
                                     ⏱ {qvJob.type}
                                 </span>
+
 
                                 <span className="qv-badge">
                                     💰 {qvJob.salary}
@@ -1207,20 +1586,28 @@ function PublicApp() {
                                 Sobre el rol
                             </p>
 
+
                             <p>
                                 {qvJob.desc}
                             </p>
+
 
                             <p className="qv-sec">
                                 Requisitos mínimos
                             </p>
 
+
                             <ul className="qv-list">
 
                                 {qvJob.requirements?.map(
-                                    (req, idx) => (
+                                    (
+                                        req,
+                                        idx
+                                    ) => (
 
-                                        <li key={idx}>
+                                        <li
+                                            key={idx}
+                                        >
                                             {req}
                                         </li>
 
@@ -1238,15 +1625,25 @@ function PublicApp() {
                                 className="qv-apply"
                                 onClick={() => {
 
-                                    setQvOpen(false);
+                                    setQvOpen(
+                                        false
+                                    );
 
-                                    setApplyFlowType('job');
+                                    setApplyFlowType(
+                                        'job'
+                                    );
 
-                                    setApplyFlowTarget(qvJob);
+                                    setApplyFlowTarget(
+                                        qvJob
+                                    );
 
-                                    setFormStep(1);
+                                    setFormStep(
+                                        1
+                                    );
 
-                                    navigateTo('form');
+                                    navigateTo(
+                                        'form'
+                                    );
 
                                 }}
                             >
@@ -1257,7 +1654,9 @@ function PublicApp() {
                             <button
                                 className="qv-close"
                                 onClick={() =>
-                                    setQvOpen(false)
+                                    setQvOpen(
+                                        false
+                                    )
                                 }
                             >
                                 Cerrar
@@ -1281,7 +1680,9 @@ function PublicApp() {
                 <div
                     className="modal-overlay"
                     onClick={() =>
-                        setSelectedOrg(null)
+                        setSelectedOrg(
+                            null
+                        )
                     }
                 >
 
@@ -1293,48 +1694,66 @@ function PublicApp() {
                     >
 
                         <h3>
-                            Sobre {selectedOrg.org}
+                            Sobre{' '}
+                            {selectedOrg.org}
                         </h3>
+
 
                         <p
                             style={{
-                                fontStyle: 'italic',
-                                color: 'var(--c500)'
+                                fontStyle:
+                                    'italic',
+                                color:
+                                    'var(--c500)'
                             }}
                         >
                             Eje de impacto:{' '}
                             {selectedOrg.area}
                         </p>
 
+
                         <p
                             style={{
-                                marginTop: '10px',
-                                fontSize: '13.5px',
-                                color: 'var(--c700)'
+                                marginTop:
+                                    '10px',
+                                fontSize:
+                                    '13.5px',
+                                color:
+                                    'var(--c700)'
                             }}
                         >
                             {selectedOrg.orgInfo}
                         </p>
 
+
                         <p
                             style={{
-                                marginTop: '10px',
-                                fontSize: '12px',
-                                color: 'var(--c400)'
+                                marginTop:
+                                    '10px',
+                                fontSize:
+                                    '12px',
+                                color:
+                                    'var(--c400)'
                             }}
                         >
+
                             <strong>
                                 Ubicación de cobertura:
                             </strong>{' '}
+
                             {selectedOrg.location}
+
                         </p>
+
 
                         <div className="modal-actions">
 
                             <button
                                 className="modal-btn-confirm"
                                 onClick={() =>
-                                    setSelectedOrg(null)
+                                    setSelectedOrg(
+                                        null
+                                    )
                                 }
                             >
                                 Cerrar
@@ -1358,7 +1777,9 @@ function PublicApp() {
                 <div
                     className="modal-overlay"
                     onClick={() =>
-                        setVolSuccessContact(null)
+                        setVolSuccessContact(
+                            null
+                        )
                     }
                 >
 
@@ -1371,17 +1792,22 @@ function PublicApp() {
 
                         <div
                             style={{
-                                textAlign: 'center',
-                                marginBottom: '15px'
+                                textAlign:
+                                    'center',
+                                marginBottom:
+                                    '15px'
                             }}
                         >
+
                             <span
                                 style={{
-                                    fontSize: '40px'
+                                    fontSize:
+                                        '40px'
                                 }}
                             >
                                 🎉
                             </span>
+
                         </div>
 
 
@@ -1391,9 +1817,12 @@ function PublicApp() {
 
 
                         <p>
-                            Tu solicitud para participar en{' '}
+                            Tu solicitud para participar
+                            en{' '}
                             <strong>
-                                {volSuccessContact.title}
+                                {
+                                    volSuccessContact.title
+                                }
                             </strong>{' '}
                             ha sido registrada con éxito.
                         </p>
@@ -1401,41 +1830,60 @@ function PublicApp() {
 
                         <div
                             style={{
-                                background: 'var(--gl)',
-                                padding: '15px',
-                                borderRadius: 'var(--rad)',
-                                marginBottom: '15px',
-                                textAlign: 'center'
+                                background:
+                                    'var(--gl)',
+                                padding:
+                                    '15px',
+                                borderRadius:
+                                    'var(--rad)',
+                                marginBottom:
+                                    '15px',
+                                textAlign:
+                                    'center'
                             }}
                         >
 
                             <p
                                 style={{
-                                    fontSize: '12px',
-                                    color: 'var(--c500)',
-                                    marginBottom: '5px'
+                                    fontSize:
+                                        '12px',
+                                    color:
+                                        'var(--c500)',
+                                    marginBottom:
+                                        '5px'
                                 }}
                             >
-                                Comunícate directamente al número del administrador:
+                                Comunícate directamente al
+                                número del administrador:
                             </p>
+
 
                             <strong
                                 style={{
-                                    fontSize: '20px',
-                                    color: 'var(--gd)'
+                                    fontSize:
+                                        '20px',
+                                    color:
+                                        'var(--gd)'
                                 }}
                             >
-                                {volSuccessContact.contact}
+                                {
+                                    volSuccessContact.contact
+                                }
                             </strong>
+
 
                             <p
                                 style={{
-                                    fontSize: '11px',
-                                    color: 'var(--c400)',
-                                    marginTop: '5px'
+                                    fontSize:
+                                        '11px',
+                                    color:
+                                        'var(--c400)',
+                                    marginTop:
+                                        '5px'
                                 }}
                             >
-                                O bien, espera pacientemente a que se comuniquen contigo.
+                                O bien, espera pacientemente
+                                a que se comuniquen contigo.
                             </p>
 
                         </div>
@@ -1446,7 +1894,9 @@ function PublicApp() {
                             <button
                                 className="modal-btn-confirm"
                                 onClick={() =>
-                                    setVolSuccessContact(null)
+                                    setVolSuccessContact(
+                                        null
+                                    )
                                 }
                             >
                                 Entendido
@@ -1466,13 +1916,17 @@ function PublicApp() {
             ====================================================== */}
 
             <div
-                className={`toast ${toastShow ? 'show' : ''
-                    }`}
+                className={`toast ${
+                    toastShow
+                        ? 'show'
+                        : ''
+                }`}
             >
 
                 <span>
                     ✓
                 </span>
+
 
                 <span>
                     {toastMsg}

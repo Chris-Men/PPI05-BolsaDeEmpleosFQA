@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import {
-  Bell,
   BriefcaseBusiness,
   ChevronRight,
   FileText,
@@ -16,6 +15,7 @@ import {
   Star,
   UserRound,
   X,
+  Bell,
 } from 'lucide-react';
 
 import { CandidateSettings } from '../components/users/CandidateSettings';
@@ -35,6 +35,8 @@ import type {
   StudentSpot,
   VolunteerSpot,
 } from '../types/models';
+
+import fqaLogo from '../components/imagenes/logo/logo 1.png';
 
 interface CandidateProfileProps {
   currentUser: CurrentUser | null;
@@ -74,6 +76,7 @@ type ProfileTab =
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
 type ProfileSection = 'overview' | 'personal' | 'settings';
 
+/** Renders the candidate overview, personal editor, and account settings. */
 export default function CandidateProfile({
   currentUser,
   handleLogout,
@@ -100,6 +103,7 @@ export default function CandidateProfile({
 
   showToast,
 }: CandidateProfileProps) {
+
   /* =========================================================
      ESTADOS
   ========================================================= */
@@ -166,6 +170,11 @@ export default function CandidateProfile({
 
   const goToStudents = () => {
     navigateTo('students');
+    setMobileMenuOpen(false);
+  };
+
+  const goToHelp = () => {
+    navigateTo('help');
     setMobileMenuOpen(false);
   };
 
@@ -237,9 +246,8 @@ export default function CandidateProfile({
   return (
     <div className="profile-user-screen">
 
-
       {/* =====================================================
-          SIDEBAR DESKTOP
+          SIDEBAR
       ===================================================== */}
 
       <aside
@@ -250,28 +258,24 @@ export default function CandidateProfile({
         }`}
       >
 
+        {/* ===================================================
+            LOGO FQA
+        =================================================== */}
+
         <div className="profile-brand">
 
-          <div className="profile-brand-mark">
-            <div className="profile-brand-leaf">
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-
-          <div>
-            <strong>
-              FQA Empleos
-            </strong>
-
-            <small>
-              Más oportunidades, un mejor futuro
-            </small>
-          </div>
+          <img
+            src={fqaLogo}
+            alt="FQA Empleos"
+            className="profile-brand-logo"
+          />
 
         </div>
 
+
+        {/* ===================================================
+            CERRAR MENÚ MOBILE
+        =================================================== */}
 
         <button
           type="button"
@@ -285,16 +289,28 @@ export default function CandidateProfile({
         </button>
 
 
+        {/* ===================================================
+            NAVEGACIÓN
+        =================================================== */}
+
         <nav className="profile-sidebar-nav">
 
           <button
             type="button"
-            className={`profile-sidebar-item ${activeSection === 'overview' ? 'active' : ''}`}
+            className={`profile-sidebar-item ${
+              activeSection === 'overview'
+                ? 'active'
+                : ''
+            }`}
             onClick={() => {
               setActiveSection('overview');
               setMobileMenuOpen(false);
             }}
-            aria-current={activeSection === 'overview' ? 'page' : undefined}
+            aria-current={
+              activeSection === 'overview'
+                ? 'page'
+                : undefined
+            }
           >
             <House size={19} />
 
@@ -329,6 +345,7 @@ export default function CandidateProfile({
             </span>
           </button>
 
+
           <button
             type="button"
             className="profile-sidebar-item"
@@ -349,23 +366,43 @@ export default function CandidateProfile({
             </span>
           </button>
 
+
           <button
             type="button"
-            className={`profile-sidebar-item ${activeSection === 'settings' ? 'active' : ''}`}
+            className={`profile-sidebar-item ${
+              activeSection === 'settings'
+                ? 'active'
+                : ''
+            }`}
             onClick={() => {
               setActiveSection('settings');
               setMobileMenuOpen(false);
             }}
-            aria-current={activeSection === 'settings' ? 'page' : undefined}
+            aria-current={
+              activeSection === 'settings'
+                ? 'page'
+                : undefined
+            }
           >
             <Settings size={19} />
-            <span>Configuración</span>
+
+            <span>
+              Configuración
+            </span>
           </button>
 
         </nav>
 
 
-        <div className="profile-sidebar-help">
+        {/* ===================================================
+            AYUDA
+        =================================================== */}
+
+        <button
+          type="button"
+          className="profile-sidebar-help"
+          onClick={goToHelp}
+        >
 
           <div className="profile-help-icon">
             <HelpCircle size={19} />
@@ -383,7 +420,7 @@ export default function CandidateProfile({
 
           <ChevronRight size={16} />
 
-        </div>
+        </button>
 
       </aside>
 
@@ -408,12 +445,12 @@ export default function CandidateProfile({
 
       <main className="profile-main">
 
-
         {/* ===================================================
-            TOPBAR
+            BOTÓN MENÚ MOBILE
+            Se mantiene porque eliminamos el TOPBAR.
         =================================================== */}
 
-        <header className="profile-topbar">
+        <div className="profile-mobile-header">
 
           <button
             type="button"
@@ -426,41 +463,7 @@ export default function CandidateProfile({
             <Menu size={22} />
           </button>
 
-
-          <div className="profile-topbar-spacer" />
-
-
-          <div className="profile-topbar-actions">
-
-            <button
-              type="button"
-              className="profile-topbar-icon"
-              onClick={() =>
-                showToast(
-                  'No tienes nuevas notificaciones'
-                )
-              }
-              aria-label="Notificaciones"
-            >
-              <Bell size={20} />
-
-              <span className="profile-notification-dot" />
-            </button>
-
-
-            <div className="profile-topbar-avatar">
-              {currentUser?.initial || 'U'}
-            </div>
-
-
-            <ChevronRight
-              className="profile-topbar-chevron"
-              size={18}
-            />
-
-          </div>
-
-        </header>
+        </div>
 
 
         {/* ===================================================
@@ -469,755 +472,781 @@ export default function CandidateProfile({
 
         <div className="profile-content">
 
-          {activeSection === 'settings' ? <CandidateSettings /> : activeSection === 'personal' ? <>
-            <section className="profile-welcome">
-              <div className="profile-welcome-text">
-                <h1>Datos Personales</h1>
-                <p>Consulta y actualiza tu información personal y profesional.</p>
-              </div>
-            </section>
-            <CandidateProfileEditor state={candidateState} />
-          </> : <>
-
-
-          {/* =================================================
-              HEADER DEL CANDIDATO
-          ================================================= */}
-
-          <section className="profile-welcome">
-
-            <div className="profile-welcome-user">
-
-              <div className="profile-large-avatar">
-
-                {currentUser?.initial || 'U'}
-
-                <span className="profile-avatar-edit">
-                  <UserRound size={11} />
-                </span>
-
-              </div>
-
-
-              <div className="profile-welcome-text">
-
-                <h1>
-                  Hola, {currentUser?.name || 'Candidato'}
-                </h1>
-
-                <p>
-                  Candidato registrado
-                  <span>
-                    ·
-                  </span>
-                  Correo:{' '}
-                  {currentUser?.email ||
-                    'No disponible'}
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <button
-              type="button"
-              className="profile-logout-button"
-              onClick={() =>
-                setConfirmLogout(true)
-              }
-            >
-              <LogOut size={17} />
-
-              <span>
-                Cerrar Sesión
-              </span>
-            </button>
-
-          </section>
-
-
-          {/* =================================================
-              ESTADÍSTICAS
-          ================================================= */}
-
-          <section className="profile-stats">
-
-            <div className="profile-stat-card">
-
-              <div className="profile-stat-icon">
-                <BriefcaseBusiness size={20} />
-              </div>
-
-              <div>
-                <strong>
-                  {totalActive}
-                </strong>
-
-                <span>
-                  Postulaciones activas
-                </span>
-              </div>
-
-              <ChevronRight size={17} />
-
-            </div>
-
-
-            <div className="profile-stat-card">
-
-              <div className="profile-stat-icon">
-                <FileText size={20} />
-              </div>
-
-              <div>
-                <strong>
-                  {myApplications.length}
-                </strong>
-
-                <span>
-                  Empleos
-                </span>
-              </div>
-
-              <ChevronRight size={17} />
-
-            </div>
-
-
-            <div className="profile-stat-card">
-
-              <div className="profile-stat-icon">
-                <Heart size={20} />
-              </div>
-
-              <div>
-                <strong>
-                  {myVolunteerSpots.length}
-                </strong>
-
-                <span>
-                  Voluntariados
-                </span>
-              </div>
-
-              <ChevronRight size={17} />
-
-            </div>
-
-
-            <div className="profile-stat-card">
-
-              <div className="profile-stat-icon">
-                <GraduationCap size={20} />
-              </div>
-
-              <div>
-                <strong>
-                  {myStudentSpots.length}
-                </strong>
-
-                <span>
-                  Estudiantes
-                </span>
-              </div>
-
-              <ChevronRight size={17} />
-
-            </div>
-
-
-            <div className="profile-stat-card">
-
-              <div className="profile-stat-icon">
-                <Star size={20} />
-              </div>
-
-              <div>
-                <strong>
-                  {mySavedJobs.length}
-                </strong>
-
-                <span>
-                  Guardadas
-                </span>
-              </div>
-
-              <ChevronRight size={17} />
-
-            </div>
-
-          </section>
-
-
-          {/* =================================================
-              TABS
-          ================================================= */}
-
-          <nav className="profile-tabs">
-
-            <button
-              type="button"
-              className={
-                activeTab === 'jobs'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('jobs')
-              }
-            >
-              <BriefcaseBusiness size={16} />
-
-              Empleos ({myApplications.length})
-            </button>
-
-
-            <button
-              type="button"
-              className={
-                activeTab === 'volunteer'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('volunteer')
-              }
-            >
-              <Heart size={16} />
-
-              Voluntariado (
-              {myVolunteerSpots.length}
-              )
-            </button>
-
-
-            <button
-              type="button"
-              className={
-                activeTab === 'student'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('student')
-              }
-            >
-              <GraduationCap size={16} />
-
-              Estudiantes (
-              {myStudentSpots.length}
-              )
-            </button>
-
-
-            <button
-              type="button"
-              className={
-                activeTab === 'saved'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                setActiveTab('saved')
-              }
-            >
-              <Star size={16} />
-
-              Guardadas ({mySavedJobs.length})
-            </button>
-
-          </nav>
-
-
-          {/* =================================================
-              GRID DE CONTENIDO
-          ================================================= */}
-
-          <div className="profile-dashboard-grid">
-
-
-            {/* ===============================================
-                POSTULACIONES
-            =============================================== */}
-
-            <section className="profile-card profile-applications-card">
-
-              {activeTab === 'jobs' && (
-                <>
-                  <div className="profile-card-heading">
-
-                    <div>
-                      <div className="profile-heading-icon">
-                        <BriefcaseBusiness size={19} />
-                      </div>
-
-                      <div>
-                        <h2>
-                          Mis Postulaciones a Empleos
-                        </h2>
-                      </div>
-                    </div>
-
-                  </div>
-
-
-                  {myApplications.length > 0 ? (
-
-                    <div className="profile-list">
-
-                      {myApplications.map((app) => (
-
-                        <article
-                          key={app.id}
-                          className="profile-list-item"
-                        >
-
-                          <div className="profile-list-info">
-
-                            <h3>
-                              {app.jobTitle}
-                            </h3>
-
-                            <p>
-                              {app.orgName}
-                              {' · '}
-                              Enviado: {app.date}
-                            </p>
-
-                            <small>
-                              CV adjunto:{' '}
-                              {app.cvName}
-                            </small>
-
-                          </div>
-
-
-                          <div className="profile-list-actions">
-
-                            <span
-                              className={`profile-status ${
-                                app.status ===
-                                'Pendiente'
-                                  ? 'pending'
-                                  : app.status ===
-                                    'Aprobado para Entrevista'
-                                  ? 'approved'
-                                  : 'rejected'
-                              }`}
-                            >
-                              {app.status}
-                            </span>
-
-
-                            <button
-                              type="button"
-                              className="profile-small-button"
-                              onClick={() =>
-                                setConfirmRetire({
-                                  kind: 'job',
-                                  id: app.id,
-                                  title:
-                                    app.jobTitle,
-                                })
-                              }
-                            >
-                              Retirar
-                            </button>
-
-                          </div>
-
-                        </article>
-
-                      ))}
-
-                    </div>
-
-                  ) : (
-
-                    <div className="profile-empty-state">
-
-                      <div className="profile-empty-copy">
-
-                        <p>
-                          Aún no te has postulado
-                          a ninguna vacante laboral.
-                        </p>
-
-                        <button
-                          type="button"
-                          className="profile-primary-button"
-                          onClick={goToJobs}
-                        >
-                          <Search size={16} />
-
-                          Explorar vacantes
-
-                          <ChevronRight
-                            size={15}
-                          />
-                        </button>
-
-                      </div>
-
-
-                      <div className="profile-empty-illustration">
-                        <div className="profile-document-illustration">
-                          <div />
-                          <div />
-                          <div />
-                        </div>
-
-                        <span>
-                          ✓
-                        </span>
-                      </div>
-
-                    </div>
-
-                  )}
-                </>
-              )}
-
+          {activeSection === 'settings' ? (
+            <CandidateSettings />
+          ) : activeSection === 'personal' ? (
+            <>
+              <section className="profile-welcome">
+                <div className="profile-welcome-text">
+                  <h1>Datos Personales</h1>
+                  <p>Consulta y actualiza tu información personal y profesional.</p>
+                </div>
+              </section>
+              <CandidateProfileEditor state={candidateState} />
+            </>
+          ) : (
+            <>
 
               {/* =============================================
-                  VOLUNTARIADO
+                  HEADER DEL CANDIDATO
               ============================================= */}
 
-              {activeTab === 'volunteer' && (
-                <>
-                  <div className="profile-card-heading">
+              <section className="profile-welcome">
 
-                    <div>
-                      <div className="profile-heading-icon">
-                        <Heart size={19} />
-                      </div>
+                <div className="profile-welcome-user">
 
-                      <h2>
-                        Mis Voluntariados Activos
-                      </h2>
-                    </div>
+                  <div className="profile-large-avatar">
+
+                    {currentUser?.initial || 'U'}
+
+                    <span className="profile-avatar-edit">
+                      <UserRound size={11} />
+                    </span>
 
                   </div>
 
 
-                  {myVolunteerSpots.length > 0 ? (
+                  <div className="profile-welcome-text">
 
-                    <div className="profile-list">
+                    <h1>
+                      Hola, {currentUser?.name || 'Candidato'}
+                    </h1>
 
-                      {myVolunteerSpots.map((spot) => (
-
-                        <article
-                          key={spot.id}
-                          className="profile-list-item"
-                        >
-
-                          <div className="profile-list-info">
-
-                            <h3>
-                              {spot.title}
-                            </h3>
-
-                            <p>
-                              {spot.org}
-                              {' · '}
-                              {spot.location}
-                            </p>
-
-                          </div>
-
-
-                          <button
-                            type="button"
-                            className="profile-small-button"
-                            onClick={() =>
-                              setConfirmRetire({
-                                kind: 'volunteer',
-                                id: spot.id,
-                                title:
-                                  spot.title,
-                              })
-                            }
-                          >
-                            Retirar
-                          </button>
-
-                        </article>
-
-                      ))}
-
-                    </div>
-
-                  ) : (
-
-                    <div className="profile-empty-simple">
-
-                      <Heart size={34} />
-
-                      <p>
-                        No te has postulado como
-                        voluntario.
-                      </p>
-
-                      <button
-                        type="button"
-                        className="profile-primary-button"
-                        onClick={goToVolunteers}
-                      >
-                        Ver oportunidades
-                      </button>
-
-                    </div>
-
-                  )}
-                </>
-              )}
-
-
-              {/* =============================================
-                  ESTUDIANTES
-              ============================================= */}
-
-              {activeTab === 'student' && (
-                <>
-                  <div className="profile-card-heading">
-
-                    <div>
-                      <div className="profile-heading-icon">
-                        <GraduationCap size={19} />
-                      </div>
-
-                      <h2>
-                        Mis Postulaciones Estudiantiles
-                      </h2>
-                    </div>
+                    <p>
+                      Candidato registrado
+                      <span>
+                        ·
+                      </span>
+                      Correo:{' '}
+                      {currentUser?.email ||
+                        'No disponible'}
+                    </p>
 
                   </div>
 
-
-                  {myStudentSpots.length > 0 ? (
-
-                    <div className="profile-list">
-
-                      {myStudentSpots.map((spot) => (
-
-                        <article
-                          key={spot.id}
-                          className="profile-list-item"
-                        >
-
-                          <div className="profile-list-info">
-
-                            <h3>
-                              {spot.title}
-                            </h3>
-
-                            <p>
-                              {spot.org}
-                              {' · '}
-                              {spot.location}
-                            </p>
-
-                            <small>
-                              {spot.tipo === 'social'
-                                ? '🤝 Voluntariado social'
-                                : '🎓 Práctica profesional'}
-                            </small>
-
-                          </div>
-
-
-                          <button
-                            type="button"
-                            className="profile-small-button"
-                            onClick={() =>
-                              setConfirmRetire({
-                                kind: 'student',
-                                id: spot.id,
-                                title:
-                                  spot.title,
-                              })
-                            }
-                          >
-                            Retirar
-                          </button>
-
-                        </article>
-
-                      ))}
-
-                    </div>
-
-                  ) : (
-
-                    <div className="profile-empty-simple">
-
-                      <GraduationCap size={34} />
-
-                      <p>
-                        No te has postulado a
-                        oportunidades para
-                        estudiantes.
-                      </p>
-
-                      <button
-                        type="button"
-                        className="profile-primary-button"
-                        onClick={goToStudents}
-                      >
-                        Ver oportunidades
-                      </button>
-
-                    </div>
-
-                  )}
-                </>
-              )}
-
-
-              {/* =============================================
-                  GUARDADAS
-              ============================================= */}
-
-              {activeTab === 'saved' && (
-                <>
-                  <div className="profile-card-heading">
-
-                    <div>
-                      <div className="profile-heading-icon">
-                        <Star size={19} />
-                      </div>
-
-                      <h2>
-                        Vacantes Guardadas
-                      </h2>
-                    </div>
-
-                  </div>
-
-
-                  {mySavedJobs.length > 0 ? (
-
-                    <div className="profile-list">
-
-                      {mySavedJobs.map((job) => (
-
-                        <article
-                          key={job.id}
-                          className="profile-list-item"
-                        >
-
-                          <div className="profile-list-info">
-
-                            <h3>
-                              {job.title}
-                            </h3>
-
-                            <p>
-                              {job.org}
-                              {' · '}
-                              {job.location}
-                            </p>
-
-                          </div>
-
-
-                          <div className="profile-list-actions">
-
-                            <button
-                              type="button"
-                              className="profile-small-button"
-                              onClick={() =>
-                                navigateTo(
-                                  'detail',
-                                  job
-                                )
-                              }
-                            >
-                              Ver vacante
-                            </button>
-
-                            <button
-                              type="button"
-                              className="profile-small-button profile-danger-outline"
-                              onClick={() => {
-                                toggleSaveJob(
-                                  job.id
-                                );
-
-                                showToast(
-                                  '✓ Vacante eliminada de guardadas'
-                                );
-                              }}
-                            >
-                              Quitar
-                            </button>
-
-                          </div>
-
-                        </article>
-
-                      ))}
-
-                    </div>
-
-                  ) : (
-
-                    <div className="profile-empty-simple">
-
-                      <Star size={34} />
-
-                      <p>
-                        No tienes vacantes
-                        guardadas todavía.
-                      </p>
-
-                      <button
-                        type="button"
-                        className="profile-primary-button"
-                        onClick={goToJobs}
-                      >
-                        Explorar vacantes
-                      </button>
-
-                    </div>
-
-                  )}
-                </>
-              )}
-
-            </section>
-
-
-            {/* ===============================================
-                DOCUMENTOS
-            =============================================== */}
-
-            <section className="profile-card profile-documents-card">
-
-              <div className="profile-card-heading">
-
-                <div>
-                  <div className="profile-heading-icon">
-                    <FileText size={19} />
-                  </div>
-
-                  <h2>
-                    Mis Documentos
-                  </h2>
                 </div>
 
+
+                <button
+                  type="button"
+                  className="profile-logout-button"
+                  onClick={() =>
+                    setConfirmLogout(true)
+                  }
+                >
+                  <LogOut size={17} />
+
+                  <span>
+                    Cerrar Sesión
+                  </span>
+                </button>
+
+              </section>
+
+
+              {/* =============================================
+                  ESTADÍSTICAS
+              ============================================= */}
+
+              <section className="profile-stats">
+
+                <div className="profile-stat-card">
+
+                  <div className="profile-stat-icon">
+                    <BriefcaseBusiness size={20} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {totalActive}
+                    </strong>
+
+                    <span>
+                      Postulaciones activas
+                    </span>
+                  </div>
+
+                  <ChevronRight size={17} />
+
+                </div>
+
+
+                <div className="profile-stat-card">
+
+                  <div className="profile-stat-icon">
+                    <FileText size={20} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {myApplications.length}
+                    </strong>
+
+                    <span>
+                      Empleos
+                    </span>
+                  </div>
+
+                  <ChevronRight size={17} />
+
+                </div>
+
+
+                <div className="profile-stat-card">
+
+                  <div className="profile-stat-icon">
+                    <Heart size={20} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {myVolunteerSpots.length}
+                    </strong>
+
+                    <span>
+                      Voluntariados
+                    </span>
+                  </div>
+
+                  <ChevronRight size={17} />
+
+                </div>
+
+
+                <div className="profile-stat-card">
+
+                  <div className="profile-stat-icon">
+                    <GraduationCap size={20} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {myStudentSpots.length}
+                    </strong>
+
+                    <span>
+                      Estudiantes
+                    </span>
+                  </div>
+
+                  <ChevronRight size={17} />
+
+                </div>
+
+
+                <div className="profile-stat-card">
+
+                  <div className="profile-stat-icon">
+                    <Star size={20} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {mySavedJobs.length}
+                    </strong>
+
+                    <span>
+                      Guardadas
+                    </span>
+                  </div>
+
+                  <ChevronRight size={17} />
+
+                </div>
+
+              </section>
+
+
+              {/* =============================================
+                  TABS
+              ============================================= */}
+
+              <nav className="profile-tabs">
+
+                <button
+                  type="button"
+                  className={
+                    activeTab === 'jobs'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setActiveTab('jobs')
+                  }
+                >
+                  <BriefcaseBusiness size={16} />
+
+                  Empleos ({myApplications.length})
+                </button>
+
+
+                <button
+                  type="button"
+                  className={
+                    activeTab === 'volunteer'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setActiveTab('volunteer')
+                  }
+                >
+                  <Heart size={16} />
+
+                  Voluntariado (
+                  {myVolunteerSpots.length}
+                  )
+                </button>
+
+
+                <button
+                  type="button"
+                  className={
+                    activeTab === 'student'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setActiveTab('student')
+                  }
+                >
+                  <GraduationCap size={16} />
+
+                  Estudiantes (
+                  {myStudentSpots.length}
+                  )
+                </button>
+
+
+                <button
+                  type="button"
+                  className={
+                    activeTab === 'saved'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setActiveTab('saved')
+                  }
+                >
+                  <Star size={16} />
+
+                  Guardadas ({mySavedJobs.length})
+                </button>
+
+              </nav>
+
+
+              {/* =============================================
+                  GRID DE CONTENIDO
+              ============================================= */}
+
+              <div className="profile-dashboard-grid">
+
+
+                {/* ===========================================
+                    POSTULACIONES
+                =========================================== */}
+
+                <section className="profile-card profile-applications-card">
+
+                  {activeTab === 'jobs' && (
+                    <>
+
+                      <div className="profile-card-heading">
+
+                        <div>
+
+                          <div className="profile-heading-icon">
+                            <BriefcaseBusiness size={19} />
+                          </div>
+
+                          <div>
+                            <h2>
+                              Mis Postulaciones a Empleos
+                            </h2>
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      {myApplications.length > 0 ? (
+
+                        <div className="profile-list">
+
+                          {myApplications.map((app) => (
+
+                            <article
+                              key={app.id}
+                              className="profile-list-item"
+                            >
+
+                              <div className="profile-list-info">
+
+                                <h3>
+                                  {app.jobTitle}
+                                </h3>
+
+                                <p>
+                                  {app.orgName}
+                                  {' · '}
+                                  Enviado: {app.date}
+                                </p>
+
+                                <small>
+                                  CV adjunto:{' '}
+                                  {app.cvName}
+                                </small>
+
+                              </div>
+
+
+                              <div className="profile-list-actions">
+
+                                <span
+                                  className={`profile-status ${
+                                    app.status ===
+                                    'Pendiente'
+                                      ? 'pending'
+                                      : app.status ===
+                                        'Aprobado para Entrevista'
+                                      ? 'approved'
+                                      : 'rejected'
+                                  }`}
+                                >
+                                  {app.status}
+                                </span>
+
+
+                                <button
+                                  type="button"
+                                  className="profile-small-button"
+                                  onClick={() =>
+                                    setConfirmRetire({
+                                      kind: 'job',
+                                      id: app.id,
+                                      title:
+                                        app.jobTitle,
+                                    })
+                                  }
+                                >
+                                  Retirar
+                                </button>
+
+                              </div>
+
+                            </article>
+
+                          ))}
+
+                        </div>
+
+                      ) : (
+
+                        <div className="profile-empty-state">
+
+                          <div className="profile-empty-copy">
+
+                            <p>
+                              Aún no te has postulado
+                              a ninguna vacante laboral.
+                            </p>
+
+                            <button
+                              type="button"
+                              className="profile-primary-button"
+                              onClick={goToJobs}
+                            >
+                              <Search size={16} />
+
+                              Explorar vacantes
+
+                              <ChevronRight
+                                size={15}
+                              />
+                            </button>
+
+                          </div>
+
+
+                          <div className="profile-empty-illustration">
+
+                            <div className="profile-document-illustration">
+                              <div />
+                              <div />
+                              <div />
+                            </div>
+
+                            <span>
+                              ✓
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                      )}
+
+                    </>
+                  )}
+
+
+                  {/* =========================================
+                      VOLUNTARIADO
+                  ========================================= */}
+
+                  {activeTab === 'volunteer' && (
+                    <>
+
+                      <div className="profile-card-heading">
+
+                        <div>
+
+                          <div className="profile-heading-icon">
+                            <Heart size={19} />
+                          </div>
+
+                          <h2>
+                            Mis Voluntariados Activos
+                          </h2>
+
+                        </div>
+
+                      </div>
+
+
+                      {myVolunteerSpots.length > 0 ? (
+
+                        <div className="profile-list">
+
+                          {myVolunteerSpots.map((spot) => (
+
+                            <article
+                              key={spot.id}
+                              className="profile-list-item"
+                            >
+
+                              <div className="profile-list-info">
+
+                                <h3>
+                                  {spot.title}
+                                </h3>
+
+                                <p>
+                                  {spot.org}
+                                  {' · '}
+                                  {spot.location}
+                                </p>
+
+                              </div>
+
+
+                              <button
+                                type="button"
+                                className="profile-small-button"
+                                onClick={() =>
+                                  setConfirmRetire({
+                                    kind: 'volunteer',
+                                    id: spot.id,
+                                    title:
+                                      spot.title,
+                                  })
+                                }
+                              >
+                                Retirar
+                              </button>
+
+                            </article>
+
+                          ))}
+
+                        </div>
+
+                      ) : (
+
+                        <div className="profile-empty-simple">
+
+                          <Heart size={34} />
+
+                          <p>
+                            No te has postulado como
+                            voluntario.
+                          </p>
+
+                          <button
+                            type="button"
+                            className="profile-primary-button"
+                            onClick={goToVolunteers}
+                          >
+                            Ver oportunidades
+                          </button>
+
+                        </div>
+
+                      )}
+
+                    </>
+                  )}
+
+
+                  {/* =========================================
+                      ESTUDIANTES
+                  ========================================= */}
+
+                  {activeTab === 'student' && (
+                    <>
+
+                      <div className="profile-card-heading">
+
+                        <div>
+
+                          <div className="profile-heading-icon">
+                            <GraduationCap size={19} />
+                          </div>
+
+                          <h2>
+                            Mis Postulaciones Estudiantiles
+                          </h2>
+
+                        </div>
+
+                      </div>
+
+
+                      {myStudentSpots.length > 0 ? (
+
+                        <div className="profile-list">
+
+                          {myStudentSpots.map((spot) => (
+
+                            <article
+                              key={spot.id}
+                              className="profile-list-item"
+                            >
+
+                              <div className="profile-list-info">
+
+                                <h3>
+                                  {spot.title}
+                                </h3>
+
+                                <p>
+                                  {spot.org}
+                                  {' · '}
+                                  {spot.location}
+                                </p>
+
+                                <small>
+                                  {spot.tipo === 'social'
+                                    ? '🤝 Voluntariado social'
+                                    : '🎓 Práctica profesional'}
+                                </small>
+
+                              </div>
+
+
+                              <button
+                                type="button"
+                                className="profile-small-button"
+                                onClick={() =>
+                                  setConfirmRetire({
+                                    kind: 'student',
+                                    id: spot.id,
+                                    title:
+                                      spot.title,
+                                  })
+                                }
+                              >
+                                Retirar
+                              </button>
+
+                            </article>
+
+                          ))}
+
+                        </div>
+
+                      ) : (
+
+                        <div className="profile-empty-simple">
+
+                          <GraduationCap size={34} />
+
+                          <p>
+                            No te has postulado a
+                            oportunidades para
+                            estudiantes.
+                          </p>
+
+                          <button
+                            type="button"
+                            className="profile-primary-button"
+                            onClick={goToStudents}
+                          >
+                            Ver oportunidades
+                          </button>
+
+                        </div>
+
+                      )}
+
+                    </>
+                  )}
+
+
+                  {/* =========================================
+                      GUARDADAS
+                  ========================================= */}
+
+                  {activeTab === 'saved' && (
+                    <>
+
+                      <div className="profile-card-heading">
+
+                        <div>
+
+                          <div className="profile-heading-icon">
+                            <Star size={19} />
+                          </div>
+
+                          <h2>
+                            Vacantes Guardadas
+                          </h2>
+
+                        </div>
+
+                      </div>
+
+
+                      {mySavedJobs.length > 0 ? (
+
+                        <div className="profile-list">
+
+                          {mySavedJobs.map((job) => (
+
+                            <article
+                              key={job.id}
+                              className="profile-list-item"
+                            >
+
+                              <div className="profile-list-info">
+
+                                <h3>
+                                  {job.title}
+                                </h3>
+
+                                <p>
+                                  {job.org}
+                                  {' · '}
+                                  {job.location}
+                                </p>
+
+                              </div>
+
+
+                              <div className="profile-list-actions">
+
+                                <button
+                                  type="button"
+                                  className="profile-small-button"
+                                  onClick={() =>
+                                    navigateTo(
+                                      'detail',
+                                      job
+                                    )
+                                  }
+                                >
+                                  Ver vacante
+                                </button>
+
+
+                                <button
+                                  type="button"
+                                  className="profile-small-button profile-danger-outline"
+                                  onClick={() => {
+
+                                    toggleSaveJob(
+                                      job.id
+                                    );
+
+                                    showToast(
+                                      '✓ Vacante eliminada de guardadas'
+                                    );
+
+                                  }}
+                                >
+                                  Quitar
+                                </button>
+
+                              </div>
+
+                            </article>
+
+                          ))}
+
+                        </div>
+
+                      ) : (
+
+                        <div className="profile-empty-simple">
+
+                          <Star size={34} />
+
+                          <p>
+                            No tienes vacantes
+                            guardadas todavía.
+                          </p>
+
+                          <button
+                            type="button"
+                            className="profile-primary-button"
+                            onClick={goToJobs}
+                          >
+                            Explorar vacantes
+                          </button>
+
+                        </div>
+
+                      )}
+
+                    </>
+                  )}
+
+                </section>
+
+
+                {/* ===========================================
+                    DOCUMENTOS
+                =========================================== */}
+
+                <section className="profile-card profile-documents-card">
+
+                  <div className="profile-card-heading">
+
+                    <div>
+
+                      <div className="profile-heading-icon">
+                        <FileText size={19} />
+                      </div>
+
+                      <h2>
+                        Mis Documentos
+                      </h2>
+
+                    </div>
+
+                  </div>
+
+                  <ResumeManager state={candidateState} />
+
+                </section>
+
               </div>
 
-
-              <ResumeManager state={candidateState} />
-
-            </section>
-
-          </div>
-
-
-          </>}
+            </>
+          )}
 
         </div>
 
