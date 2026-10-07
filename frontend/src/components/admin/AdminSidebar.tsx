@@ -1,5 +1,6 @@
 import { canManageUsers } from '../../utils/userManagement';
 import { canManageOrganizations } from '../../utils/organizationManagement';
+import { canManageVacancies } from '../../utils/vacancyManagement';
 import { useAuth } from '../../hooks/useAuth';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
@@ -12,8 +13,8 @@ interface AdminSidebarProps {
 
 const menuItems: Array<{ icon: string; name: AdminMenuName }> = [
   { icon: '🏠', name: 'Dashboard' },
-  { icon: '➕', name: 'Nueva Postulación' },
-  { icon: '📄', name: 'Administrar Postulaciones' },
+  { icon: '➕', name: 'Nueva Vacante' },
+  { icon: '📄', name: 'Administrar Vacantes' },
   { icon: '📁', name: 'CV Recibidos' },
   { icon: '🏢', name: 'Organizaciones' },
   { icon: '📚', name: 'Categorías' },
@@ -47,7 +48,10 @@ export default function AdminSidebar({
       </button>
       <nav className="menu">
         {menuItems.filter((item) => (item.name !== 'Usuarios' || canManageUsers(session)) &&
-          (item.name !== 'Organizaciones' || canManageOrganizations(session))).map((item) => (
+          (item.name !== 'Organizaciones' || canManageOrganizations(session)) &&
+          (item.name !== 'Nueva Vacante' || canManageVacancies(session, 'opportunities.create')) &&
+          (item.name !== 'Administrar Vacantes' || canManageVacancies(session)) &&
+          (item.name !== 'Categorías' || canManageVacancies(session, 'categories.read'))).map((item) => (
           <button
             key={item.name}
             aria-label={item.name}

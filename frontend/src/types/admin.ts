@@ -1,8 +1,8 @@
 /** Administrative sections preserved for the future authenticated area. */
 export type AdminMenuName =
   | 'Dashboard'
-  | 'Nueva Postulación'
-  | 'Administrar Postulaciones'
+  | 'Nueva Vacante'
+  | 'Administrar Vacantes'
   | 'CV Recibidos'
   | 'Organizaciones'
   | 'Categorías'

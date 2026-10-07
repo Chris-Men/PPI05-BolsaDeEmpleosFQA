@@ -2,6 +2,8 @@ import type { Job, NavigateTo, StateSetter } from '../types/models';
 
 interface HomeProps {
   jobs: Job[];
+  categories: string[];
+  total: number;
   savedJobs: number[];
   toggleSaveJob: (id: number) => void;
   navigateTo: NavigateTo;
@@ -16,7 +18,7 @@ interface HomeProps {
 
 /** Public landing page with demonstration opportunities. */
 export default function Home({
-  jobs, savedJobs, toggleSaveJob, navigateTo, setQvJob, setQvOpen,
+  categories, total, jobs, savedJobs, toggleSaveJob, navigateTo, setQvJob, setQvOpen,
   searchQuery, setSearchQuery, searchLocation, setSearchLocation, setSelectedArea,
 }: HomeProps) {
   return (
@@ -39,17 +41,7 @@ export default function Home({
             aria-label="Buscar vacantes" 
           />
           <div className="hero-vdiv"></div>
-          <select 
-            aria-label="Ubicación"
-            value={searchLocation}
-            onChange={(e) => setSearchLocation(e.target.value)}
-          >
-            <option value="Todo el país">Todo el país</option>
-            <option value="San Salvador">San Salvador</option>
-            <option value="Santa Ana">Santa Ana</option>
-            <option value="San Miguel">San Miguel</option>
-            <option value="Remoto">Remoto</option>
-          </select>
+          <input type="text" aria-label="Ubicación" placeholder="Departamento o municipio" value={searchLocation === 'Todo el país' ? '' : searchLocation} onChange={(event) => setSearchLocation(event.target.value || 'Todo el país')} />
           
           <button className="hero-search-btn" onClick={() => navigateTo('jobs')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16">
@@ -61,10 +53,8 @@ export default function Home({
         </div>
 
         <div className="hero-stats">
-          <div className="hero-stat"><strong>{jobs.length}</strong><span>Vacantes activas</span></div>
-          <div className="hero-stat"><strong>24</strong><span>Organizaciones</span></div>
-          <div className="hero-stat"><strong>2,400+</strong><span>Candidatos</span></div>
-          <div className="hero-stat"><strong>5</strong><span>Ejes de impacto</span></div>
+          <div className="hero-stat"><strong>{total}</strong><span>Vacantes activas</span></div>
+          <div className="hero-stat"><strong>{categories.length}</strong><span>Categorías</span></div>
         </div>
       </div>
 
@@ -84,7 +74,7 @@ export default function Home({
       <div className="areas-strip">
         <h3>Explorar por área de impacto</h3>
         <div className="areas-row">
-          {['Todos', 'Salud', 'Educación', 'Bienestar Social', 'Medio Ambiente', 'Autonomía Económica'].map(area => (
+          {['Todos', ...categories].map(area => (
             <div 
               key={area} 
               className="area-pill"
@@ -116,8 +106,8 @@ export default function Home({
       {/* FEATURED JOBS */}
       <div className="section-wrap">
         <div className="section-hd">
-          <h2>Vacantes destacadas</h2>
-          <span onClick={() => navigateTo('jobs')}>Ver las {jobs.length} vacantes →</span>
+          <h2>Vacantes recientes</h2>
+          <span onClick={() => navigateTo('jobs')}>Ver las {total} vacantes →</span>
         </div>
 
         <div className="jobs-grid">
@@ -168,10 +158,10 @@ export default function Home({
       {/* IMPACT BAND */}
       <div className="stats-band">
         <div className="stats-inner">
-          <div className="sstat"><strong>12,000+</strong><span>Personas beneficiadas</span></div>
-          <div className="sstat"><strong>{jobs.length}</strong><span>Vacantes activas</span></div>
-          <div className="sstat"><strong>24</strong><span>Organizaciones aliadas</span></div>
-          <div className="sstat"><strong>5</strong><span>Ejes de impacto</span></div>
+
+          <div className="sstat"><strong>{total}</strong><span>Vacantes activas</span></div>
+
+          <div className="sstat"><strong>{categories.length}</strong><span>Categorías</span></div>
         </div>
       </div>
 

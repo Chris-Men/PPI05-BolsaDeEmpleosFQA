@@ -8,12 +8,13 @@ interface StudentsProps {
   activeStudentTab: StudentOpportunityType;
   setActiveStudentTab: StateSetter<StudentOpportunityType>;
   handleStudentApplyClick: (spot: StudentSpot) => void;
+  onView: (key: string) => void;
 }
 
 /** Student volunteering and internship opportunities. */
 export default function Students({
   studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
-  handleStudentApplyClick,
+  handleStudentApplyClick, onView,
 }: StudentsProps) {
   const filteredSpots = studentSpots.filter(
     spot => spot.tipo === activeStudentTab
@@ -26,7 +27,7 @@ export default function Students({
       <div className="v-hero">
         <h1>Oportunidades para Estudiantes</h1>
         <p>
-          Encuentra oportunidades de voluntariado y prácticas profesionales
+          Encuentra oportunidades de horas sociales y prácticas profesionales
           para desarrollar tu experiencia y contribuir al desarrollo social.
         </p>
       </div>
@@ -40,7 +41,7 @@ export default function Students({
             }`}
             onClick={() => setActiveStudentTab('social')}
           >
-            🤝 Voluntariado Social
+            🤝 Horas Sociales
           </button>
 
           <button
@@ -66,7 +67,7 @@ export default function Students({
                 marginBottom: '6px'
               }}
             >
-              Voluntariado Social
+              Horas Sociales
             </h2>
 
             <p
@@ -122,7 +123,7 @@ export default function Students({
               {/* CUPOS / TIPO */}
               <div className="vol-slots">
                 {spot.tipo === 'social'
-                  ? '🤝 Voluntariado disponible'
+                  ? '🤝 Horas sociales disponibles'
                   : '🎓 Práctica disponible'}
               </div>
 
@@ -176,6 +177,7 @@ export default function Students({
               </div>
 
               {/* POSTULACIÓN */}
+              <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
               <button
                 className="btn-vol-apply"
                 onClick={() => handleStudentApplyClick(spot)}

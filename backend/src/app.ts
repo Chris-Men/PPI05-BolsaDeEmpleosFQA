@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { profileRouter } from './routes/profile.routes.js';
+import { adminCategoryRouter, adminOpportunityRouter, publicCategoryRouter, publicOpportunityRouter } from './routes/vacancy.routes.js';
 
 /** Creates the configured Express application without binding a network port. */
 export const createApp = (): express.Express => {
@@ -20,6 +21,10 @@ export const createApp = (): express.Express => {
   app.use('/api/profile', profileRouter);
   app.use('/api/admin/users', adminUserRouter);
   app.use('/api/admin/organizations', organizationRouter);
+  app.use('/api/opportunities', publicOpportunityRouter);
+  app.use('/api/categories', publicCategoryRouter);
+  app.use('/api/admin/opportunities', adminOpportunityRouter);
+  app.use('/api/admin/categories', adminCategoryRouter);
   // Temporary local diagnostics must never be mounted in production.
   if (env.NODE_ENV === 'development') {
     app.use('/api/debug', debugRouter);

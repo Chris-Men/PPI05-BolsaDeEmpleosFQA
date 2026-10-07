@@ -28,6 +28,7 @@ export interface CurrentUser {
 /** Demonstration employment opportunity. */
 export interface Job {
   id: number;
+  opportunityKey?: string;
   title: string;
   org: string;
   location: string;
@@ -40,8 +41,8 @@ export interface Job {
   isNew?: boolean;
   isHot?: boolean;
   isUrgent?: boolean;
-  views: number;
-  compat: number;
+  views?: number;
+  compat?: number;
   desc: string;
   responsibilities: string[];
   requirements: string[];
@@ -51,9 +52,10 @@ export interface Job {
 /** Demonstration volunteer opportunity. */
 export interface VolunteerSpot {
   id: number;
+  opportunityKey?: string;
   title: string;
   org: string;
-  slots: number;
+  slots: number | null;
   location: string;
   area: string;
   desc: string;
@@ -67,6 +69,7 @@ export type StudentOpportunityType = "social" | "practica";
 /** Demonstration opportunity intended for students. */
 export interface StudentSpot {
   id: number;
+  opportunityKey?: string;
   tipo: StudentOpportunityType;
   title: string;
   org: string;
