@@ -30,7 +30,7 @@ interface OpportunityListingLayoutProps {
   };
 }
 
-/** Keeps public filters below each banner using the employment listing's existing design. */
+/** Shares public filters and pagination using the employment listing's existing design. */
 export function OpportunityListingLayout({ controls, children, salaryFilter }: OpportunityListingLayoutProps) {
   const fieldId = useId();
   const totalPages = Math.max(1, Math.ceil(controls.total / controls.pageSize));

@@ -12,16 +12,12 @@ interface JobsListingProps {
   setMaxSalary: StateSetter<number>;
 }
 
-/** Employment opportunities with the shared filters below the page banner. */
+/** Employment opportunities with shared filters and results, without a page banner. */
 export default function JobsListing({
   listingControls, filteredJobs, selectedJob, navigateTo, setQvJob, setQvOpen, maxSalary, setMaxSalary,
 }: JobsListingProps) {
   return (
     <div className="screen opportunity-screen">
-      <div className="v-hero">
-        <h1>Bolsa de Empleos</h1>
-        <p>Encuentra oportunidades profesionales en organizaciones que generan impacto social.</p>
-      </div>
       <OpportunityListingLayout controls={listingControls} salaryFilter={{ maximum: maxSalary, onChange: setMaxSalary }}>
           <div className="jobs-lv">
             {filteredJobs.map(job => (
