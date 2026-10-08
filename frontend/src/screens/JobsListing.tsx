@@ -1,92 +1,30 @@
 import type { Job, NavigateTo, StateSetter } from '../types/models';
+import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
 
 interface JobsListingProps {
   filteredJobs: Job[];
   selectedJob: Job | null;
-  categories: string[];
-  total: number;
+  listingControls: OpportunityListingControls;
   navigateTo: NavigateTo;
   setQvJob: StateSetter<Job | null>;
   setQvOpen: StateSetter<boolean>;
-  searchQuery: string;
-  setSearchQuery: StateSetter<string>;
-  searchLocation: string;
-  setSearchLocation: StateSetter<string>;
-  selectedArea: string;
-  setSelectedArea: StateSetter<string>;
   maxSalary: number;
   setMaxSalary: StateSetter<number>;
-  showToast: (message: string) => void;
 }
 
-/** Searchable list of demonstration employment opportunities. */
+/** Employment opportunities with the shared filters below the page banner. */
 export default function JobsListing({
-  categories, total, filteredJobs, selectedJob, navigateTo, setQvJob, setQvOpen, searchQuery,
-  setSearchQuery, searchLocation, setSearchLocation, selectedArea, setSelectedArea, maxSalary, setMaxSalary, showToast,
+  listingControls, filteredJobs, selectedJob, navigateTo, setQvJob, setQvOpen, maxSalary, setMaxSalary,
 }: JobsListingProps) {
   return (
-    <div className="screen">
-      <div className="listing-wrap">
-        {/* SIDEBAR FILTERS */}
-        <aside className="l-aside">
-          <div className="aside-hd">
-            FILTROS
-            <button onClick={() => { setSelectedArea('Todos'); setMaxSalary(1500); setSearchQuery(''); setSearchLocation('Todo el país'); showToast('Filtros reiniciados'); }}>Limpiar</button>
-          </div>
-          <div className="fg">
-            <p className="fg-lbl">Área de impacto</p>
-            <div className="ftags">
-              {['Todos', ...categories].map(area => (
-                <span
-                  key={area}
-                  className={`ftag ${selectedArea === area ? 'on' : ''}`}
-                  onClick={() => setSelectedArea(area)}
-                >
-                  {area}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="fg">
-            <p className="fg-lbl">Salario mensual máximo</p>
-            <div className="range-wrap">
-              <input
-                type="range"
-                min="200"
-                max="1500"
-                step="50"
-                value={maxSalary}
-                onChange={(e) => setMaxSalary(parseInt(e.target.value))}
-              />
-              <div className="range-val">{maxSalary === 1500 ? 'Sin límite' : 'Hasta $' + maxSalary}</div>
-            </div>
-          </div>
-          <div className="aside-div"></div>
-          <label>Departamento o municipio<input value={searchLocation === 'Todo el país' ? '' : searchLocation} onChange={(event) => setSearchLocation(event.target.value || 'Todo el país')} /></label>
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <div className="l-main">
-          <div className="l-topbar">
-            <div className="srch-inline">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7A9866" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="M20 20l-3.5-3.5" strokeLinecap="round"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Buscar por título, habilidad u organización…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <span className="res-info"><strong>{total}</strong> resultados</span>
-          </div>
-
+    <div className="screen opportunity-screen">
+      <div className="v-hero">
+        <h1>Bolsa de Empleos</h1>
+        <p>Encuentra oportunidades profesionales en organizaciones que generan impacto social.</p>
+      </div>
+      <OpportunityListingLayout controls={listingControls} salaryFilter={{ maximum: maxSalary, onChange: setMaxSalary }}>
           <div className="jobs-lv">
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map(job => (
+            {filteredJobs.map(job => (
                 <div
                   key={job.id}
                   className={`jrow ${job.isFqa ? 'fqa' : ''} ${selectedJob?.id === job.id ? 'sel' : ''}`}
@@ -115,15 +53,9 @@ export default function JobsListing({
                     </button>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div style={{padding: '40px', textAlign: 'center', color: 'var(--c400)'}}>
-                No se encontraron vacantes con los criterios de búsqueda actuales.
-              </div>
-            )}
+              ))}
           </div>
-        </div>
-      </div>
+      </OpportunityListingLayout>
     </div>
   );
 }

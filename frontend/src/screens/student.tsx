@@ -1,8 +1,10 @@
 import type {
   StateSetter, StudentOpportunityType, StudentSpot,
 } from '../types/models';
+import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
 
 interface StudentsProps {
+  listingControls: OpportunityListingControls;
   studentSpots: StudentSpot[];
   studentApps: number[];
   activeStudentTab: StudentOpportunityType;
@@ -11,9 +13,9 @@ interface StudentsProps {
   onView: (key: string) => void;
 }
 
-/** Student volunteering and internship opportunities. */
+/** Student tabs and cards retain their layout with shared filters below the banner. */
 export default function Students({
-  studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
+  listingControls, studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
   handleStudentApplyClick, onView,
 }: StudentsProps) {
   const filteredSpots = studentSpots.filter(
@@ -21,7 +23,7 @@ export default function Students({
   );
 
   return (
-    <div className="screen">
+    <div className="screen opportunity-screen">
 
       {/* HERO */}
       <div className="v-hero">
@@ -33,7 +35,7 @@ export default function Students({
       </div>
 
       {/* TABS */}
-      <div style={{ padding: '24px 48px 0' }}>
+      <div className="student-listing-tabs">
         <div className="panel-tabs">
           <button
             className={`panel-tab ${
@@ -56,7 +58,7 @@ export default function Students({
       </div>
 
       {/* DESCRIPCIÓN */}
-      <div style={{ padding: '0 48px' }}>
+      <div className="student-listing-description">
         {activeStudentTab === 'social' ? (
           <div>
             <h2
@@ -109,6 +111,7 @@ export default function Students({
       </div>
 
       {/* TARJETAS */}
+      <OpportunityListingLayout controls={listingControls}>
       <div className="volunteer-grid">
 
         {filteredSpots.map(spot => {
@@ -194,30 +197,7 @@ export default function Students({
         })}
 
       </div>
-
-      {/* SIN RESULTADOS */}
-      {filteredSpots.length === 0 && (
-        <div
-          style={{
-            padding: '50px',
-            textAlign: 'center',
-            color: 'var(--c400)'
-          }}
-        >
-          <h3
-            style={{
-              color: 'var(--gd)',
-              marginBottom: '8px'
-            }}
-          >
-            No hay oportunidades disponibles
-          </h3>
-
-          <p>
-            Actualmente no existen oportunidades en esta categoría.
-          </p>
-        </div>
-      )}
+      </OpportunityListingLayout>
 
     </div>
   );

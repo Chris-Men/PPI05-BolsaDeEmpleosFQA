@@ -5,6 +5,7 @@ import { opportunityToJob, opportunityToVolunteer, opportunityToStudent } from '
 import type { OpportunityKind } from './types/opportunity';
 import type { Opportunity } from './types/opportunity';
 import { OpportunityDetailsDialog } from './components/OpportunityDetailsDialog';
+import type { OpportunityListingControls } from './components/OpportunityListingLayout';
 import './styles/admin/vacancies.css';
 import type {
     ApplicationTarget,
@@ -689,6 +690,31 @@ function PublicApp() {
     // ==========================================================
 
     const filteredJobs = jobs;
+    const listingControls: OpportunityListingControls = {
+        categories: dictionaries.catalogs?.categories.map((item) => item.name) ?? [],
+        searchQuery,
+        onSearchChange: setSearchQuery,
+        searchLocation,
+        onLocationChange: setSearchLocation,
+        selectedArea,
+        onAreaChange: setSelectedArea,
+        onClear: () => {
+            setSearchQuery('');
+            setSearchLocation('Todo el país');
+            setSelectedArea('Todos');
+            setMaxSalary(1500);
+            showToast('Filtros reiniciados');
+        },
+        total: listing.page.total,
+        page: publicPage,
+        pageSize: listing.page.pageSize,
+        onPageChange: (page) => setPagination({ identity: filterIdentity, page }),
+        loading: listing.loading,
+        error: listing.error,
+        catalogError: dictionaries.error,
+        onRetry: listing.reload,
+        onRetryCatalogs: dictionaries.reload,
+    };
 
 
     // ==========================================================
@@ -994,22 +1020,11 @@ function PublicApp() {
             ====================================================== */}
 
             <div className="screen-container">
-                {['home', 'jobs', 'volunteers', 'students'].includes(screen) && <div className="vacancy-status">
+                {screen === 'home' && <div className="vacancy-status">
                     {listing.loading && <p role="status">Cargando oportunidades…</p>}
                     {listing.error && <p role="alert">{listing.error} <button type="button" onClick={listing.reload}>Reintentar</button></p>}
                     {dictionaries.error && <p role="alert">{dictionaries.error} <button type="button" onClick={dictionaries.reload}>Reintentar filtros</button></p>}
                     {!listing.loading && !listing.error && !listing.page.total && <p>No hay oportunidades disponibles para estos filtros.</p>}
-                </div>}
-                {['volunteers', 'students'].includes(screen) && <div className="vacancy-public-controls">
-                    <input aria-label="Buscar oportunidades" placeholder="Título u organización" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
-                    <select aria-label="Categoría" value={selectedArea} onChange={(event) => setSelectedArea(event.target.value)}><option value="Todos">Todas las categorías</option>{dictionaries.catalogs?.categories.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select>
-                    <input aria-label="Departamento o municipio" placeholder="Departamento o municipio" value={searchLocation === 'Todo el país' ? '' : searchLocation} onChange={(event) => setSearchLocation(event.target.value || 'Todo el país')} />
-                    <button type="button" onClick={() => { setSearchQuery(''); setSearchLocation('Todo el país'); setSelectedArea('Todos'); }}>Limpiar filtros</button>
-                </div>}
-                {['jobs', 'volunteers', 'students'].includes(screen) && !listing.loading && !listing.error && <div className="vacancy-public-controls">
-                    <span>{listing.page.total} oportunidades · Página {publicPage}</span>
-                    <button type="button" disabled={publicPage <= 1} onClick={() => setPagination({ identity: filterIdentity, page: publicPage - 1 })}>Anterior</button>
-                    <button type="button" disabled={publicPage * 20 >= listing.page.total} onClick={() => setPagination({ identity: filterIdentity, page: publicPage + 1 })}>Siguiente</button>
                 </div>}
                 {screen === 'detail' && !selectedJob && <div className="vacancy-status"><p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando vacante…'}</p>{detailError && <button type="button" onClick={() => navigateTo('jobs')}>Volver a las vacantes</button>}</div>}
                 {publicDetailLoading && <p className="vacancy-status" role="status">Cargando oportunidad…</p>}
@@ -1064,7 +1079,7 @@ function PublicApp() {
 
                 {screen === 'jobs' && (
 
-                    <JobsListing categories={dictionaries.catalogs?.categories.map((item) => item.name) ?? []} total={listing.page.total} searchLocation={searchLocation} setSearchLocation={setSearchLocation}
+                    <JobsListing listingControls={listingControls}
                         filteredJobs={
                             filteredJobs
                         }
@@ -1080,26 +1095,11 @@ function PublicApp() {
                         setQvOpen={
                             setQvOpen
                         }
-                        searchQuery={
-                            searchQuery
-                        }
-                        setSearchQuery={
-                            setSearchQuery
-                        }
-                        selectedArea={
-                            selectedArea
-                        }
-                        setSelectedArea={
-                            setSelectedArea
-                        }
                         maxSalary={
                             maxSalary
                         }
                         setMaxSalary={
                             setMaxSalary
-                        }
-                        showToast={
-                            showToast
                         }
                     />
 
@@ -1187,6 +1187,7 @@ function PublicApp() {
                 {screen === 'volunteers' && (
 
                     <Volunteers
+                        listingControls={listingControls}
                         volunteerSpots={
                             volunteerSpots
                         }
@@ -1208,7 +1209,7 @@ function PublicApp() {
 
                 {screen === 'students' && (
 
-                    <Students onView={viewOpportunity}
+                    <Students onView={viewOpportunity} listingControls={listingControls}
                         studentSpots={
                             studentSpots
                         }
