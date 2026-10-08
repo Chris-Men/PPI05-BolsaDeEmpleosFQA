@@ -25,7 +25,9 @@ export interface OpportunityInput {
 /** Server pagination response. */
 export interface Page<T> { items: T[]; total: number; page: number; pageSize: number }
 /** Server-side vacancy filtering. */
-export interface OpportunityFilters { page?: number; pageSize?: number; search?: string; kind?: OpportunityKind; categoryId?: number; organizationId?: number; status?: Opportunity['status']; location?: string; salaryMax?: number }
+export interface OpportunityFilters { page?: number; pageSize?: number; search?: string; kind?: OpportunityKind; categoryId?: number; organizationId?: number; status?: Opportunity['status']; location?: string; modality?: Opportunity['modality']; salaryMax?: number }
+/** Unfiltered public homepage counters, without identities or account details. */
+export interface PublicOpportunityStatistics { activeOpportunities: number; organizations: number; candidates: number; impactAxes: number }
 /** Category metadata and actual administrative usage. */
 export interface Category extends CatalogItem { slug: string; description: string | null; parentId: number | null; isActive: boolean; opportunityCount: number; childCount: number }
 /** Writable category values. */

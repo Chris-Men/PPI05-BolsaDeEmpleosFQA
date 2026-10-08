@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useOpportunityListing, useOpportunityCatalogs } from './hooks/useOpportunities';
+import { useOpportunityListing, useOpportunityCatalogs, useHomeStatistics } from './hooks/useOpportunities';
 import { getOpportunity } from './services/opportunityService';
 import { opportunityToJob, opportunityToVolunteer, opportunityToStudent } from './utils/opportunityPresentation';
 import type { OpportunityKind } from './types/opportunity';
@@ -280,10 +280,13 @@ function PublicApp() {
     const publicPage = pagination.identity === filterIdentity ? pagination.page : 1;
     const category = dictionaries.catalogs?.categories.find((item) => item.name === selectedArea);
     const listing = useOpportunityListing({ kind, page: publicPage, pageSize: 20,
-        search: searchQuery || undefined, location: searchLocation === 'Todo el país' ? undefined : searchLocation,
+        search: searchQuery || undefined, location: ['Todo el país', 'Remoto'].includes(searchLocation) ? undefined : searchLocation,
+        modality: searchLocation === 'Remoto' ? 'REMOTE' : undefined,
         categoryId: category?.id, salaryMax: kind === 'EMPLOYMENT' && maxSalary < 1500 ? maxSalary : undefined,
-    });
-    const jobs = listing.page.items.filter((item) => item.kind === 'EMPLOYMENT').map(opportunityToJob);
+    }, screen !== 'home');
+    const homeListing = useOpportunityListing({ kind: 'EMPLOYMENT', page: 1, pageSize: 6 }, screen === 'home');
+    const homeStatistics = useHomeStatistics(screen === 'home');
+    const jobs = (screen === 'home' ? homeListing.page.items : listing.page.items).filter((item) => item.kind === 'EMPLOYMENT').map(opportunityToJob);
     const volunteerSpots = listing.page.items.filter((item) => item.kind === 'VOLUNTEER').map(opportunityToVolunteer);
     const studentSpots = listing.page.items.filter((item) => item.kind === 'SOCIAL_HOURS' || item.kind === 'INTERNSHIP').map(opportunityToStudent);
 
@@ -432,6 +435,16 @@ function PublicApp() {
         setToastMsg(msg);
         setToastShow(true);
 
+    };
+
+    /** Commits Home's draft filters only when navigating to employment results. */
+    const searchFromHome = (query: string, location: string, area = 'Todos'): void => {
+        setSearchQuery(query.trim());
+        setSearchLocation(location);
+        setSelectedArea(area);
+        setMaxSalary(1500);
+        setPagination({ identity: '', page: 1 });
+        navigateTo('jobs');
     };
 
 
@@ -1020,12 +1033,6 @@ function PublicApp() {
             ====================================================== */}
 
             <div className="screen-container">
-                {screen === 'home' && <div className="vacancy-status">
-                    {listing.loading && <p role="status">Cargando oportunidades…</p>}
-                    {listing.error && <p role="alert">{listing.error} <button type="button" onClick={listing.reload}>Reintentar</button></p>}
-                    {dictionaries.error && <p role="alert">{dictionaries.error} <button type="button" onClick={dictionaries.reload}>Reintentar filtros</button></p>}
-                    {!listing.loading && !listing.error && !listing.page.total && <p>No hay oportunidades disponibles para estos filtros.</p>}
-                </div>}
                 {screen === 'detail' && !selectedJob && <div className="vacancy-status"><p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando vacante…'}</p>{detailError && <button type="button" onClick={() => navigateTo('jobs')}>Volver a las vacantes</button>}</div>}
                 {publicDetailLoading && <p className="vacancy-status" role="status">Cargando oportunidad…</p>}
                 {publicDetailError && <p className="vacancy-status" role="alert">{publicDetailError}</p>}
@@ -1038,7 +1045,14 @@ function PublicApp() {
 
                 {screen === 'home' && (
 
-                    <Home categories={dictionaries.catalogs?.categories.map((item) => item.name) ?? []} total={listing.page.total}
+                    <Home categories={dictionaries.catalogs?.categories.map((item) => item.name) ?? []} total={homeListing.page.total}
+                        statistics={homeStatistics.statistics}
+                        statisticsError={homeStatistics.error}
+                        onRetryStatistics={homeStatistics.reload}
+                        listingLoading={homeListing.loading}
+                        listingError={homeListing.error}
+                        onRetryListing={homeListing.reload}
+                        onSearch={searchFromHome}
                         jobs={jobs}
                         savedJobs={savedJobs}
                         toggleSaveJob={
@@ -1052,21 +1066,6 @@ function PublicApp() {
                         }
                         setQvOpen={
                             setQvOpen
-                        }
-                        searchQuery={
-                            searchQuery
-                        }
-                        setSearchQuery={
-                            setSearchQuery
-                        }
-                        searchLocation={
-                            searchLocation
-                        }
-                        setSearchLocation={
-                            setSearchLocation
-                        }
-                        setSelectedArea={
-                            setSelectedArea
                         }
                     />
 

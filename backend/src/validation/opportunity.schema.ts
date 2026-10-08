@@ -49,6 +49,7 @@ export const listOpportunitiesSchema = z.object({
   organizationId: z.coerce.number({ errorMap: vacancyErrorMap }).int().positive().max(2_147_483_647).optional(),
   status: z.enum(['DRAFT', 'OPEN', 'CLOSED', 'ARCHIVED'], { errorMap: vacancyErrorMap }).optional(),
   location: z.string({ errorMap: vacancyErrorMap }).trim().max(100).optional(),
+  modality: z.enum(['ON_SITE', 'REMOTE', 'HYBRID'], { errorMap: vacancyErrorMap }).optional(),
   salaryMax: z.coerce.number({ errorMap: vacancyErrorMap }).min(0).max(1_000_000).optional(),
 }, { errorMap: vacancyErrorMap }).strict('La solicitud incluye campos no permitidos.').refine((value) => value.page * value.pageSize <= 10_000, 'Refina los filtros para consultar más de 10000 resultados.');
 /** Inferred DTOs keep controllers and services aligned. */

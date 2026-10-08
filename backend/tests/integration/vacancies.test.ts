@@ -8,7 +8,7 @@ import { PERMISSIONS, ROLE_NAMES, ROLE_PERMISSIONS, type RoleCode } from '../../
 import { OPPORTUNITY_KINDS, type OpportunityType } from '../../src/constants/opportunity.constants.js';
 import { seedAccountCatalogs } from '../../src/services/catalog.service.js';
 import { seedOpportunityCatalogs } from '../../src/services/opportunity-catalog.service.js';
-import { createOpportunity, type Opportunity } from '../../src/services/opportunity.service.js';
+import { createOpportunity, type Opportunity, type getPublicStatistics } from '../../src/services/opportunity.service.js';
 import { startTestServer, stopTestServer, type TestServer } from '../helpers/http.js';
 import type { RegistrationResponse } from '../../src/types/auth.types.js';
 
@@ -93,6 +93,75 @@ describe('PB-129: vacantes y categorías persistentes', () => {
     await prisma.locations.deleteMany({ where: { department: runId } });
     await prisma.applicationStatuses.deleteMany({ where: { name: runId } });
     await prisma.$disconnect();
+  });
+
+  it('expone estadísticas globales reales sin usuarios, borradores ni publicaciones ocultas', async () => {
+    type Statistics = Awaited<ReturnType<typeof getPublicStatistics>>;
+    const statistics = async (): Promise<Statistics> => {
+      const response = await request('GET', '/opportunities/statistics');
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      const value = await response.json() as Statistics;
+      assert.deepEqual(Object.keys(value).sort(), ['activeOpportunities', 'candidates', 'impactAxes', 'organizations']);
+      return value;
+    };
+    const baseline = await statistics();
+    const category = await createCategory();
+    const opportunities = new Map<OpportunityType, Opportunity>();
+    for (const kind of OPPORTUNITY_KINDS) opportunities.set(kind, await published(kind, { categoryId: category.id }));
+    await draft('EMPLOYMENT', { categoryId: category.id });
+    assert.equal((await statistics()).activeOpportunities, baseline.activeOpportunities + 4);
+    assert.equal((await statistics()).impactAxes, baseline.impactAxes + 1);
+    const filtered = await request('GET', '/opportunities/statistics?search=no-match&location=no-match');
+    assert.deepEqual(await filtered.json(), await statistics());
+
+    const employment = opportunities.get('EMPLOYMENT')!;
+    const volunteer = opportunities.get('VOLUNTEER')!;
+    const social = opportunities.get('SOCIAL_HOURS')!;
+    const internship = opportunities.get('INTERNSHIP')!;
+    assert.equal((await request('PATCH', '/admin/opportunities/' + employment.key + '/status', admin(), { status: 'CLOSED' })).status, 200);
+    assert.equal((await request('DELETE', '/admin/opportunities/' + volunteer.key, admin())).status, 200);
+    await prisma.jobs.update({ where: { id: social.id }, data: { expiresAt: new Date('2020-01-01') } });
+    assert.equal((await statistics()).activeOpportunities, baseline.activeOpportunities + 1);
+    await prisma.jobs.update({ where: { id: internship.id }, data: { publishedAt: new Date('2099-01-01') } });
+    assert.equal((await statistics()).activeOpportunities, baseline.activeOpportunities);
+    await prisma.jobs.update({ where: { id: internship.id }, data: { publishedAt: new Date() } });
+    assert.equal((await request('PATCH', '/admin/categories/' + category.id, admin(), { isActive: false })).status, 200);
+    assert.equal((await statistics()).activeOpportunities, baseline.activeOpportunities);
+    assert.equal((await statistics()).impactAxes, baseline.impactAxes);
+    try {
+      assert.equal((await request('PATCH', '/admin/organizations/' + organizationId + '/status', admin(), { status: 'INACTIVE' })).status, 204);
+      assert.equal((await statistics()).organizations, baseline.organizations - 1);
+    } finally {
+      await request('PATCH', '/admin/organizations/' + organizationId + '/status', admin(), { status: 'ACTIVE' });
+    }
+
+    const candidateIdentity = identities.get('CANDIDATE')!;
+    const { passwordHash } = await prisma.user.findUniqueOrThrow({ where: { id: candidateIdentity.id }, select: { passwordHash: true } });
+    const candidate = await prisma.user.create({ data: { email: runId + '-stats-candidate@example.test', passwordHash,
+      status: { connect: { name: 'Deshabilitado' } }, userRoles: { create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } } } } });
+    users.push(candidate.id);
+    assert.equal((await statistics()).candidates, baseline.candidates + 1);
+    await prisma.userRoles.create({ data: { users: { connect: { id: candidate.id } }, roles: { connect: { name: ROLE_NAMES.ADMINISTRATOR } } } });
+    assert.equal((await statistics()).candidates, baseline.candidates + 1);
+    await prisma.user.update({ where: { id: candidate.id }, data: { deletedAt: new Date() } });
+    assert.equal((await statistics()).candidates, baseline.candidates);
+    const administrator = await prisma.user.create({ data: { email: runId + '-stats-admin@example.test', passwordHash,
+      status: { connect: { name: 'Activo' } }, userRoles: { create: { roles: { connect: { name: ROLE_NAMES.ADMINISTRATOR } } } } } });
+    users.push(administrator.id);
+    assert.equal((await statistics()).candidates, baseline.candidates);
+  });
+
+  it('filtra la opción Remoto por modalidad y conserva el filtro de texto', async () => {
+    const prefix = runId + '-remote-';
+    const remote = await published('EMPLOYMENT', { title: prefix + 'remote', modality: 'REMOTE' });
+    await published('EMPLOYMENT', { title: prefix + 'hybrid', modality: 'HYBRID' });
+    const result = await request('GET', '/opportunities?kind=EMPLOYMENT&search=' + prefix + '&modality=REMOTE');
+    assert.equal(result.status, 200);
+    const page = await result.json() as Page<Opportunity>;
+    assert.equal(page.total, 1);
+    assert.equal(page.items[0].key, remote.key);
+    assert.equal((await request('GET', '/opportunities?modality=invalid')).status, 400);
   });
 
   it('guarda, completa, publica, cierra, reabre y archiva los cuatro tipos', async () => {

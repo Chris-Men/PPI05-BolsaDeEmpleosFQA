@@ -25,6 +25,15 @@ test('vacantes separa transporte público y administrativo y codifica filtros', 
   assert.equal(calls[4].url, '/api/admin/opportunities/volunteer-8'); assert.equal(calls[4].options.method, 'DELETE');
 });
 
+test('Home consulta estadísticas globales sin filtros ni credenciales', async (context) => {
+  const calls = [];
+  const statistics = { activeOpportunities: 23, organizations: 4, candidates: 15, impactAxes: 5 };
+  context.mock.method(globalThis, 'fetch', async (url, options) => { calls.push({ url, options }); return Response.json(statistics); });
+  assert.deepEqual(await service.getPublicOpportunityStatistics(), statistics);
+  assert.equal(calls[0].url, '/api/opportunities/statistics');
+  assert.equal(calls[0].options.headers.get('Authorization'), null);
+});
+
 test('vacantes conserva errores por campo y categorías los conflictos de relaciones', async (context) => {
   context.mock.method(globalThis, 'fetch', async () => Response.json({ message: 'No se puede publicar.', errors: [{ field: 'duration', message: 'Indica duración.' }] }, { status: 400 }));
   await assert.rejects(service.setOpportunityStatus('job-1', 'OPEN'), (error) => error instanceof ApiError && error.validationErrors[0].field === 'duration');

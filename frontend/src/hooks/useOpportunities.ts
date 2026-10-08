@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getOpportunityCatalogs, listManagedOpportunities, listOpportunities } from '../services/opportunityService';
-import type { Opportunity, OpportunityCatalogs, OpportunityFilters, Page } from '../types/opportunity';
+import { getOpportunityCatalogs, getPublicOpportunityStatistics, listManagedOpportunities, listOpportunities } from '../services/opportunityService';
+import type { Opportunity, OpportunityCatalogs, OpportunityFilters, Page, PublicOpportunityStatistics } from '../types/opportunity';
 
 /** Request identity prevents a late response from overwriting newer filters or account data. */
 export function useOpportunityListing(filters: OpportunityFilters, enabled = true, admin = false, accountId?: number) {
@@ -34,4 +34,23 @@ export function useOpportunityCatalogs() {
     return () => { current = false; };
   }, [revision]);
   return { catalogs, error, reload: () => setRevision((value) => value + 1) };
+}
+
+/** Loads aggregate homepage metrics only on Home, independently of search input. */
+export function useHomeStatistics(enabled: boolean) {
+  const [statistics, setStatistics] = useState<PublicOpportunityStatistics | null>(null);
+  const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    let current = true;
+    setError('');
+    void getPublicOpportunityStatistics().then((value) => {
+      if (current) setStatistics(value);
+    }).catch((failure: unknown) => {
+      if (current) setError(failure instanceof Error ? failure.message : 'No se pudieron cargar las estadísticas.');
+    });
+    return () => { current = false; };
+  }, [enabled, revision]);
+  return { statistics, error, reload: () => setRevision((value) => value + 1) };
 }

@@ -1,26 +1,35 @@
+import { useState } from 'react';
 import type { Job, NavigateTo, StateSetter } from '../types/models';
+import type { PublicOpportunityStatistics } from '../types/opportunity';
 
 interface HomeProps {
   jobs: Job[];
   categories: string[];
   total: number;
+  statistics: PublicOpportunityStatistics | null;
+  statisticsError: string;
+  onRetryStatistics: () => void;
+  listingLoading: boolean;
+  listingError: string;
+  onRetryListing: () => void;
   savedJobs: number[];
   toggleSaveJob: (id: number) => void;
   navigateTo: NavigateTo;
   setQvJob: StateSetter<Job | null>;
   setQvOpen: StateSetter<boolean>;
-  searchQuery: string;
-  setSearchQuery: StateSetter<string>;
-  searchLocation: string;
-  setSearchLocation: StateSetter<string>;
-  setSelectedArea: StateSetter<string>;
+  onSearch: (query: string, location: string, area?: string) => void;
 }
 
-/** Public landing page with demonstration opportunities. */
+/** Original homepage layout with unfiltered database metrics and a draft search submitted to Empleos. */
 export default function Home({
   categories, total, jobs, savedJobs, toggleSaveJob, navigateTo, setQvJob, setQvOpen,
-  searchQuery, setSearchQuery, searchLocation, setSearchLocation, setSelectedArea,
+  statistics, statisticsError, onRetryStatistics, listingLoading, listingError, onRetryListing, onSearch,
 }: HomeProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLocation, setSearchLocation] = useState('Todo el país');
+  /** Pending or unavailable statistics remain unknown rather than showing invented counts. */
+  const metric = (value: number | undefined): string => value === undefined ? '—' : value.toLocaleString('es-SV');
+
   return (
     <div className="screen">
       <div className="hero">
@@ -32,30 +41,40 @@ export default function Home({
         <h1>Trabaja donde tu<br />historia <em>importa.</em></h1>
         <p className="hero-sub">Conectamos profesionales comprometidos con organizaciones que generan impacto real en comunidades de El Salvador y Centroamérica.</p>
         
-        <div className="hero-search">
+        <form className="hero-search" onSubmit={(event) => { event.preventDefault(); onSearch(searchQuery, searchLocation); }}>
           <input 
             type="text" 
             placeholder="Puesto, habilidad o palabra clave…" 
             value={searchQuery}
+            maxLength={150}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Buscar vacantes" 
           />
           <div className="hero-vdiv"></div>
-          <input type="text" aria-label="Ubicación" placeholder="Departamento o municipio" value={searchLocation === 'Todo el país' ? '' : searchLocation} onChange={(event) => setSearchLocation(event.target.value || 'Todo el país')} />
+          <select aria-label="Ubicación" value={searchLocation} onChange={(event) => setSearchLocation(event.target.value)}>
+            <option value="Todo el país">Todo el país</option>
+            <option value="San Salvador">San Salvador</option>
+            <option value="Santa Ana">Santa Ana</option>
+            <option value="San Miguel">San Miguel</option>
+            <option value="Remoto">Remoto</option>
+          </select>
           
-          <button className="hero-search-btn" onClick={() => navigateTo('jobs')}>
+          <button type="submit" className="hero-search-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16">
               <circle cx="11" cy="11" r="7"/>
               <path d="M20 20l-3.5-3.5" strokeLinecap="round"/>
             </svg>
             Buscar
           </button>
-        </div>
+        </form>
 
-        <div className="hero-stats">
-          <div className="hero-stat"><strong>{total}</strong><span>Vacantes activas</span></div>
-          <div className="hero-stat"><strong>{categories.length}</strong><span>Categorías</span></div>
+        <div className="hero-stats" aria-live="polite">
+          <div className="hero-stat"><strong>{metric(statistics?.activeOpportunities)}</strong><span>Vacantes activas</span></div>
+          <div className="hero-stat"><strong>{metric(statistics?.organizations)}</strong><span>Organizaciones</span></div>
+          <div className="hero-stat"><strong>{metric(statistics?.candidates)}</strong><span>Candidatos</span></div>
+          <div className="hero-stat"><strong>{metric(statistics?.impactAxes)}</strong><span>Ejes de impacto</span></div>
         </div>
+        {statisticsError && <p className="home-statistics-error" role="alert">{statisticsError} <button type="button" onClick={onRetryStatistics}>Reintentar estadísticas</button></p>}
       </div>
 
       {/* TRUST STRIP */}
@@ -78,7 +97,7 @@ export default function Home({
             <div 
               key={area} 
               className="area-pill"
-              onClick={() => { setSelectedArea(area); navigateTo('jobs'); }}
+              onClick={() => onSearch(searchQuery, searchLocation, area)}
             >
               {area}
             </div>
@@ -106,12 +125,15 @@ export default function Home({
       {/* FEATURED JOBS */}
       <div className="section-wrap">
         <div className="section-hd">
-          <h2>Vacantes recientes</h2>
-          <span onClick={() => navigateTo('jobs')}>Ver las {total} vacantes →</span>
+          <h2>Vacantes destacadas</h2>
+          <span onClick={() => onSearch('', 'Todo el país')}>Ver las {total} vacantes →</span>
         </div>
 
         <div className="jobs-grid">
-          {jobs.slice(0, 6).map(job => (
+          {listingLoading && <p className="home-listing-message" role="status">Cargando vacantes…</p>}
+          {listingError && <p className="home-listing-message" role="alert">{listingError} <button type="button" onClick={onRetryListing}>Reintentar</button></p>}
+          {!listingLoading && !listingError && !jobs.length && <p className="home-listing-message">Todavía no hay vacantes publicadas.</p>}
+          {!listingLoading && !listingError && jobs.slice(0, 6).map(job => (
             <div key={job.id} className={`jcard ${job.isFqa ? 'fqa-f' : ''}`} onClick={() => navigateTo('detail', job)}>
               <div className="jcard-top">
                 <div className="org-logo" style={{background: job.isFqa ? 'var(--g)' : 'var(--gd)'}}>
@@ -159,9 +181,10 @@ export default function Home({
       <div className="stats-band">
         <div className="stats-inner">
 
-          <div className="sstat"><strong>{total}</strong><span>Vacantes activas</span></div>
-
-          <div className="sstat"><strong>{categories.length}</strong><span>Categorías</span></div>
+          <div className="sstat"><strong>{metric(statistics?.candidates)}</strong><span>Candidatos</span></div>
+          <div className="sstat"><strong>{metric(statistics?.activeOpportunities)}</strong><span>Vacantes activas</span></div>
+          <div className="sstat"><strong>{metric(statistics?.organizations)}</strong><span>Organizaciones aliadas</span></div>
+          <div className="sstat"><strong>{metric(statistics?.impactAxes)}</strong><span>Ejes de impacto</span></div>
         </div>
       </div>
 

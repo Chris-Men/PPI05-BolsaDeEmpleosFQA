@@ -41,6 +41,8 @@ export const statusOpportunity = endpoint((request) => opportunities.changeOppor
 export const archiveOpportunity = endpoint((request) => opportunities.changeOpportunityStatus(opportunityKeySchema.parse(request.params.key), 'ARCHIVED', actorFor(request)));
 /** Selectable dictionaries contain no candidate data. */
 export const catalogs = endpoint(() => opportunityCatalogs());
+/** Homepage metrics always represent the complete public catalog and registered candidates. */
+export const publicStatistics = endpoint(() => opportunities.getPublicStatistics());
 /** Public active-category metadata. */
 export const publicCategories = endpoint(() => categories.publicCategories());
 /** Administrative filtered category listing. */

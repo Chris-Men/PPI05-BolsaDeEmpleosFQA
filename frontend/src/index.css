@@ -616,6 +616,7 @@ a {
 
 .hero-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 52px;
   margin-top: 40px;
 }
@@ -636,6 +637,58 @@ a {
   letter-spacing: .12em;
   margin-top: 5px;
   display: block;
+}
+
+.home-statistics-error {
+  margin-top: 16px;
+  color: var(--w);
+  font-size: 13px;
+}
+
+.home-listing-message {
+  grid-column: 1 / -1;
+  color: var(--c500);
+  font-size: 13px;
+}
+
+.home-statistics-error button,
+.home-listing-message button {
+  border: none;
+  background: none;
+  color: var(--g);
+  font: inherit;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .hero-search {
+    flex-wrap: wrap;
+  }
+
+  .hero-search input {
+    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-search select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-vdiv {
+    display: none;
+  }
+
+  .hero-search-btn {
+    padding: 16px 20px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
 }
 
 /* TRUST STRIP */

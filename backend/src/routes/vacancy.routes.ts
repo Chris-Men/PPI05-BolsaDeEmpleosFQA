@@ -20,6 +20,7 @@ const grant = (permission: PermissionCode): RequestHandler => (request, _respons
 /** Public read-only opportunity catalog. */
 export const publicOpportunityRouter = Router();
 publicOpportunityRouter.get('/catalogs', controller.catalogs);
+publicOpportunityRouter.get('/statistics', controller.publicStatistics);
 publicOpportunityRouter.get('/', validateQuery(listOpportunitiesSchema), controller.listPublic);
 publicOpportunityRouter.get('/:key', controller.getPublic);
 /** Public category catalog excludes inactive records. */

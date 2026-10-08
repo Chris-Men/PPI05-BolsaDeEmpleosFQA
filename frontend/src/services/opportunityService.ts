@@ -1,5 +1,5 @@
 import { apiRequest } from './api';
-import type { Category, CategoryInput, Opportunity, OpportunityCatalogs, OpportunityFilters, OpportunityInput, OpportunityKind, Page } from '../types/opportunity';
+import type { Category, CategoryInput, Opportunity, OpportunityCatalogs, OpportunityFilters, OpportunityInput, OpportunityKind, Page, PublicOpportunityStatistics } from '../types/opportunity';
 
 /** Query encoding preserves spaces and never serializes absent filter values. */
 const queryString = (filters: object): string => {
@@ -13,6 +13,8 @@ export const listOpportunities = (filters: OpportunityFilters = {}) => apiReques
 export const getOpportunity = (key: string) => apiRequest<Opportunity>('/opportunities/' + encodeURIComponent(key));
 /** Select catalogs use the central transport and session renewal for administration. */
 export const getOpportunityCatalogs = (admin = false) => apiRequest<OpportunityCatalogs>((admin ? '/admin' : '') + '/opportunities/catalogs', { authenticated: admin });
+/** Homepage statistics never inherit listing filters and require no authenticated session. */
+export const getPublicOpportunityStatistics = () => apiRequest<PublicOpportunityStatistics>('/opportunities/statistics');
 /** Public category selectors contain names instead of requiring users to enter database identities. */
 export const getCategoryCatalog = () => apiRequest<OpportunityCatalogs['categories']>('/categories');
 /** Drafts and closed opportunities are visible only to authorized administrators. */

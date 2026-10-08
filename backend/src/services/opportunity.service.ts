@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
-import { PERMISSIONS } from '../constants/authorization.constants.js';
+import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
 import { OPPORTUNITY_STATUS_NAMES, type OpportunityStatus, type OpportunityType } from '../constants/opportunity.constants.js';
 import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
@@ -70,6 +70,18 @@ const publicWhere = (now: Date) => ({
   organizations: { organizationStatuses: { name: ORGANIZATION_STATUS_NAMES.ACTIVE } },
   jobCategories: { isActive: true },
 });
+/** Unfiltered homepage counts share vacancy visibility and expose no account information. */
+export const getPublicStatistics = async () => {
+  const visible = publicWhere(new Date());
+  const [jobs, volunteers, organizations, candidates, impactAxes] = await prisma.$transaction([
+    prisma.jobs.count({ where: { ...visible, jobStatuses: { name: OPPORTUNITY_STATUS_NAMES.OPEN } } }),
+    prisma.volunteerOpportunities.count({ where: { ...visible, volunteerStatuses: { name: OPPORTUNITY_STATUS_NAMES.OPEN } } }),
+    prisma.organizations.count({ where: { organizationStatuses: { name: ORGANIZATION_STATUS_NAMES.ACTIVE } } }),
+    prisma.user.count({ where: { deletedAt: null, userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } } } } }),
+    prisma.jobCategories.count({ where: { isActive: true } }),
+  ], { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+  return { activeOpportunities: jobs + volunteers, organizations, candidates, impactAxes };
+};
 /** Filters each source in SQL, then merges bounded prefixes for correctly ordered mixed-source pages. */
 export const listOpportunities = async (query: OpportunityQuery, actor?: AccessContext) => {
   if (actor) assertVacancyAccess(actor, PERMISSIONS.OPPORTUNITY_READ);
@@ -78,6 +90,7 @@ export const listOpportunities = async (query: OpportunityQuery, actor?: AccessC
     ...(actor ? (query.status === 'ARCHIVED' ? {} : { archivedAt: null }) : publicWhere(now)),
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.organizationId ? { organizationId: query.organizationId } : {}),
+    ...(query.modality ? { modality: query.modality } : {}),
     ...(query.search ? { AND: [{ OR: [{ title: { contains: query.search, mode: 'insensitive' as const } }, { organizations: { name: { contains: query.search, mode: 'insensitive' as const } } }] }] } : {}),
     ...(query.location ? { locations: { OR: [{ department: { contains: query.location, mode: 'insensitive' as const } }, { municipality: { contains: query.location, mode: 'insensitive' as const } }] } } : {}),
   };

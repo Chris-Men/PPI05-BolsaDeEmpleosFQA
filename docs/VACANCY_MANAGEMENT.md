@@ -38,6 +38,7 @@ En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:producti
 | `GET /api/opportunities` | Listado público, sin sesión |
 | `GET /api/opportunities/:key` | Detalle público vigente |
 | `GET /api/opportunities/catalogs` | Opciones para filtros |
+| `GET /api/opportunities/statistics` | Contadores públicos globales para Home |
 | `GET /api/categories` | Categorías activas, sin métricas administrativas |
 | `GET /api/admin/opportunities` | Listado — `opportunities.read` |
 | `GET /api/admin/opportunities/catalogs` | Opciones del editor — `opportunities.read` |
@@ -53,7 +54,7 @@ En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:producti
 
 Todas las rutas administrativas requieren Administrador o Super Admin **y** el permiso correspondiente, verificados en el backend con los grants vigentes. Las mutaciones también aplican la protección de sesión del transporte central. Los candidatos no pueden gestionar vacantes aunque reciban un permiso administrativo por error.
 
-Los filtros de vacantes son `search`, `kind`, `categoryId`, `organizationId`, `location`, `salaryMax`, `page`, `pageSize` y, solo para administración, `status`. La búsqueda consulta título y organización, sin distinguir mayúsculas; ubicación consulta departamento y municipio. `salaryMax` limita el máximo publicado o, si se omitió, el mínimo conocido, excluyendo salarios sin información.
+Los filtros de vacantes son `search`, `kind`, `categoryId`, `organizationId`, `location`, `modality`, `salaryMax`, `page`, `pageSize` y, solo para administración, `status`. La búsqueda consulta título y organización, sin distinguir mayúsculas; ubicación consulta departamento y municipio. La opción «Remoto» de Home aplica `modality=REMOTE` en Empleos. `salaryMax` limita el máximo publicado o, si se omitió, el mínimo conocido, excluyendo salarios sin información.
 
 La paginación admite hasta 100 elementos por página y una ventana de 10000 registros: cada tabla filtra en PostgreSQL y obtiene un prefijo acotado de identidades y fechas; después se mezclan por fecha de creación descendente, identidad descendente y clave, dejando fechas nulas al final. El contenido completo se carga únicamente para la página solicitada. El total, ambos prefijos y el contenido se consultan en una transacción de lectura consistente. Para superar la ventana debe refinarse la búsqueda.
 
@@ -66,5 +67,7 @@ Las categorías admiten búsqueda, `state=ACTIVE|INACTIVE` y paginación. El nom
 Empleos, voluntariados y las pestañas de horas sociales y prácticas consultan vacantes reales con búsqueda, categorías y paginación. Todos los tipos permiten consultar su detalle actualizado; voluntariados y estudiantes comparten el modal de consulta con administración. No se muestran salarios, visualizaciones ni compatibilidades ficticias. El estado público de las vacantes es independiente de la cuenta; el estado administrativo se desmonta al salir o cambiar de identidad.
 
 Las tres páginas sitúan sus filtros debajo del banner y comparten la barra lateral, las etiquetas de áreas y el buscador de Empleos. En móvil, los filtros se muestran completos encima de los resultados. La paginación aparece al final del listado; las tarjetas y pestañas de estudiantes conservan sus estilos.
+
+Home conserva su estructura, selector de ubicación y cuatro contadores. Las estadísticas se consultan sin filtros: vacantes publicadas y vigentes de los cuatro tipos, organizaciones activas, usuarios no eliminados con rol Candidato (incluidos los deshabilitados) y categorías activas presentadas como «Ejes de impacto». La banda inferior usa candidatos, sin inventar una cifra de beneficiarios. Solo se exponen cantidades, en una lectura consistente. Las tarjetas cargan seis empleos sin filtros y no cambian al escribir. Buscar, pulsar Enter o elegir un eje navega a Empleos, aplica los filtros y empieza en la primera página; volver a Home restaura las tarjetas y cifras globales.
 
 Ejecutar `typecheck`, `lint`, `test` y `build` en frontend y backend. Para integración se requiere `TEST_DATABASE_URL` explícita, distinta de la base normal y con nombre terminado en `_test`; el runner aplica migraciones, seed y todas las pruebas sobre esa base. Las pruebas cubren los cuatro ciclos de vida, filtros y páginas mixtas, categorías y ciclos, permisos revocados, expiración, rollback de auditoría y conservación de relaciones históricas. La validación de navegador utiliza una API temporal y esa misma base independiente, con usuarios de prueba, en 1440 y 390 píxeles.
