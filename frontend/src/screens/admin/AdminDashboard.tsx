@@ -1,5 +1,5 @@
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 
 import type {
     CandidateApplication,
@@ -12,7 +12,7 @@ import type {
     AdminMenuName,
 } from '../../types/admin';
 
-import type { NewJobForm } from './NuevaPostulacion';
+
 import type { SiteConfiguration } from '../../config/siteConfiguration';
 
 import AdminSidebar from '../../components/admin/AdminSidebar';
@@ -23,11 +23,7 @@ import '../../styles/admin/admin-sidebar.css';
 import '../../styles/admin/admin-topbar.css';
 import '../../styles/admin/dashboard.css';
 
-import NuevaPostulacion from './NuevaPostulacion';
-
-import AdministrarPostulaciones, {
-    type NormalizedVacancy,
-} from './AdministrarPostulaciones';
+import OpportunityManagement from './OpportunityManagement';
 
 import CVrecibidos from './CVrecibidos';
 import Organizaciones from './Organizaciones';
@@ -53,22 +49,8 @@ interface AdminDashboardProps {
     handleLogout: () => void;
 
     jobs?: DashboardJob[];
-
-    newJobForm: NewJobForm;
-
-    setNewJobForm: StateSetter<NewJobForm>;
-
-    handleCreateJob?: (
-        event?: FormEvent<HTMLFormElement>
-    ) => void;
-
-    handleUpdateJob?: (
-        id: string | number,
-        form: NewJobForm,
-        event?: FormEvent<HTMLFormElement>
-    ) => void;
-
-    handleSaveDraft?: () => void;
+    vacancyTotal?: number;
+    onVacanciesChanged?: () => void;
 
     applications?: CandidateApplication[];
 
@@ -89,13 +71,8 @@ function AdminDashboard({
     handleLogout,
 
     jobs = [],
-
-    newJobForm,
-    setNewJobForm,
-
-    handleCreateJob,
-    handleUpdateJob,
-    handleSaveDraft,
+    vacancyTotal,
+    onVacanciesChanged,
 
     applications = [],
 
@@ -117,8 +94,7 @@ function AdminDashboard({
     const [search, setSearch] =
         useState('');
 
-    const [editingJobId, setEditingJobId] =
-        useState<string | number | null>(null);
+
 
 
     // =========================================================
@@ -135,7 +111,7 @@ function AdminDashboard({
     // =========================================================
 
     const stats = {
-        vacantes: jobs.length,
+        vacantes: vacancyTotal ?? '—',
         cvs: applications.length,
         empresas: 18,
         usuarios: 4,
@@ -182,8 +158,6 @@ function AdminDashboard({
 
             setActiveMenu('Dashboard');
 
-            setEditingJobId(null);
-
             setSearch('');
 
             return;
@@ -203,171 +177,8 @@ function AdminDashboard({
         );
 
         setSearch('');
-
-        setEditingJobId(null);
     };
 
-
-    const handleBackFromNewJob = () => {
-
-        setEditingJobId(null);
-
-        handleBack();
-    };
-
-
-    // =========================================================
-    // GUARDAR BORRADOR
-    // =========================================================
-
-    const handleDraft = () => {
-
-        if (!newJobForm?.title?.trim()) {
-            return;
-        }
-
-        if (
-            typeof handleSaveDraft ===
-            'function'
-        ) {
-            handleSaveDraft();
-        }
-    };
-
-
-    // =========================================================
-    // EDITAR VACANTE
-    // =========================================================
-
-    const handleEditJob = (
-        job: NormalizedVacancy
-    ) => {
-
-        if (!job) {
-            return;
-        }
-
-        setEditingJobId(job.id);
-
-        if (
-            typeof setNewJobForm ===
-            'function'
-        ) {
-
-            setNewJobForm({
-
-                title: job.title || '',
-
-                org: job.org || '',
-
-                location:
-                    job.location || '',
-
-                area:
-                    job.area ||
-                    'Educación',
-
-                type:
-                    job.type ||
-                    'Tiempo completo',
-
-                salary:
-                    job.salary || '',
-
-                deadline:
-                    job.deadline ||
-                    job.closing ||
-                    '',
-
-                desc:
-                    job.desc || '',
-
-                responsibilities:
-                    Array.isArray(
-                        job.responsibilities
-                    )
-                        ? job.responsibilities.join(
-                            ', '
-                        )
-                        : job.responsibilities ||
-                        '',
-
-                requirements:
-                    Array.isArray(
-                        job.requirements
-                    )
-                        ? job.requirements.join(
-                            ', '
-                        )
-                        : job.requirements ||
-                        '',
-
-                offers:
-                    Array.isArray(
-                        job.offers
-                    )
-                        ? job.offers.join(
-                            ', '
-                        )
-                        : job.offers ||
-                        '',
-            });
-        }
-
-        setMenuHistory(
-            (previous) => [
-                ...previous,
-                'Administrar Postulaciones',
-            ]
-        );
-
-        setActiveMenu(
-            'Nueva Postulación'
-        );
-
-        setSearch('');
-    };
-
-
-    // =========================================================
-    // CREAR / ACTUALIZAR VACANTE
-    // =========================================================
-
-    const handleSubmitJob = (
-        event?: FormEvent<HTMLFormElement>
-    ) => {
-
-        if (editingJobId !== null) {
-
-            if (
-                typeof handleUpdateJob ===
-                'function'
-            ) {
-
-                handleUpdateJob(
-                    editingJobId,
-                    newJobForm,
-                    event
-                );
-
-                setEditingJobId(null);
-            }
-
-            return;
-        }
-
-        if (
-            typeof handleCreateJob ===
-            'function'
-        ) {
-            handleCreateJob(event);
-        }
-    };
-
-
-    // =========================================================
-    // DASHBOARD
-    // =========================================================
 
     const renderDashboard = () => {
 
@@ -375,7 +186,7 @@ function AdminDashboard({
             jobs
                 .slice(0, 10)
                 .map((job) => ({
-                    id: job.id,
+                    id: job.opportunityKey ?? String(job.id),
 
                     puesto:
                         job.title ||
@@ -389,8 +200,7 @@ function AdminDashboard({
                         job.status ||
                         'Activa',
 
-                    candidatos:
-                        job.views || 0,
+                    candidatos: '—',
                 }));
 
 
@@ -526,7 +336,7 @@ function AdminDashboard({
                                 type="button"
                                 onClick={() =>
                                     navegarA(
-                                        'Administrar Postulaciones'
+                                        'Administrar Vacantes'
                                     )
                                 }
                             >
@@ -663,7 +473,7 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        'Administrar Postulaciones'
+                                        'Administrar Vacantes'
                                     )
                                 }
                             >
@@ -739,7 +549,7 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        'Nueva Postulación'
+                                        'Nueva Vacante'
                                     )
                                 }
                             >
@@ -751,7 +561,7 @@ function AdminDashboard({
                                 <div className="attention-content">
 
                                     <strong>
-                                        Nueva Postulación
+                                        Nueva Vacante
                                     </strong>
 
                                     <span>
@@ -791,26 +601,17 @@ function AdminDashboard({
                 return renderDashboard();
 
 
-            case 'Nueva Postulación':
+            case 'Nueva Vacante':
 
                 return (
-                    <NuevaPostulacion
-                        newJobForm={newJobForm}
-                        setNewJobForm={setNewJobForm}
-                        onPublish={handleSubmitJob}
-                        onSaveDraft={handleDraft}
-                        onBack={handleBackFromNewJob}
-                    />
+                    <OpportunityManagement key="create" startCreating onBack={handleBack} onChanged={onVacanciesChanged} />
                 );
 
 
-            case 'Administrar Postulaciones':
+            case 'Administrar Vacantes':
 
                 return (
-                    <AdministrarPostulaciones
-                        jobs={jobs}
-                        onEditJob={handleEditJob}
-                    />
+                    <OpportunityManagement key="manage" onChanged={onVacanciesChanged} />
                 );
 
 

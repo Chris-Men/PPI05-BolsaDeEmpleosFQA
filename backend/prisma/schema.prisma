@@ -262,6 +262,8 @@ model JobCategories {
   name                   String                   @unique @db.VarChar(100)
   slug                   String                   @unique @db.VarChar(120)
   parentId               Int?                     @map("parent_id")
+  description            String?                  @db.VarChar(1000)
+  isActive               Boolean                  @default(true) @map("is_active")
   jobCategories          JobCategories?           @relation("job_categoriesTojob_categories", fields: [parentId], references: [id], onUpdate: NoAction, map: "fk_job_categories_parent")
   otherJobCategories     JobCategories[]          @relation("job_categoriesTojob_categories")
   jobs                   Jobs[]
@@ -308,28 +310,41 @@ model JobStatuses {
 }
 
 model Jobs {
-  id                Int              @id @default(autoincrement())
-  organizationId    Int              @map("organization_id")
-  categoryId        Int              @map("category_id")
-  employmentTypeId  Int              @map("employment_type_id")
-  experienceLevelId Int              @map("experience_level_id")
-  locationId        Int              @map("location_id")
-  statusId          Int              @map("status_id")
-  title             String           @db.VarChar(150)
-  slug              String           @unique @db.VarChar(180)
+  id                Int               @id @default(autoincrement())
+  organizationId    Int?              @map("organization_id")
+  categoryId        Int?              @map("category_id")
+  employmentTypeId  Int?              @map("employment_type_id")
+  experienceLevelId Int?              @map("experience_level_id")
+  locationId        Int?              @map("location_id")
+  statusId          Int               @map("status_id")
+  title             String            @db.VarChar(150)
+  slug              String            @unique @db.VarChar(180)
   description       String
-  publishedAt       DateTime?        @map("published_at") @db.Timestamp(6)
-  expiresAt         DateTime?        @map("expires_at") @db.Timestamp(6)
-  createdAt         DateTime?        @default(now()) @map("created_at") @db.Timestamp(6)
+  /// These types preserve the existing application and revision relations.
+  kind              OpportunityKind   @default(EMPLOYMENT)
+  modality          WorkModality      @default(ON_SITE)
+  salaryMin         Decimal?          @map("salary_min") @db.Decimal(10, 2)
+  salaryMax         Decimal?          @map("salary_max") @db.Decimal(10, 2)
+  slots             Int?
+  socialHours       Int?              @map("social_hours")
+  duration          String?           @db.VarChar(120)
+  contact           String?           @db.VarChar(255)
+  requirements      String[]          @default([])
+  responsibilities  String[]          @default([])
+  benefits          String[]          @default([])
+  archivedAt        DateTime?         @map("archived_at") @db.Timestamp(6)
+  publishedAt       DateTime?         @map("published_at") @db.Timestamp(6)
+  expiresAt         DateTime?         @map("expires_at") @db.Timestamp(6)
+  createdAt         DateTime?         @default(now()) @map("created_at") @db.Timestamp(6)
   applications      Applications[]
   jobRevisions      JobRevisions[]
   jobSkills         JobSkills[]
-  jobCategories     JobCategories    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_category")
-  employmentTypes   EmploymentTypes  @relation(fields: [employmentTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_employment_type")
-  experienceLevels  ExperienceLevels @relation(fields: [experienceLevelId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_experience_level")
-  locations         Locations        @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_location")
-  organizations     Organizations    @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_jobs_organization")
-  jobStatuses       JobStatuses      @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_status")
+  jobCategories     JobCategories?    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_category")
+  employmentTypes   EmploymentTypes?  @relation(fields: [employmentTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_employment_type")
+  experienceLevels  ExperienceLevels? @relation(fields: [experienceLevelId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_experience_level")
+  locations         Locations?        @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_location")
+  organizations     Organizations?    @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_jobs_organization")
+  jobStatuses       JobStatuses       @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_jobs_status")
   savedJobs         SavedJobs[]
 
   @@index([categoryId], map: "ix_jobs_category_id")
@@ -341,6 +356,20 @@ model Jobs {
   @@index([publishedAt], map: "ix_jobs_published_at")
   @@index([statusId], map: "ix_jobs_status_id")
   @@map("jobs")
+}
+
+/// Volunteer records retain their separate registration structure.
+enum OpportunityKind {
+  EMPLOYMENT
+  INTERNSHIP
+  SOCIAL_HOURS
+}
+
+/// Working arrangements are independent of contract and opportunity type.
+enum WorkModality {
+  ON_SITE
+  REMOTE
+  HYBRID
 }
 
 model Locations {
@@ -482,17 +511,26 @@ model UserSkills {
 
 model VolunteerOpportunities {
   id                     Int                      @id @default(autoincrement())
-  organizationId         Int                      @map("organization_id")
-  categoryId             Int                      @map("category_id")
-  locationId             Int                      @map("location_id")
+  organizationId         Int?                     @map("organization_id")
+  categoryId             Int?                     @map("category_id")
+  locationId             Int?                     @map("location_id")
   statusId               Int                      @map("status_id")
   title                  String                   @db.VarChar(150)
   slug                   String                   @unique @db.VarChar(180)
   description            String
+  modality               WorkModality             @default(ON_SITE)
+  slots                  Int?
+  contact                String?                  @db.VarChar(255)
+  requirements           String[]                 @default([])
+  responsibilities       String[]                 @default([])
+  benefits               String[]                 @default([])
+  publishedAt            DateTime?                @map("published_at") @db.Timestamp(6)
+  expiresAt              DateTime?                @map("expires_at") @db.Timestamp(6)
+  archivedAt             DateTime?                @map("archived_at") @db.Timestamp(6)
   createdAt              DateTime?                @default(now()) @map("created_at") @db.Timestamp(6)
-  jobCategories          JobCategories            @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_category")
-  locations              Locations                @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_location")
-  organizations          Organizations            @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vol_opp_organization")
+  jobCategories          JobCategories?           @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_category")
+  locations              Locations?               @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_location")
+  organizations          Organizations?           @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_vol_opp_organization")
   volunteerStatuses      VolunteerStatuses        @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vol_opp_status")
   volunteerRegistrations VolunteerRegistrations[]
 

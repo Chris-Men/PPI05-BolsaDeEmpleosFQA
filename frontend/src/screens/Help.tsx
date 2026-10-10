@@ -1,388 +1,497 @@
-import React, { useState } from "react";
+
+import React, { useMemo, useState } from "react";
 import {
   ArrowRight,
   BookOpen,
+  BriefcaseBusiness,
   CheckCircle2,
   ChevronDown,
+  CircleHelp,
   FileText,
-  HelpCircle,
+  LockKeyhole,
   Mail,
   MapPin,
   Phone,
   Search,
-  UserPlus,
+  ShieldCheck,
+  UserRound,
+  UserRoundPlus,
+  Bell,
+  Bookmark,
+  ClipboardCheck,
 } from "lucide-react";
 
 import "../styles/users/help.css";
+import ayudaDesktop from "../components/imagenes/img/ayuda.png";
+import ayudaMobile from "../components/imagenes/img/ayuda-responsiv.png";
 
 interface HelpProps {
   navigateTo?: (page: string) => void;
 }
 
-interface HelpStep {
-  number: number;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-}
-
-const helpSteps: HelpStep[] = [
+const steps = [
   {
-    number: 1,
+    number: "01",
     title: "Crea tu cuenta",
+    icon: UserRoundPlus,
     description:
-      "Haz clic en “Registrarse” y completa tus datos personales, correo electrónico y contraseña. Verifica que toda la información sea correcta antes de continuar.",
-    icon: UserPlus,
+      "Selecciona “Registrarse” y completa los datos solicitados, como tu nombre, correo electrónico, contraseña e información de contacto.",
+    details: [
+      "Revisa que tu nombre y correo estén escritos correctamente.",
+      "Utiliza una contraseña segura y que puedas recordar.",
+      "No compartas tu contraseña con otras personas.",
+    ],
   },
   {
-    number: 2,
+    number: "02",
     title: "Inicia sesión",
+    icon: UserRound,
     description:
-      "Una vez creada tu cuenta, selecciona “Ingresar” e introduce tu correo electrónico y contraseña para acceder a tu perfil.",
-    icon: CheckCircle2,
+      "Entra en “Ingresar” y escribe el correo electrónico y la contraseña que utilizaste al crear tu cuenta.",
+    details: [
+      "Verifica que el correo y la contraseña sean correctos.",
+      "Comprueba que el bloqueo de mayúsculas no esté activado.",
+      "Si olvidaste tu contraseña, utiliza la opción de recuperación y revisa también la carpeta de spam.",
+    ],
   },
   {
-    number: 3,
+    number: "03",
     title: "Completa tu perfil",
+    icon: ClipboardCheck,
     description:
-      "Agrega y mantén actualizada tu información personal y profesional. Un perfil completo permite presentar mejor tu experiencia y habilidades.",
-    icon: FileText,
+      "Presenta tu experiencia y tus conocimientos con información clara, honesta y actualizada.",
+    details: [
+      "Completa tus datos personales y de contacto.",
+      "Agrega formación académica, experiencia, habilidades, cursos o certificaciones cuando corresponda.",
+      "Actualiza tus datos si cambian tu teléfono, correo o trayectoria profesional.",
+    ],
   },
   {
-    number: 4,
-    title: "Carga tu hoja de vida",
-    description:
-      "Dirígete a la sección “Mis documentos” y carga tu CV. Procura utilizar una versión actualizada que incluya tu formación, experiencia y habilidades.",
+    number: "04",
+    title: "Sube tu hoja de vida",
     icon: FileText,
+    description:
+      "En “Mis documentos” carga una hoja de vida reciente para tenerla disponible al realizar tus postulaciones.",
+    details: [
+      "Verifica que tus datos de contacto sean correctos.",
+      "Incluye formación, experiencia y habilidades relevantes.",
+      "Asegúrate de que el archivo se abra y se pueda leer correctamente.",
+      "Actualízala cuando completes estudios, cursos o adquieras experiencia nueva.",
+    ],
   },
   {
-    number: 5,
+    number: "05",
     title: "Busca oportunidades",
-    description:
-      "Explora las ofertas de empleo disponibles. Utiliza los filtros para encontrar oportunidades relacionadas con tu área de interés.",
     icon: Search,
+    description:
+      "Explora las ofertas disponibles y utiliza los filtros para encontrar puestos relacionados con tus intereses.",
+    details: [
+      "Prueba búsquedas por área, categoría, ubicación, tipo de puesto o palabras clave, si esos filtros están disponibles.",
+      "Busca también puestos relacionados con tus habilidades, no solo por el nombre exacto del trabajo.",
+      "Revisa periódicamente las nuevas oportunidades.",
+    ],
   },
   {
-    number: 6,
-    title: "Revisa una oferta",
-    description:
-      "Selecciona una vacante para conocer el puesto, organización, descripción, requisitos, experiencia solicitada, ubicación y demás información.",
+    number: "06",
+    title: "Lee los detalles de la oferta",
     icon: BookOpen,
+    description:
+      "Antes de postularte, revisa las funciones, requisitos, experiencia, formación solicitada, ubicación y demás condiciones publicadas.",
+    details: [
+      "Valora si el puesto se relaciona con tus intereses y experiencia.",
+      "Comprueba si puedes trasladarte a la ubicación indicada.",
+      "Lee toda la información antes de continuar.",
+    ],
   },
   {
-    number: 7,
-    title: "Guarda una oportunidad",
+    number: "07",
+    title: "Guarda o envía tu postulación",
+    icon: Bookmark,
     description:
-      "Si una oferta te interesa pero todavía no quieres postularte, puedes guardarla para consultarla posteriormente.",
-    icon: CheckCircle2,
+      "Guarda una oferta si deseas revisarla más tarde o selecciona “Postularme” cuando estés listo para participar.",
+    details: [
+      "Guardar una oferta no significa que ya te hayas postulado.",
+      "Antes de enviar, revisa tus datos y que tu hoja de vida esté actualizada.",
+      "Completa todos los campos solicitados y espera la confirmación del sistema.",
+    ],
   },
   {
-    number: 8,
-    title: "Postúlate",
+    number: "08",
+    title: "Da seguimiento a tus postulaciones",
+    icon: Bell,
     description:
-      "Cuando encuentres una oportunidad adecuada para tu perfil, selecciona “Postularme” y completa los pasos solicitados.",
-    icon: ArrowRight,
-  },
-  {
-    number: 9,
-    title: "Consulta tus postulaciones",
-    description:
-      "Desde “Mis postulaciones” puedes consultar las oportunidades a las que has aplicado y revisar el estado de cada proceso.",
-    icon: FileText,
-  },
-  {
-    number: 10,
-    title: "Revisa tus notificaciones",
-    description:
-      "Mantente atento a las notificaciones y al correo electrónico registrado. Las organizaciones pueden utilizar estos medios para comunicarse contigo.",
-    icon: CheckCircle2,
+      "Consulta “Mis postulaciones” para revisar las oportunidades a las que aplicaste y el estado que muestre cada proceso.",
+    details: [
+      "Si una postulación no aparece y no recibiste confirmación, verifica si el proceso terminó correctamente.",
+      "Revisa las notificaciones de la plataforma y tu correo, incluida la carpeta de spam.",
+      "Cada organización gestiona su selección y toma sus propias decisiones.",
+    ],
   },
 ];
 
-const faqItems = [
+const faqs = [
   {
-    question: "¿Necesito una cuenta para postularme?",
+    question: "¿Necesito una cuenta para buscar oportunidades?",
     answer:
-      "Sí. Para realizar una postulación necesitas tener una cuenta registrada en FQA Empleos y contar con tu información actualizada.",
+      "Puedes consultar las oportunidades que estén disponibles para visitantes. Para realizar determinadas acciones, como postularte, necesitarás una cuenta.",
   },
   {
-    question: "¿Puedo guardar una oferta sin postularme?",
+    question: "¿Necesito experiencia laboral para registrarme?",
     answer:
-      "Sí. Puedes guardar las oportunidades que sean de tu interés y consultarlas posteriormente desde tu perfil.",
+      "No necesariamente. Si estás comenzando tu vida laboral, puedes incluir tu formación académica, cursos, habilidades, prácticas, voluntariados u otra experiencia relevante que corresponda a tu perfil.",
   },
   {
-    question: "¿Puedo actualizar mi hoja de vida?",
+    question: "¿Puedo postularme a varias oportunidades?",
     answer:
-      "Sí. Puedes actualizar el documento que tienes registrado desde la sección “Mis documentos” de tu perfil.",
+      "Sí, siempre que cumplas con las condiciones de cada oferta. Lee los requisitos y la información de cada oportunidad antes de enviar tu postulación.",
   },
   {
-    question: "¿Cómo puedo saber si mi postulación fue enviada?",
+    question: "¿Guardar una oferta significa que ya me postulé?",
     answer:
-      "Después de completar correctamente el proceso, puedes consultar la oportunidad desde la sección “Mis postulaciones”.",
+      "No. Guardar permite conservar una oferta para revisarla después. Para participar en el proceso debes completar la acción de postularte y recibir la confirmación correspondiente.",
   },
   {
-    question: "¿Quién se comunica conmigo después de postularme?",
+    question: "¿Puedo cambiar mi hoja de vida después de subirla?",
     answer:
-      "La organización responsable de la oportunidad es quien gestiona el proceso de selección y puede comunicarse contigo utilizando los datos registrados en tu perfil.",
+      "Sí, cuando la plataforma permita actualizar documentos desde “Mis documentos”, puedes reemplazarla por una versión más reciente.",
   },
   {
-    question: "¿Qué hago si tengo problemas con mi cuenta?",
+    question: "¿Qué pasa después de postularme?",
     answer:
-      "Si tienes dificultades para acceder, actualizar tu información, cargar tu CV o realizar una postulación, puedes comunicarte con el equipo de soporte.",
+      "La organización responsable revisa las candidaturas y administra su proceso de selección. Según la oportunidad, podría contactarte para solicitar información adicional, realizar una entrevista o avanzar a otra etapa.",
+  },
+  {
+    question: "¿Quién decide si soy seleccionado?",
+    answer:
+      "La organización que publicó la oportunidad evalúa a las personas candidatas y toma las decisiones del proceso. FQA Empleos facilita el acceso a oportunidades, pero no garantiza una contratación.",
+  },
+  {
+    question: "¿Qué hago si una oferta ya no está disponible?",
+    answer:
+      "Una oportunidad puede dejar de aceptar postulaciones cuando termina el periodo de recepción o la organización deja de necesitar candidatos. Puedes continuar revisando otras ofertas disponibles.",
   },
 ];
 
 const tips = [
-  "Mantén actualizado tu perfil profesional.",
-  "Utiliza una hoja de vida reciente y bien estructurada.",
-  "Lee cuidadosamente los requisitos de cada oportunidad.",
-  "Verifica tus datos de contacto antes de postularte.",
-  "Revisa periódicamente las nuevas oportunidades.",
-  "Postúlate únicamente a ofertas que correspondan con tu perfil.",
+  "Mantén tu perfil y tus datos de contacto actualizados.",
+  "Utiliza una hoja de vida clara, reciente y fácil de leer.",
+  "Lee los requisitos antes de enviar una postulación.",
+  "Revisa periódicamente “Mis postulaciones” y tus notificaciones.",
+  "Proporciona información verdadera y pertinente.",
+  "No te desanimes si una postulación no termina en contratación.",
 ];
 
 export default function Help({ navigateTo }: HelpProps) {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
 
-  const handleFaq = (index: number) => {
-    setOpenFaq((current) => (current === index ? null : index));
-  };
+  const filteredFaqs = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    if (!query) return faqs;
+
+    return faqs.filter(
+      (item) =>
+        item.question.toLowerCase().includes(query) ||
+        item.answer.toLowerCase().includes(query),
+    );
+  }, [searchTerm]);
 
   return (
     <div className="help-page">
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-      <header className="help-header">
-        <div className="help-header-inner">
-          <div className="help-header-brand">
-            <div className="help-brand-icon">
-              <HelpCircle size={22} strokeWidth={2.2} />
-            </div>
+      <main className="help-main" id="inicio">
+        <section className="help-hero" aria-labelledby="help-hero-title">
+          <picture className="help-hero-picture">
+            <source
+              media="(max-width: 700px)"
+              srcSet={ayudaMobile}
+            />
+            <img
+              src={ayudaDesktop}
+              alt=""
+              aria-hidden="true"
+              className="help-hero-image"
+            />
+          </picture>
 
-            <div>
-              <span className="help-brand-eyebrow">FQA EMPLEOS</span>
-              <h1>Centro de Ayuda</h1>
-            </div>
-          </div>
-
-          {navigateTo && (
-            <button
-              type="button"
-              className="help-back-button"
-              onClick={() => navigateTo("home")}
-            >
-              Volver al inicio
-              <ArrowRight size={17} />
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="help-main">
-        {/* =====================================================
-            INTRO
-        ===================================================== */}
-        <section className="help-intro">
-          <div className="help-intro-content">
-            <span className="help-section-label">
+          <div className="help-hero-copy">
+            <span className="help-kicker">
+              <BookOpen size={15} aria-hidden="true" />
               GUÍA PARA CANDIDATOS
             </span>
 
-            <h2>
-              Aprende a utilizar
-              <br />
-              <strong>FQA Empleos</strong>
-            </h2>
+            <h1 id="help-hero-title">
+              Bienvenido a <span>FQA Empleos</span>
+            </h1>
 
             <p>
-              Encuentra oportunidades, completa tu perfil y realiza tus
-              postulaciones de manera sencilla. Sigue esta guía paso a paso
-              para aprovechar todas las herramientas disponibles.
+              Aprende a utilizar la plataforma, preparar tu perfil y dar
+              seguimiento a tus postulaciones. Encuentra aquí respuestas y
+              recomendaciones para avanzar con confianza.
+            </p>
+
+            <a className="help-hero-link" href="#guia">
+              Explorar la guía
+              <ArrowRight size={17} aria-hidden="true" />
+            </a>
+          </div>
+        </section>
+
+        <section
+          className="help-overview"
+          aria-label="Qué puedes hacer en FQA Empleos"
+        >
+          <div className="help-overview-heading">
+            <span className="help-section-label">
+              TU BÚSQUEDA, MÁS SENCILLA
+            </span>
+            <h2>Todo lo que necesitas para empezar</h2>
+            <p>
+              Desde una sola cuenta puedes preparar tu perfil y gestionar tu
+              búsqueda de empleo.
             </p>
           </div>
 
-          <div className="help-intro-decoration">
-            <HelpCircle size={110} strokeWidth={1.1} />
+          <div className="help-overview-grid">
+            <article className="help-overview-card">
+              <span className="help-overview-icon">
+                <UserRound size={22} />
+              </span>
+              <h3>Prepara tu perfil</h3>
+              <p>
+                Administra tus datos, formación, experiencia y hoja de vida.
+              </p>
+            </article>
+
+            <article className="help-overview-card">
+              <span className="help-overview-icon">
+                <BriefcaseBusiness size={22} />
+              </span>
+              <h3>Encuentra oportunidades</h3>
+              <p>
+                Explora ofertas y revisa los requisitos antes de aplicar.
+              </p>
+            </article>
+
+            <article className="help-overview-card">
+              <span className="help-overview-icon">
+                <ClipboardCheck size={22} />
+              </span>
+              <h3>Da seguimiento</h3>
+              <p>
+                Consulta tus postulaciones y mantente atento a las
+                notificaciones.
+              </p>
+            </article>
           </div>
         </section>
 
-        {/* =====================================================
-            QUICK SUMMARY
-        ===================================================== */}
-        <section className="help-summary">
-          <div className="help-summary-item">
-            <div className="help-summary-icon">
-              <UserPlus size={20} />
-            </div>
-            <div>
-              <strong>Crea tu perfil</strong>
-              <span>Regístrate y completa tus datos.</span>
-            </div>
-          </div>
-
-          <div className="help-summary-line" />
-
-          <div className="help-summary-item">
-            <div className="help-summary-icon">
-              <Search size={20} />
-            </div>
-            <div>
-              <strong>Encuentra oportunidades</strong>
-              <span>Busca ofertas según tu perfil.</span>
-            </div>
-          </div>
-
-          <div className="help-summary-line" />
-
-          <div className="help-summary-item">
-            <div className="help-summary-icon">
-              <CheckCircle2 size={20} />
-            </div>
-            <div>
-              <strong>Realiza tu postulación</strong>
-              <span>Completa el proceso y da seguimiento.</span>
-            </div>
-          </div>
-        </section>
-
-        {/* =====================================================
-            STEP BY STEP
-        ===================================================== */}
-        <section className="help-section">
+        <section className="help-section" id="guia">
           <div className="help-section-heading">
-            <span className="help-section-label">PASO A PASO</span>
+            <span className="help-section-label">GUÍA PASO A PASO</span>
             <h2>¿Cómo utilizar FQA Empleos?</h2>
             <p>
-              Sigue estos pasos para comenzar tu búsqueda de oportunidades
-              laborales.
+              Selecciona cada etapa para consultar recomendaciones prácticas.
+              No necesitas conocimientos técnicos: sigue las instrucciones de
+              cada sección de la plataforma.
             </p>
           </div>
 
           <div className="help-steps">
-            {helpSteps.map((step) => {
+            {steps.map((step) => {
               const Icon = step.icon;
+              const isExpanded = expandedStep === step.number;
 
               return (
-                <article className="help-step" key={step.number}>
-                  <div className="help-step-number">
-                    {String(step.number).padStart(2, "0")}
-                  </div>
-
-                  <div className="help-step-icon">
-                    <Icon size={22} strokeWidth={2} />
-                  </div>
-
-                  <div className="help-step-content">
-                    <span className="help-step-label">
-                      PASO {step.number}
+                <article
+                  className={`help-step ${
+                    isExpanded ? "help-step-expanded" : ""
+                  }`}
+                  key={step.number}
+                >
+                  <div className="help-step-topline">
+                    <span className="help-step-number">{step.number}</span>
+                    <span className="help-step-icon">
+                      <Icon size={22} />
                     </span>
-
-                    <h3>{step.title}</h3>
-
-                    <p>{step.description}</p>
                   </div>
+
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+
+                  <button
+                    type="button"
+                    className="help-step-toggle"
+                    aria-expanded={isExpanded}
+                    onClick={() =>
+                      setExpandedStep(
+                        isExpanded ? null : step.number,
+                      )
+                    }
+                  >
+                    {isExpanded
+                      ? "Mostrar menos"
+                      : "Ver recomendaciones"}
+                    <ChevronDown size={17} aria-hidden="true" />
+                  </button>
+
+                  {isExpanded && (
+                    <ul className="help-step-details">
+                      {step.details.map((detail) => (
+                        <li key={detail}>
+                          <CheckCircle2
+                            size={16}
+                            aria-hidden="true"
+                          />
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </article>
               );
             })}
           </div>
         </section>
 
-        {/* =====================================================
-            TIPS
-        ===================================================== */}
         <section className="help-tips-section">
           <div className="help-tips-heading">
             <span className="help-section-label">RECOMENDACIONES</span>
-            <h2>Consejos para mejorar tu búsqueda</h2>
+            <h2>Mejora tu búsqueda de empleo</h2>
             <p>
-              Pequeños detalles pueden ayudarte a presentar mejor tu perfil
-              profesional.
+              Pequeños hábitos pueden ayudarte a presentar mejor tu perfil.
             </p>
           </div>
 
           <div className="help-tips-grid">
             {tips.map((tip, index) => (
               <div className="help-tip-card" key={tip}>
-                <div className="help-tip-number">
+                <span className="help-tip-number">
                   {String(index + 1).padStart(2, "0")}
-                </div>
-
-                <div className="help-tip-check">
-                  <CheckCircle2 size={17} />
-                </div>
-
+                </span>
+                <CheckCircle2 size={19} aria-hidden="true" />
                 <p>{tip}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* =====================================================
-            FAQ
-        ===================================================== */}
-        <section className="help-section help-faq-section">
-          <div className="help-section-heading">
-            <span className="help-section-label">PREGUNTAS FRECUENTES</span>
-            <h2>Preguntas frecuentes</h2>
+        <section className="help-security">
+          <span className="help-security-icon">
+            <ShieldCheck size={25} />
+          </span>
+
+          <div>
+            <span className="help-section-label">
+              SEGURIDAD DE TU CUENTA
+            </span>
+            <h2>Protege tu información personal</h2>
             <p>
-              Encuentra respuestas rápidas a algunas de las consultas más
-              comunes.
+              No compartas tu contraseña ni códigos de acceso. Si utilizas un
+              equipo compartido, cierra sesión al terminar. Actualiza tus datos
+              únicamente desde los canales oficiales y desconfía de mensajes
+              que te soliciten contraseñas.
             </p>
-          </div>
-
-          <div className="help-faq-list">
-            {faqItems.map((item, index) => {
-              const isOpen = openFaq === index;
-
-              return (
-                <div
-                  className={`help-faq-item ${
-                    isOpen ? "help-faq-item-open" : ""
-                  }`}
-                  key={item.question}
-                >
-                  <button
-                    type="button"
-                    className="help-faq-question"
-                    onClick={() => handleFaq(index)}
-                    aria-expanded={isOpen}
-                  >
-                    <span>{item.question}</span>
-
-                    <span className="help-faq-chevron">
-                      <ChevronDown size={19} />
-                    </span>
-                  </button>
-
-                  <div
-                    className={`help-faq-answer ${
-                      isOpen ? "help-faq-answer-open" : ""
-                    }`}
-                  >
-                    <p>{item.answer}</p>
-                  </div>
-                </div>
-              );
-            })}
+            <p className="help-security-note">
+              El equipo de soporte no necesita que le compartas tu contraseña
+              para ayudarte con un problema.
+            </p>
           </div>
         </section>
 
-        {/* =====================================================
-            CONTACT
-        ===================================================== */}
-        <section className="help-contact-section">
-          <div className="help-contact-content">
+        <section
+          className="help-section help-faq-section"
+          id="preguntas"
+        >
+          <div className="help-section-heading">
+            <span className="help-section-label">
+              CENTRO DE RESPUESTAS
+            </span>
+            <h2>Preguntas frecuentes</h2>
+            <p>
+              Busca una consulta o abre una pregunta para leer su respuesta.
+            </p>
+          </div>
+
+          <label className="help-faq-search">
+            <Search size={19} aria-hidden="true" />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setOpenFaq(null);
+              }}
+              placeholder="Buscar una pregunta..."
+              aria-label="Buscar en preguntas frecuentes"
+            />
+          </label>
+
+          <div className="help-faq-list">
+            {filteredFaqs.length ? (
+              filteredFaqs.map((item) => {
+                const index = faqs.indexOf(item);
+                const isOpen = openFaq === index;
+
+                return (
+                  <article
+                    className={`help-faq-item ${
+                      isOpen ? "help-faq-item-open" : ""
+                    }`}
+                    key={item.question}
+                  >
+                    <button
+                      type="button"
+                      className="help-faq-question"
+                      onClick={() =>
+                        setOpenFaq(isOpen ? null : index)
+                      }
+                      aria-expanded={isOpen}
+                    >
+                      <span>{item.question}</span>
+                      <span className="help-faq-chevron">
+                        <ChevronDown
+                          size={19}
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="help-faq-answer">
+                        <p>{item.answer}</p>
+                      </div>
+                    )}
+                  </article>
+                );
+              })
+            ) : (
+              <div className="help-faq-empty">
+                <CircleHelp size={24} aria-hidden="true" />
+                <p>
+                  No encontramos preguntas relacionadas con “{searchTerm}”.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                >
+                  Ver todas las preguntas
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="help-contact-section" id="contacto">
+          <div className="help-contact-heading">
             <span className="help-section-label help-section-label-light">
               ¿NECESITAS MÁS AYUDA?
             </span>
-
             <h2>Estamos para ayudarte</h2>
-
             <p>
-              Si tienes dificultades con tu cuenta, perfil, hoja de vida o
-              proceso de postulación, puedes comunicarte con el equipo de
-              soporte de FQA Empleos.
+              Si después de consultar esta guía continúas teniendo
+              dificultades, comunícate con el equipo de soporte de FQA Empleos.
             </p>
           </div>
 
@@ -391,71 +500,78 @@ export default function Help({ navigateTo }: HelpProps) {
               href="mailto:soporte@fundacionqa.org"
               className="help-contact-card"
             >
-              <div className="help-contact-icon">
+              <span className="help-contact-icon">
                 <Mail size={21} />
-              </div>
-
-              <div>
+              </span>
+              <span className="help-contact-copy">
                 <span>Correo electrónico</span>
                 <strong>soporte@fundacionqa.org</strong>
-              </div>
+                <small>Escríbenos tu consulta</small>
+              </span>
+              <ArrowRight
+                className="help-contact-arrow"
+                size={17}
+              />
             </a>
 
-            <a href="tel:+50376234832" className="help-contact-card">
-              <div className="help-contact-icon">
+            <a
+              href="tel:+50376234832"
+              className="help-contact-card"
+            >
+              <span className="help-contact-icon">
                 <Phone size={21} />
-              </div>
-
-              <div>
+              </span>
+              <span className="help-contact-copy">
                 <span>Teléfono</span>
                 <strong>+503 7623-4832</strong>
-              </div>
+                <small>Llámanos para solicitar ayuda</small>
+              </span>
+              <ArrowRight
+                className="help-contact-arrow"
+                size={17}
+              />
             </a>
 
-            <div className="help-contact-card">
-              <div className="help-contact-icon">
+            <div className="help-contact-card help-contact-location">
+              <span className="help-contact-icon">
                 <MapPin size={21} />
-              </div>
-
-              <div>
+              </span>
+              <span className="help-contact-copy">
                 <span>Ubicación</span>
                 <strong>San Salvador, El Salvador</strong>
-              </div>
+                <small>
+                  Atención: lunes a viernes, 8:00 a. m. – 4:00 p. m.
+                </small>
+              </span>
             </div>
           </div>
 
-          <div className="help-contact-hours">
-            <span>Horario de atención</span>
-            <strong>Lunes a viernes · 8:00 a. m. – 4:00 p. m.</strong>
-          </div>
-        </section>
-
-        {/* =====================================================
-            SECURITY NOTICE
-        ===================================================== */}
-        <section className="help-security">
-          <div className="help-security-icon">
-            <HelpCircle size={21} />
-          </div>
-
-          <div>
-            <h3>Protege tu información</h3>
-            <p>
-              Nunca compartas tu contraseña ni códigos de acceso. Mantén tus
-              datos personales protegidos y utiliza únicamente los canales
-              oficiales para solicitar asistencia.
-            </p>
+          <div className="help-contact-footnote">
+            <LockKeyhole size={17} aria-hidden="true" />
+            <span>
+              Para agilizar la atención, indica qué intentabas hacer, en qué
+              sección ocurrió el problema y qué mensaje apareció. No incluyas
+              contraseñas ni códigos de acceso.
+            </span>
           </div>
         </section>
       </main>
 
-      {/* =====================================================
-          FOOTER
-      ===================================================== */}
       <footer className="help-footer">
         <div className="help-footer-inner">
-          <span>FQA Empleos</span>
+          <div className="help-footer-brand">
+            <span className="help-footer-mark">
+              <CircleHelp size={18} />
+            </span>
+            <strong>FQA Empleos</strong>
+          </div>
+
           <span>Conectando personas con oportunidades.</span>
+
+          <a href="#inicio">
+            Volver arriba
+            <ArrowRight size={15} aria-hidden="true" />
+          </a>
         </div>
       </footer>
     </div>

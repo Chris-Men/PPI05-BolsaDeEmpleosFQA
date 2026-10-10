@@ -29,14 +29,6 @@ export default function JobDetail({
             <div className="dh-badges">
               <span className="dh-badge">📚 {selectedJob.area}</span>
               <span className="dh-badge">⏱ {selectedJob.type}</span>
-              <span className="dh-badge">👁 {selectedJob.views} visualizaciones</span>
-            </div>
-            <div className="compat-wrap">
-              <div className="compat-lbl">Compatibilidad con tu perfil</div>
-              <div className="compat-track-d">
-                <div className="compat-fill-d" style={{ width: `${selectedJob.compat}%` }}></div>
-              </div>
-              <div className="compat-pct-d">{selectedJob.compat}% de compatibilidad estimada</div>
             </div>
           </div>
         </div>
@@ -55,7 +47,7 @@ export default function JobDetail({
             <p>{selectedJob.desc}</p>
           </div>
 
-          {selectedJob.responsibilities && (
+          {selectedJob.responsibilities.length > 0 && (
             <div className="d-sec">
               <p className="d-sec-t">Responsabilidades principales</p>
               <ul className="d-list">
@@ -64,7 +56,7 @@ export default function JobDetail({
             </div>
           )}
 
-          {selectedJob.requirements && (
+          {selectedJob.requirements.length > 0 && (
             <div className="d-sec">
               <p className="d-sec-t">Perfil requerido</p>
               <ul className="d-list">
@@ -73,7 +65,7 @@ export default function JobDetail({
             </div>
           )}
 
-          {selectedJob.offers && (
+          {selectedJob.offers.length > 0 && (
             <div className="d-sec">
               <p className="d-sec-t">Lo que ofrecemos</p>
               <ul className="d-list">
@@ -90,7 +82,7 @@ export default function JobDetail({
               <div className="mrow"><span className="ml">Salario</span><span className="mv">{selectedJob.salary}</span></div>
               <div className="mrow"><span className="ml">Jornada</span><span className="mv">{selectedJob.type}</span></div>
               <div className="mrow"><span className="ml">Ubicación</span><span className="mv">{selectedJob.location}</span></div>
-              <div className="mrow"><span className="ml">Sector</span><span className="mv">{selectedJob.area} / ONG</span></div>
+              <div className="mrow"><span className="ml">Sector</span><span className="mv">{selectedJob.area}</span></div>
               <button className="ds-apply" onClick={() => { setFormStep(1); navigateTo('form'); }}>Aplicar ahora →</button>
             </div>
           </div>

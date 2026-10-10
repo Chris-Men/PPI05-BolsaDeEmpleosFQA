@@ -1,38 +1,41 @@
 import type {
   StateSetter, StudentOpportunityType, StudentSpot,
 } from '../types/models';
+import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
 
 interface StudentsProps {
+  listingControls: OpportunityListingControls;
   studentSpots: StudentSpot[];
   studentApps: number[];
   activeStudentTab: StudentOpportunityType;
   setActiveStudentTab: StateSetter<StudentOpportunityType>;
   handleStudentApplyClick: (spot: StudentSpot) => void;
+  onView: (key: string) => void;
 }
 
-/** Student volunteering and internship opportunities. */
+/** Student tabs and cards retain their layout with shared filters below the banner. */
 export default function Students({
-  studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
-  handleStudentApplyClick,
+  listingControls, studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
+  handleStudentApplyClick, onView,
 }: StudentsProps) {
   const filteredSpots = studentSpots.filter(
     spot => spot.tipo === activeStudentTab
   );
 
   return (
-    <div className="screen">
+    <div className="screen opportunity-screen">
 
       {/* HERO */}
       <div className="v-hero">
         <h1>Oportunidades para Estudiantes</h1>
         <p>
-          Encuentra oportunidades de voluntariado y prácticas profesionales
+          Encuentra oportunidades de horas sociales y prácticas profesionales
           para desarrollar tu experiencia y contribuir al desarrollo social.
         </p>
       </div>
 
       {/* TABS */}
-      <div style={{ padding: '24px 48px 0' }}>
+      <div className="student-listing-tabs">
         <div className="panel-tabs">
           <button
             className={`panel-tab ${
@@ -40,7 +43,7 @@ export default function Students({
             }`}
             onClick={() => setActiveStudentTab('social')}
           >
-            🤝 Voluntariado Social
+            🤝 Horas Sociales
           </button>
 
           <button
@@ -55,7 +58,7 @@ export default function Students({
       </div>
 
       {/* DESCRIPCIÓN */}
-      <div style={{ padding: '0 48px' }}>
+      <div className="student-listing-description">
         {activeStudentTab === 'social' ? (
           <div>
             <h2
@@ -66,7 +69,7 @@ export default function Students({
                 marginBottom: '6px'
               }}
             >
-              Voluntariado Social
+              Horas Sociales
             </h2>
 
             <p
@@ -108,6 +111,7 @@ export default function Students({
       </div>
 
       {/* TARJETAS */}
+      <OpportunityListingLayout controls={listingControls}>
       <div className="volunteer-grid">
 
         {filteredSpots.map(spot => {
@@ -122,7 +126,7 @@ export default function Students({
               {/* CUPOS / TIPO */}
               <div className="vol-slots">
                 {spot.tipo === 'social'
-                  ? '🤝 Voluntariado disponible'
+                  ? '🤝 Horas sociales disponibles'
                   : '🎓 Práctica disponible'}
               </div>
 
@@ -176,6 +180,7 @@ export default function Students({
               </div>
 
               {/* POSTULACIÓN */}
+              <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
               <button
                 className="btn-vol-apply"
                 onClick={() => handleStudentApplyClick(spot)}
@@ -192,30 +197,7 @@ export default function Students({
         })}
 
       </div>
-
-      {/* SIN RESULTADOS */}
-      {filteredSpots.length === 0 && (
-        <div
-          style={{
-            padding: '50px',
-            textAlign: 'center',
-            color: 'var(--c400)'
-          }}
-        >
-          <h3
-            style={{
-              color: 'var(--gd)',
-              marginBottom: '8px'
-            }}
-          >
-            No hay oportunidades disponibles
-          </h3>
-
-          <p>
-            Actualmente no existen oportunidades en esta categoría.
-          </p>
-        </div>
-      )}
+      </OpportunityListingLayout>
 
     </div>
   );

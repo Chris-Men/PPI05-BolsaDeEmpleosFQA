@@ -1,4 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useOpportunityListing, useOpportunityCatalogs, useHomeStatistics } from './hooks/useOpportunities';
+import { getOpportunity } from './services/opportunityService';
+import { opportunityToJob, opportunityToVolunteer, opportunityToStudent } from './utils/opportunityPresentation';
+import type { OpportunityKind } from './types/opportunity';
+import type { Opportunity } from './types/opportunity';
+import { OpportunityDetailsDialog } from './components/OpportunityDetailsDialog';
+import type { OpportunityListingControls } from './components/OpportunityListingLayout';
+import './styles/admin/vacancies.css';
 import type {
     ApplicationTarget,
     CandidateApplication,
@@ -41,272 +49,6 @@ import Navbar from './components/users/navbar';
 
 // ============================================================
 // DATOS INICIALES
-// ============================================================
-
-const initialJobsData: Job[] = [
-    {
-        id: 1,
-        title: 'Coordinadora de Programas Educativos',
-        org: 'Fundación Quintanilla Amaya',
-        location: 'San Salvador',
-        area: 'Educación',
-        type: 'Tiempo completo',
-        salary: '$650–$800/mes',
-        date: 'Hace 2 días',
-        closing: 'Cierra en 5 días',
-        isFqa: true,
-        isNew: true,
-        views: 84,
-        compat: 82,
-        desc: 'Buscamos una persona apasionada por la educación transformadora que lidere la planificación y ejecución de nuestros programas de refuerzo educativo en comunidades vulnerables de San Salvador.',
-        responsibilities: [
-            'Diseñar y coordinar los planes curriculares del Eje de Educación.',
-            'Supervisar y acompañar a un equipo de 8 facilitadores en campo.',
-            'Elaborar reportes de impacto mensuales y semestrales para donantes.',
-            'Gestionar alianzas con escuelas públicas, MINED y cooperantes.'
-        ],
-        requirements: [
-            'Licenciatura en Ciencias de la Educación, Trabajo Social o afines.',
-            'Mínimo 2 años de experiencia en gestión de proyectos sociales.',
-            'Disponibilidad para realizar trabajo de campo un 50% del tiempo.'
-        ],
-        offers: [
-            'Salario de $650 a $800 mensuales según experiencia.',
-            'Prestaciones de ley completas (ISSS, AFP, aguinaldo).',
-            'Viáticos de transporte para visitas de campo.'
-        ]
-    },
-
-    {
-        id: 2,
-        title: 'Trabajadora Social Comunitaria',
-        org: 'CARITAS El Salvador',
-        location: 'Mejicanos',
-        area: 'Bienestar Social',
-        type: 'Tiempo completo',
-        salary: '$550–$680/mes',
-        date: 'Hace 4 días',
-        isHot: true,
-        views: 120,
-        compat: 75,
-        desc: 'Buscamos un/a profesional de Trabajo Social capacitado para integrarse a nuestro equipo comunitario de apoyo familiar en la zona norte de San Salvador.',
-        responsibilities: [
-            'Realizar visitas domiciliarias y estudios socioeconómicos de familias.',
-            'Coordinar la entrega de insumos de ayuda humanitaria.',
-            'Facilitar talleres de integración y dinámicas comunitarias.'
-        ],
-        requirements: [
-            'Graduado/a de Licenciatura en Trabajo Social.',
-            'Experiencia mínima de 1 año en trabajo de campo directo.',
-            'Excelentes relaciones interpersonales y empatía.'
-        ],
-        offers: [
-            'Salario base de $550 a $680/mes.',
-            'Estabilidad laboral y capacitaciones de desarrollo profesional.'
-        ]
-    },
-
-    {
-        id: 3,
-        title: 'Especialista en Salud Comunitaria',
-        org: 'Cruz Roja Salvadoreña',
-        location: 'San Miguel',
-        area: 'Salud',
-        type: 'Contrato',
-        salary: '$500–$620/mes',
-        date: 'Hace 1 semana',
-        isUrgent: true,
-        closing: 'Cierra en 3 días',
-        views: 92,
-        compat: 60,
-        desc: 'Lidera las campañas de atención de salud primaria y prevención sanitaria preventiva en comunidades de la región oriental de El Salvador.',
-        responsibilities: [
-            'Coordinar brigadas médicas móviles en zonas rurales.',
-            'Impartir charlas sobre prevención de enfermedades vectoriales.',
-            'Mantener inventarios y solicitudes de medicamentos básicos.'
-        ],
-        requirements: [
-            'Licenciatura en Enfermería, Salud Pública o afines.',
-            'Experiencia de campo en clínicas rurales u ONGs.',
-            'Residencia en la zona oriental o disponibilidad para traslado.'
-        ],
-        offers: [
-            'Contrato por proyecto de 10 meses con opción a renovación.',
-            'Salario competitivo y seguro de vida.'
-        ]
-    },
-
-    {
-        id: 4,
-        title: 'Promotor/a Ambiental de Campo',
-        org: 'Fundación PIES',
-        location: 'Santa Ana',
-        area: 'Medio Ambiente',
-        type: 'Medio tiempo',
-        salary: '$320–$380/mes',
-        date: 'Hace 3 días',
-        views: 45,
-        compat: 90,
-        desc: 'Participa de forma proactiva en el despliegue del proyecto regional de reforestación y conservación de cuencas hidrográficas en Santa Ana.',
-        responsibilities: [
-            'Sensibilizar a los agricultores en técnicas de agricultura sostenible.',
-            'Coordinar campañas de reforestación comunitaria.',
-            'Monitorear la calidad de las cuencas locales.'
-        ],
-        requirements: [
-            'Estudios universitarios en Agronomía, Biología o afines.',
-            'Facilidad para comunicarse con poblaciones rurales.',
-            'Amor por la ecología y el trabajo al aire libre.'
-        ],
-        offers: [
-            'Plaza de medio tiempo (20 horas semanales flexibles).',
-            'Oportunidad de desarrollo y crecimiento técnico.'
-        ]
-    },
-
-    {
-        id: 5,
-        title: 'Oficial de Comunicaciones',
-        org: 'World Vision El Salvador',
-        location: 'Remoto',
-        area: 'Medio Ambiente',
-        type: 'Remoto',
-        salary: '$700–$900/mes',
-        date: 'Hoy',
-        isNew: true,
-        views: 110,
-        compat: 70,
-        desc: 'Buscamos un comunicador creativo que cree contenido atractivo y gestione las redes de nuestra organización.',
-        responsibilities: [
-            'Diseñar estrategias de contenido para redes sociales y boletines.',
-            'Redactar e ilustrar historias de éxito.',
-            'Coordinar ruedas de prensa.'
-        ],
-        requirements: [
-            'Licenciatura en Periodismo, Comunicaciones o Mercadeo.',
-            'Excelente ortografía y redacción.',
-            'Portafolio de diseño o fotografía.'
-        ],
-        offers: [
-            'Modalidad 100% remota.',
-            'Salario atractivo de $700 a $900 mensuales.'
-        ]
-    },
-
-    {
-        id: 6,
-        title: 'Coordinador de Autonomía Económica',
-        org: 'Habitat for Humanity',
-        location: 'Soyapango',
-        area: 'Autonomía Económica',
-        type: 'Tiempo completo',
-        salary: '$580–$720/mes',
-        date: 'Hace 5 días',
-        views: 74,
-        compat: 65,
-        desc: 'Lidera las iniciativas comunitarias orientadas al emprendimiento local y la capacitación financiera técnica.',
-        responsibilities: [
-            'Impartir talleres de educación financiera.',
-            'Asesorar y evaluar la entrega de microcréditos.',
-            'Organizar ferias de emprendimiento.'
-        ],
-        requirements: [
-            'Licenciatura en Administración de Empresas, Economía o afines.',
-            'Experiencia capacitando grupos comunitarios.',
-            'Conocimientos sólidos en microfinanzas.'
-        ],
-        offers: [
-            'Estabilidad laboral completa.',
-            'Salario competitivo más bonificaciones.'
-        ]
-    }
-];
-
-
-const initialVolunteersData: VolunteerSpot[] = [
-    {
-        id: 1,
-        title: 'Tutor de Refuerzo Educativo',
-        org: 'Fundación Quintanilla Amaya',
-        slots: 4,
-        location: 'San Salvador',
-        area: 'Educación',
-        desc: 'Apoyo escolar presencial a niños y niñas.',
-        orgInfo:
-            'La Fundación Quintanilla Amaya desarrolla programas de educación y salud.',
-        contact: '+503 7623-4832'
-    },
-
-    {
-        id: 2,
-        title: 'Asistente Médico de Campaña',
-        org: 'Cruz Roja Salvadoreña',
-        slots: 2,
-        location: 'San Miguel',
-        area: 'Salud',
-        desc: 'Apoyo logístico en jornadas comunitarias.',
-        orgInfo:
-            'Organización humanitaria dedicada a brindar salud comunitaria.',
-        contact: '+503 2239-4900'
-    },
-
-    {
-        id: 3,
-        title: 'Promotor de Reciclaje Urbano',
-        org: 'Fundación PIES',
-        slots: 5,
-        location: 'Santa Ana',
-        area: 'Medio Ambiente',
-        desc: 'Visitas de sensibilización sobre reciclaje.',
-        orgInfo:
-            'ONG enfocada en proyectos de resiliencia ecológica.',
-        contact: '+503 2441-1022'
-    },
-
-    {
-        id: 4,
-        title: 'Facilitador de Talleres Técnicos',
-        org: 'CARITAS El Salvador',
-        slots: 3,
-        location: 'Mejicanos',
-        area: 'Autonomía Económica',
-        desc: 'Colabora dictando talleres técnicos.',
-        orgInfo:
-            'Institución dedicada al desarrollo social.',
-        contact: '+503 2225-1033'
-    }
-];
-
-
-const initialStudentSpotsData: StudentSpot[] = [
-    {
-        id: 1,
-        tipo: 'social',
-        title: 'Voluntariado en Refuerzo Escolar',
-        org: 'Fundación Quintanilla Amaya',
-        location: 'San Salvador',
-        area: 'Educación',
-        desc: 'Apoya sesiones de refuerzo escolar para niños de comunidades vulnerables.',
-        horas: 40,
-        contact: '+503 7623-4832'
-    },
-
-    {
-        id: 2,
-        tipo: 'practica',
-        title: 'Práctica en Trabajo Social',
-        org: 'CARITAS El Salvador',
-        location: 'Mejicanos',
-        area: 'Bienestar Social',
-        desc: 'Acompaña visitas domiciliarias y estudios socioeconómicos como parte de tu práctica profesional.',
-        duracion: '3 meses',
-        contact: '+503 2225-1033'
-    }
-];
-
-
-// ============================================================
-// APP
 // ============================================================
 
 /** Remounts account-scoped demo state whenever the real identity changes. */
@@ -422,13 +164,7 @@ function PublicApp() {
     // DATOS
     // ==========================================================
 
-    const jobs = initialJobsData;
 
-    const volunteerSpots =
-        initialVolunteersData;
-
-    const studentSpots =
-        initialStudentSpotsData;
 
 
     const [savedJobs, setSavedJobs] =
@@ -466,13 +202,13 @@ function PublicApp() {
     // ==========================================================
 
     const [selectedJob, setSelectedJob] =
-        useState<Job>(
-            initialJobsData[0]
-        );
+        useState<Job | null>(null);
+    const [detailError, setDetailError] = useState('');
+    const detailRequest = useRef(0);
+    useEffect(() => () => { detailRequest.current += 1; }, []);
 
 
-    const [selectedOrg, setSelectedOrg] =
-        useState<VolunteerSpot | null>(null);
+
 
 
     const [volSuccessContact, setVolSuccessContact] =
@@ -525,6 +261,34 @@ function PublicApp() {
 
     const [maxSalary, setMaxSalary] =
         useState(1500);
+    const dictionaries = useOpportunityCatalogs();
+    const [publicDetail, setPublicDetail] = useState<Opportunity | null>(null);
+    const [publicDetailError, setPublicDetailError] = useState('');
+    const [publicDetailLoading, setPublicDetailLoading] = useState(false);
+    const publicDetailRequest = useRef(0);
+    useEffect(() => () => { publicDetailRequest.current += 1; }, []);
+    const viewOpportunity = (key: string): void => {
+        const requestId = ++publicDetailRequest.current;
+        setPublicDetailError(''); setPublicDetailLoading(true);
+        void getOpportunity(key).then((value) => { if (publicDetailRequest.current === requestId) setPublicDetail(value); })
+            .catch((failure: unknown) => { if (publicDetailRequest.current === requestId) setPublicDetailError(failure instanceof Error ? failure.message : 'La oportunidad no está disponible.'); })
+            .finally(() => { if (publicDetailRequest.current === requestId) setPublicDetailLoading(false); });
+    };
+    const kind: OpportunityKind = screen === 'volunteers' ? 'VOLUNTEER' : screen === 'students' ? (activeStudentTab === 'social' ? 'SOCIAL_HOURS' : 'INTERNSHIP') : 'EMPLOYMENT';
+    const filterIdentity = JSON.stringify([kind, searchQuery, searchLocation, selectedArea, maxSalary]);
+    const [pagination, setPagination] = useState({ identity: '', page: 1 });
+    const publicPage = pagination.identity === filterIdentity ? pagination.page : 1;
+    const category = dictionaries.catalogs?.categories.find((item) => item.name === selectedArea);
+    const listing = useOpportunityListing({ kind, page: publicPage, pageSize: 20,
+        search: searchQuery || undefined, location: ['Todo el país', 'Remoto'].includes(searchLocation) ? undefined : searchLocation,
+        modality: searchLocation === 'Remoto' ? 'REMOTE' : undefined,
+        categoryId: category?.id, salaryMax: kind === 'EMPLOYMENT' && maxSalary < 1500 ? maxSalary : undefined,
+    }, screen !== 'home');
+    const homeListing = useOpportunityListing({ kind: 'EMPLOYMENT', page: 1, pageSize: 6 }, screen === 'home');
+    const homeStatistics = useHomeStatistics(screen === 'home');
+    const jobs = (screen === 'home' ? homeListing.page.items : listing.page.items).filter((item) => item.kind === 'EMPLOYMENT').map(opportunityToJob);
+    const volunteerSpots = listing.page.items.filter((item) => item.kind === 'VOLUNTEER').map(opportunityToVolunteer);
+    const studentSpots = listing.page.items.filter((item) => item.kind === 'SOCIAL_HOURS' || item.kind === 'INTERNSHIP').map(opportunityToStudent);
 
 
     // ==========================================================
@@ -596,6 +360,8 @@ function PublicApp() {
         data: Job | null = null
     ) => {
 
+        const requestId = ++detailRequest.current;
+        publicDetailRequest.current += 1; setPublicDetail(null); setPublicDetailLoading(false); setPublicDetailError('');
         if (nextScreen === 'form') {
             setFormInitialized(false);
         }
@@ -613,7 +379,15 @@ function PublicApp() {
             data &&
             nextScreen === 'detail'
         ) {
-            setSelectedJob(data);
+            setSelectedJob(null); setDetailError('');
+            if (data.opportunityKey) {
+                void getOpportunity(data.opportunityKey).then((value) => {
+                    if (detailRequest.current !== requestId) return;
+                    const fresh = opportunityToJob(value); setSelectedJob(fresh); setApplyFlowTarget(fresh);
+                }).catch((failure: unknown) => {
+                    if (detailRequest.current === requestId) setDetailError(failure instanceof Error ? failure.message : 'La vacante no está disponible.');
+                });
+            }
             setApplyFlowType('job');
             setApplyFlowTarget(data);
         }
@@ -627,6 +401,7 @@ function PublicApp() {
 
 
     const goBack = () => {
+        detailRequest.current += 1;
 
         if (screenHistory.length > 0) {
 
@@ -660,6 +435,16 @@ function PublicApp() {
         setToastMsg(msg);
         setToastShow(true);
 
+    };
+
+    /** Commits Home's draft filters only when navigating to employment results. */
+    const searchFromHome = (query: string, location: string, area = 'Todos'): void => {
+        setSearchQuery(query.trim());
+        setSearchLocation(location);
+        setSelectedArea(area);
+        setMaxSalary(1500);
+        setPagination({ identity: '', page: 1 });
+        navigateTo('jobs');
     };
 
 
@@ -917,43 +702,32 @@ function PublicApp() {
     // FILTROS
     // ==========================================================
 
-    const filteredJobs =
-        jobs.filter(job => {
-
-            const query =
-                searchQuery.toLowerCase();
-
-
-            const matchQuery =
-                job.title
-                    .toLowerCase()
-                    .includes(query) ||
-                job.org
-                    .toLowerCase()
-                    .includes(query);
-
-
-            const matchLoc =
-                searchLocation ===
-                    'Todo el país'
-                    ? true
-                    : job.location ===
-                    searchLocation;
-
-
-            const matchArea =
-                selectedArea === 'Todos'
-                    ? true
-                    : job.area ===
-                    selectedArea;
-
-
-            return (
-                matchQuery &&
-                matchLoc &&
-                matchArea
-            );
-        });
+    const filteredJobs = jobs;
+    const listingControls: OpportunityListingControls = {
+        categories: dictionaries.catalogs?.categories.map((item) => item.name) ?? [],
+        searchQuery,
+        onSearchChange: setSearchQuery,
+        searchLocation,
+        onLocationChange: setSearchLocation,
+        selectedArea,
+        onAreaChange: setSelectedArea,
+        onClear: () => {
+            setSearchQuery('');
+            setSearchLocation('Todo el país');
+            setSelectedArea('Todos');
+            setMaxSalary(1500);
+            showToast('Filtros reiniciados');
+        },
+        total: listing.page.total,
+        page: publicPage,
+        pageSize: listing.page.pageSize,
+        onPageChange: (page) => setPagination({ identity: filterIdentity, page }),
+        loading: listing.loading,
+        error: listing.error,
+        catalogError: dictionaries.error,
+        onRetry: listing.reload,
+        onRetryCatalogs: dictionaries.reload,
+    };
 
 
     // ==========================================================
@@ -1259,6 +1033,10 @@ function PublicApp() {
             ====================================================== */}
 
             <div className="screen-container">
+                {screen === 'detail' && !selectedJob && <div className="vacancy-status"><p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando vacante…'}</p>{detailError && <button type="button" onClick={() => navigateTo('jobs')}>Volver a las vacantes</button>}</div>}
+                {publicDetailLoading && <p className="vacancy-status" role="status">Cargando oportunidad…</p>}
+                {publicDetailError && <p className="vacancy-status" role="alert">{publicDetailError}</p>}
+                {publicDetail && <OpportunityDetailsDialog opportunity={publicDetail} onClose={() => setPublicDetail(null)} />}
 
 
                 {/* ==================================================
@@ -1267,7 +1045,14 @@ function PublicApp() {
 
                 {screen === 'home' && (
 
-                    <Home
+                    <Home categories={dictionaries.catalogs?.categories.map((item) => item.name) ?? []} total={homeListing.page.total}
+                        statistics={homeStatistics.statistics}
+                        statisticsError={homeStatistics.error}
+                        onRetryStatistics={homeStatistics.reload}
+                        listingLoading={homeListing.loading}
+                        listingError={homeListing.error}
+                        onRetryListing={homeListing.reload}
+                        onSearch={searchFromHome}
                         jobs={jobs}
                         savedJobs={savedJobs}
                         toggleSaveJob={
@@ -1282,21 +1067,6 @@ function PublicApp() {
                         setQvOpen={
                             setQvOpen
                         }
-                        searchQuery={
-                            searchQuery
-                        }
-                        setSearchQuery={
-                            setSearchQuery
-                        }
-                        searchLocation={
-                            searchLocation
-                        }
-                        setSearchLocation={
-                            setSearchLocation
-                        }
-                        setSelectedArea={
-                            setSelectedArea
-                        }
                     />
 
                 )}
@@ -1308,7 +1078,7 @@ function PublicApp() {
 
                 {screen === 'jobs' && (
 
-                    <JobsListing
+                    <JobsListing listingControls={listingControls}
                         filteredJobs={
                             filteredJobs
                         }
@@ -1324,26 +1094,11 @@ function PublicApp() {
                         setQvOpen={
                             setQvOpen
                         }
-                        searchQuery={
-                            searchQuery
-                        }
-                        setSearchQuery={
-                            setSearchQuery
-                        }
-                        selectedArea={
-                            selectedArea
-                        }
-                        setSelectedArea={
-                            setSelectedArea
-                        }
                         maxSalary={
                             maxSalary
                         }
                         setMaxSalary={
                             setMaxSalary
-                        }
-                        showToast={
-                            showToast
                         }
                     />
 
@@ -1354,7 +1109,7 @@ function PublicApp() {
                     DETALLE
                 ================================================== */}
 
-                {screen === 'detail' && (
+                {screen === 'detail' && selectedJob && (
 
                     <JobDetail
                         selectedJob={
@@ -1431,15 +1186,14 @@ function PublicApp() {
                 {screen === 'volunteers' && (
 
                     <Volunteers
+                        listingControls={listingControls}
                         volunteerSpots={
                             volunteerSpots
                         }
                         volunteerApps={
                             volunteerApps
                         }
-                        setSelectedOrg={
-                            setSelectedOrg
-                        }
+                        onView={viewOpportunity}
                         handleVolunteerApplyClick={
                             handleVolunteerApplyClick
                         }
@@ -1454,7 +1208,7 @@ function PublicApp() {
 
                 {screen === 'students' && (
 
-                    <Students
+                    <Students onView={viewOpportunity} listingControls={listingControls}
                         studentSpots={
                             studentSpots
                         }
@@ -1673,103 +1427,6 @@ function PublicApp() {
 
             {/* ======================================================
                 ORGANIZACIÓN DE VOLUNTARIADO
-            ====================================================== */}
-
-            {selectedOrg && (
-
-                <div
-                    className="modal-overlay"
-                    onClick={() =>
-                        setSelectedOrg(
-                            null
-                        )
-                    }
-                >
-
-                    <div
-                        className="modal-content"
-                        onClick={e =>
-                            e.stopPropagation()
-                        }
-                    >
-
-                        <h3>
-                            Sobre{' '}
-                            {selectedOrg.org}
-                        </h3>
-
-
-                        <p
-                            style={{
-                                fontStyle:
-                                    'italic',
-                                color:
-                                    'var(--c500)'
-                            }}
-                        >
-                            Eje de impacto:{' '}
-                            {selectedOrg.area}
-                        </p>
-
-
-                        <p
-                            style={{
-                                marginTop:
-                                    '10px',
-                                fontSize:
-                                    '13.5px',
-                                color:
-                                    'var(--c700)'
-                            }}
-                        >
-                            {selectedOrg.orgInfo}
-                        </p>
-
-
-                        <p
-                            style={{
-                                marginTop:
-                                    '10px',
-                                fontSize:
-                                    '12px',
-                                color:
-                                    'var(--c400)'
-                            }}
-                        >
-
-                            <strong>
-                                Ubicación de cobertura:
-                            </strong>{' '}
-
-                            {selectedOrg.location}
-
-                        </p>
-
-
-                        <div className="modal-actions">
-
-                            <button
-                                className="modal-btn-confirm"
-                                onClick={() =>
-                                    setSelectedOrg(
-                                        null
-                                    )
-                                }
-                            >
-                                Cerrar
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            )}
-
-
-            {/* ======================================================
-                POSTULACIÓN EXITOSA
             ====================================================== */}
 
             {volSuccessContact && (

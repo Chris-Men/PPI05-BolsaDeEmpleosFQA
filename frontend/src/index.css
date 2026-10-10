@@ -616,6 +616,7 @@ a {
 
 .hero-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 52px;
   margin-top: 40px;
 }
@@ -636,6 +637,58 @@ a {
   letter-spacing: .12em;
   margin-top: 5px;
   display: block;
+}
+
+.home-statistics-error {
+  margin-top: 16px;
+  color: var(--w);
+  font-size: 13px;
+}
+
+.home-listing-message {
+  grid-column: 1 / -1;
+  color: var(--c500);
+  font-size: 13px;
+}
+
+.home-statistics-error button,
+.home-listing-message button {
+  border: none;
+  background: none;
+  color: var(--g);
+  font: inherit;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .hero-search {
+    flex-wrap: wrap;
+  }
+
+  .hero-search input {
+    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-search select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-vdiv {
+    display: none;
+  }
+
+  .hero-search-btn {
+    padding: 16px 20px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
 }
 
 /* TRUST STRIP */
@@ -1322,6 +1375,180 @@ a {
 .res-info strong {
   color: var(--g);
   font-weight: 700;
+}
+
+/* Public opportunity pages share the original employment filters and search bar. */
+.opportunity-listing .l-main {
+  min-width: 0;
+  overflow: visible;
+}
+
+.opportunity-listing .l-topbar {
+  position: static;
+}
+
+.opportunity-listing .fg-lbl {
+  display: block;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--c100);
+  border-radius: var(--rad-sm);
+  background: var(--c50);
+  color: var(--c700);
+  font-size: 12.5px;
+  transition: border-color var(--trans);
+}
+
+.filter-input:focus {
+  border-color: var(--g);
+  background: var(--w);
+}
+
+.filter-input::placeholder {
+  color: var(--c400);
+}
+
+.opportunity-listing .srch-inline,
+.opportunity-listing .srch-inline input {
+  min-width: 0;
+}
+
+.opportunity-listing .srch-inline input {
+  width: 100%;
+}
+
+.opportunity-listing .volunteer-grid {
+  padding: 26px;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+
+.opportunity-listing-status {
+  padding: 24px 26px;
+  color: var(--c500);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.opportunity-listing-status [role=alert] {
+  color: #9e2525;
+}
+
+.opportunity-listing-status button {
+  margin-left: 8px;
+  border: none;
+  background: none;
+  color: var(--g2);
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.opportunity-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 26px;
+  border-top: 1px solid var(--c100);
+  color: var(--c500);
+  font-size: 12.5px;
+}
+
+.opportunity-pagination-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.opportunity-pagination button {
+  padding: 8px 14px;
+  border: 1.5px solid var(--c100);
+  border-radius: var(--rad-sm);
+  background: var(--w);
+  color: var(--c600);
+  font-size: 12px;
+  font-weight: 600;
+  transition: border-color var(--trans), color var(--trans);
+}
+
+.opportunity-pagination button:hover:not(:disabled) {
+  border-color: var(--g);
+  color: var(--g2);
+}
+
+.opportunity-pagination button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.student-listing-tabs {
+  padding: 24px 48px 0;
+}
+
+.student-listing-description {
+  padding: 0 48px 24px;
+}
+
+@media (max-width: 768px) {
+  .opportunity-listing .l-aside {
+    max-height: none;
+  }
+
+  .opportunity-screen > .v-hero {
+    padding: 32px 20px;
+  }
+
+  .opportunity-screen > .v-hero h1 {
+    font-size: 28px;
+  }
+
+  .opportunity-listing .l-topbar,
+  .opportunity-listing-status,
+  .opportunity-pagination {
+    padding: 16px 18px;
+  }
+
+  .opportunity-listing .volunteer-grid {
+    padding: 20px 18px;
+  }
+
+  .student-listing-tabs {
+    padding: 20px 18px 0;
+  }
+
+  .student-listing-description {
+    padding: 0 18px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .opportunity-listing .srch-inline {
+    flex-basis: 100%;
+  }
+
+  .opportunity-listing .jobs-lv {
+    padding: 20px 18px;
+  }
+
+  .opportunity-listing .jrow {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .opportunity-listing .jr-info {
+    min-width: 0;
+  }
+
+  .opportunity-listing .jr-right {
+    grid-column: 2;
+    text-align: left;
+  }
 }
 
 .vtoggle {
