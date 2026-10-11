@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useApplicationStatistics } from '../../hooks/useApplications';
+import { useAuth } from '../../hooks/useAuth';
+import { canManageApplications } from '../../utils/applicationManagement';
+import { APPLICATION_LABELS } from '../../types/application';
 
 interface StatisticsJob {
     createdAt?: string;
@@ -10,24 +14,15 @@ interface StatisticsJob {
     estado?: string;
 }
 
-interface StatisticsApplication {
-    createdAt?: string;
-    fecha?: string;
-    status?: string;
-    estado?: string;
-}
-
 interface StatisticsProps {
     jobs?: StatisticsJob[];
-    applications?: StatisticsApplication[];
 }
 
 import "../../styles/admin/estadisticas.css";
 
-/** Preserved statistics dashboard using local data. */
+/** Application metrics and state distribution use server aggregates for the selected period. */
 function Estadisticas({
     jobs = [],
-    applications = [],
 }: StatisticsProps) {
     // =====================================================
     // ESTADOS
@@ -53,7 +48,14 @@ function Estadisticas({
 
     const organizacionesBase = 18;
 
-    const postulantesBase = 96;
+    const { session } = useAuth();
+    const from = useMemo(() => {
+        const date = new Date();
+        if (periodo === 'Este año') date.setMonth(0, 1);
+        else date.setDate(date.getDate() - (periodo === 'Últimos 90 días' ? 90 : 30));
+        return date.toISOString().slice(0, 10);
+    }, [periodo]);
+    const indicators = useApplicationStatistics(canManageApplications(session), { from });
 
     // =====================================================
     // FECHA
@@ -99,30 +101,8 @@ function Estadisticas({
             return fecha >= fechaLimite;
         });
 
-        const applicationsFiltradas =
-            applications.filter((application) => {
-                if (
-                    !application.createdAt &&
-                    !application.fecha
-                ) {
-                    return true;
-                }
-
-                const fecha = new Date(application.createdAt ?? application.fecha ?? '');
-
-                if (Number.isNaN(fecha.getTime())) {
-                    return true;
-                }
-
-                return fecha >= fechaLimite;
-            });
-
-        return {
-            jobs: jobsFiltrados,
-            applications:
-                applicationsFiltradas,
-        };
-    }, [jobs, applications, getDaysForPeriod]);
+        return { jobs: jobsFiltrados };
+    }, [jobs, getDaysForPeriod]);
 
     // =====================================================
     // ESTADÍSTICAS PRINCIPALES
@@ -133,13 +113,13 @@ function Estadisticas({
             datosPeriodo.jobs.length;
 
         const postulaciones =
-            datosPeriodo.applications.length;
+            indicators.statistics?.total ?? 0;
 
         const organizaciones =
             organizacionesBase;
 
         const postulantes =
-            postulantesBase;
+            indicators.statistics?.candidates ?? 0;
 
         return {
             oportunidades,
@@ -147,7 +127,7 @@ function Estadisticas({
             organizaciones,
             postulantes,
         };
-    }, [datosPeriodo]);
+    }, [datosPeriodo, indicators.statistics]);
 
     // =====================================================
     // MODALIDADES
@@ -252,86 +232,7 @@ function Estadisticas({
     // ESTADOS DE POSTULACIONES
     // =====================================================
 
-    const estadosPostulaciones = useMemo(() => {
-        const aplicaciones =
-            datosPeriodo.applications;
-
-        const contarEstado = (estados: string[]) => {
-            return aplicaciones.filter(
-                (application) =>
-                    estados.includes(
-                        application.status ?? application.estado ?? ''
-                    )
-            ).length;
-        };
-
-        const recibidas = contarEstado([
-            "Recibida",
-            "Recibido",
-            "Pendiente",
-        ]);
-
-        const revision = contarEstado([
-            "En revisión",
-            "En revision",
-            "Revisión",
-            "revision",
-        ]);
-
-        const seleccionadas = contarEstado([
-            "Seleccionada",
-            "Seleccionado",
-            "Aceptada",
-            "Aceptado",
-        ]);
-
-        const descartadas = contarEstado([
-            "Descartada",
-            "Descartado",
-            "Rechazada",
-            "Rechazado",
-        ]);
-
-        if (aplicaciones.length === 0) {
-            return [
-                {
-                    nombre: "Recibidas",
-                    cantidad: 72,
-                },
-                {
-                    nombre: "En revisión",
-                    cantidad: 38,
-                },
-                {
-                    nombre: "Seleccionadas",
-                    cantidad: 17,
-                },
-                {
-                    nombre: "Descartadas",
-                    cantidad: 8,
-                },
-            ];
-        }
-
-        return [
-            {
-                nombre: "Recibidas",
-                cantidad: recibidas,
-            },
-            {
-                nombre: "En revisión",
-                cantidad: revision,
-            },
-            {
-                nombre: "Seleccionadas",
-                cantidad: seleccionadas,
-            },
-            {
-                nombre: "Descartadas",
-                cantidad: descartadas,
-            },
-        ];
-    }, [datosPeriodo]);
+    const estadosPostulaciones = (indicators.statistics?.states ?? []).map(item => ({ nombre: APPLICATION_LABELS[item.status], cantidad: item.count }));
 
     // =====================================================
     // ANIMACIÓN DE ESTADÍSTICAS
@@ -401,6 +302,7 @@ function Estadisticas({
     // =====================================================
 
     const actualizarEstadisticas = () => {
+        indicators.reload();
         setActualizando(true);
 
         setTimeout(() => {
@@ -414,6 +316,7 @@ function Estadisticas({
 
     return (
         <section className="admin-screen estadisticas-screen">
+            {indicators.error && <p role="alert">{indicators.error} <button type="button" onClick={indicators.reload}>Reintentar indicadores</button></p>}
 
             {/* =================================================
                 HEADER

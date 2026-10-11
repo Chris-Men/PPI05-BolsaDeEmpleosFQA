@@ -107,7 +107,7 @@ export const downloadResume = async (actor: AccessContext): Promise<{ metadata: 
 /** Deletes unreferenced modern resumes after a grace period and retries orphaned filesystem blobs. */
 export const cleanupResumes = async (storage: ResumeStorage = getResumeStorage(), now = new Date()): Promise<void> => {
   const cutoff = new Date(now.getTime() - 60 * 60_000);
-  const unreferenced = { activeProfile: null, applications: { none: {} }, applicationFiles: { none: {} } };
+  const unreferenced = { activeProfile: null, applications: { none: {} }, applicationFiles: { none: {} }, applicationDrafts: { none: {} } };
   const files = await prisma.files.findMany({ where: { fileType: 'RESUME', originalName: { not: null },
     createdAt: { lt: cutoff }, ...unreferenced }, select: { id: true, filePath: true } });
   for (const file of files) {

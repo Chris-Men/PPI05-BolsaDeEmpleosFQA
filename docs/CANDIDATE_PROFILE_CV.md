@@ -27,7 +27,7 @@ La sección **Datos Personales**, debajo de **Mi perfil** en la barra lateral,
 permite consultar, editar, cancelar y guardar el perfil profesional. El nombre confirmado
 por el servidor se actualiza en la sesión y las otras pestañas. Al iniciar una nueva
 postulación se precarga el perfil; volver entre pasos conserva las ediciones locales.
-Las postulaciones continúan siendo una demostración hasta su ticket independiente.
+PB-238 conecta las postulaciones con borradores persistentes, snapshots y documentos históricos; consulta [Flujo de postulación](APPLICATION_FLOW.md).
 
 ## CV privado
 

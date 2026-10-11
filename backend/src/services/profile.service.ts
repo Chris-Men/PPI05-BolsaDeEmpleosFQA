@@ -17,7 +17,7 @@ export const assertCandidateAccess = (actor: AccessContext, permission: Permissi
 };
 
 /** Reads a candidate snapshot using only the authenticated account ID. */
-const readProfile = async (userId: number, database: Prisma.TransactionClient): Promise<CandidateProfile> => {
+export const readProfile = async (userId: number, database: Prisma.TransactionClient): Promise<CandidateProfile> => {
   const user = await database.user.findUnique({ where: { id: userId }, select: {
     email: true, profile: true,
     workExperiences: { orderBy: { id: 'asc' } }, educations: { orderBy: { id: 'asc' } },

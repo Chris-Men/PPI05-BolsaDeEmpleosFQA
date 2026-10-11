@@ -24,15 +24,16 @@ export function useOpportunityListing(filters: OpportunityFilters, enabled = tru
 }
 
 /** Public filter options come from the same persisted catalogs as the administrator editor. */
-export function useOpportunityCatalogs() {
+export function useOpportunityCatalogs(admin=false,enabled=true) {
   const [catalogs, setCatalogs] = useState<OpportunityCatalogs | null>(null);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
   useEffect(() => {
+    if (!enabled) return;
     let current = true;
-    void getOpportunityCatalogs().then((value) => { if (current) { setCatalogs(value); setError(''); } }).catch((failure: unknown) => { if (current) setError(failure instanceof Error ? failure.message : 'No se pudieron cargar los filtros.'); });
+    void getOpportunityCatalogs(admin).then((value) => { if (current) { setCatalogs(value); setError(''); } }).catch((failure: unknown) => { if (current) setError(failure instanceof Error ? failure.message : 'No se pudieron cargar los filtros.'); });
     return () => { current = false; };
-  }, [revision]);
+  }, [revision,admin,enabled]);
   return { catalogs, error, reload: () => setRevision((value) => value + 1) };
 }
 

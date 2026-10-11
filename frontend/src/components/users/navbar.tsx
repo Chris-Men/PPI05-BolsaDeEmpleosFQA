@@ -11,6 +11,7 @@ interface NavbarProps {
   setUserMenuOpen: StateSetter<boolean>;
   navigateTo: NavigateTo;
   handleLogout: () => void;
+  beforeLogout?: () => Promise<unknown>;
 }
 
 /** Main responsive navigation for public and candidate screens. */
@@ -20,6 +21,7 @@ export default function Navbar({
   userMenuOpen,
   setUserMenuOpen,
   navigateTo,
+  beforeLogout,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -73,7 +75,7 @@ export default function Navbar({
                 >
                   Ir al perfil
                 </button>
-                <SessionControls showAll={false} />
+                <SessionControls showAll={false} beforeClose={beforeLogout} />
               </div>
             )}
           </div>

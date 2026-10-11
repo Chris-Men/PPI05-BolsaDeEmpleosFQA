@@ -7,7 +7,8 @@ Monorepo de la bolsa de oportunidades de la Fundación Quintanilla Amaya. Contie
 - El frontend público consulta empleos, voluntariados, horas sociales y prácticas reales mediante la API, con filtros y paginación.
 - El registro público consume `POST /api/auth/register` y siempre crea una cuenta con rol `CANDIDATE`.
 - El inicio de sesión autentica los tres roles y conserva sesiones revocables durante un máximo de 30 días.
-- Administrador y Super Admin acceden al panel con identidad real; el módulo Usuarios usa la API y PostgreSQL. Administrador puede consultar, crear, deshabilitar y eliminar candidatos; Super Admin también gestiona administradores y restaura cuentas eliminadas. La persistencia de postulaciones, su revisión, favoritos, notificaciones y estadísticas generales quedan para otros tickets.
+- Administrador y Super Admin acceden al panel con identidad real; el módulo Usuarios usa la API y PostgreSQL. Administrador puede consultar, crear, deshabilitar y eliminar candidatos; Super Admin también gestiona administradores y restaura cuentas eliminadas. Favoritos y estadísticas generales ajenas a postulaciones mantienen su alcance anterior.
+- Postulaciones de los cuatro tipos, borradores, intentos, CV históricos, revisión administrativa, cupos y notificaciones usan la API y PostgreSQL. Consulta [Flujo de postulación](docs/APPLICATION_FLOW.md) para migración, permisos y pruebas.
 - El módulo Organizaciones usa la API y PostgreSQL para listar, buscar, crear, consultar, editar y activar/desactivar organizaciones.
 - Vacantes y Categorías usan la API y PostgreSQL para gestionar los cuatro tipos, guardar borradores, publicar, cerrar y archivar; las categorías incluyen jerarquía y activación. Consulta [Vacantes y categorías](docs/VACANCY_MANAGEMENT.md), incluida la migración y el seed necesarios antes de habilitarlas.
 - Los permisos de Candidato, Administrador y Super Admin se validan en el backend.
@@ -162,7 +163,7 @@ Consulta [inicio de sesión y sesiones revocables](docs/AUTHENTICATION.md) para 
 
 ## Correo y recuperación de contraseña
 
-El backend permite solicitar y completar la recuperación de contraseña por correo para cualquier rol. El correo se encola cifrado en PostgreSQL y se entrega por SMTP con reintentos. En desarrollo, Mailpit muestra los mensajes en `http://localhost:8025`. Las plantillas de postulaciones están preparadas para conectarse cuando existan APIs reales de postulaciones. Consulta [correo y recuperación de contraseña](docs/EMAIL_PASSWORD_RECOVERY.md).
+El backend permite solicitar y completar la recuperación de contraseña por correo para cualquier rol. El correo se encola cifrado en PostgreSQL y se entrega por SMTP con reintentos. En desarrollo, Mailpit muestra los mensajes en `http://localhost:8025`. Las postulaciones reales encolan confirmación y resultado de selección o rechazo. Consulta [correo y recuperación de contraseña](docs/EMAIL_PASSWORD_RECOVERY.md).
 
 ## Gestión de usuarios
 

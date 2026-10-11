@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useApplications, useNotifications } from '../hooks/useApplications';
+import { ApplicationList } from '../components/applications/ApplicationList';
+import { CandidateNotifications } from '../components/applications/CandidateNotifications';
 
 import {
   BriefcaseBusiness,
@@ -10,7 +13,6 @@ import {
   House,
   LogOut,
   Menu,
-  Search,
   Settings,
   Star,
   UserRound,
@@ -26,14 +28,9 @@ import type { CandidateProfileState } from '../hooks/useCandidateProfile';
 import '../styles/users/profileuser.css';
 
 import type {
-  CandidateApplication,
   CurrentUser,
   Job,
   NavigateTo,
-  RetireSelection,
-  StateSetter,
-  StudentSpot,
-  VolunteerSpot,
 } from '../types/models';
 
 import fqaLogo from '../components/imagenes/logo/logo 1.png';
@@ -42,19 +39,7 @@ interface CandidateProfileProps {
   currentUser: CurrentUser | null;
   handleLogout: () => void;
 
-  applications: CandidateApplication[];
-  setApplications: StateSetter<CandidateApplication[]>;
-
-  volunteerApps: number[];
-  setVolunteerApps: StateSetter<number[]>;
-
-  volunteerSpots: VolunteerSpot[];
-
-  studentApps: number[];
-  setStudentApps: StateSetter<number[]>;
-
-  studentSpots: StudentSpot[];
-
+  onResume: (key:string) => void;
   savedJobs: number[];
   jobs: Job[];
 
@@ -67,31 +52,15 @@ interface CandidateProfileProps {
   showToast: (message: string) => void;
 }
 
-type ProfileTab =
-  | 'jobs'
-  | 'volunteer'
-  | 'student'
-  | 'saved';
-
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
-type ProfileSection = 'overview' | 'personal' | 'settings';
+type ProfileSection = 'overview' | 'personal' | 'settings' | 'applications' | 'notifications';
 
 /** Renders the candidate overview, personal editor, and account settings. */
 export default function CandidateProfile({
   currentUser,
   handleLogout,
 
-  applications,
-  setApplications,
-
-  volunteerApps,
-  setVolunteerApps,
-  volunteerSpots,
-
-  studentApps,
-  setStudentApps,
-  studentSpots,
-
+  onResume,
   savedJobs,
   jobs,
 
@@ -108,15 +77,16 @@ export default function CandidateProfile({
      ESTADOS
   ========================================================= */
 
-  const [activeTab, setActiveTab] =
-    useState<ProfileTab>('jobs');
-
-  const [activeSection, setActiveSection] =
-    useState<ProfileSection>('overview');
-
-  const [confirmRetire, setConfirmRetire] =
-    useState<RetireSelection | null>(null);
-
+  const activeTab = 'saved';
+  const initialApplication = Number(new URLSearchParams(window.location.search).get('postulacion')) || undefined;
+  const [activeSection, setActiveSection] = useState<ProfileSection>(initialApplication ? 'applications' : 'overview');
+  const notifications = useNotifications();
+  const all = useApplications({ pageSize:1 });
+  const employment = useApplications({ pageSize:1, kind:'EMPLOYMENT' });
+  const volunteering = useApplications({ pageSize:1, kind:'VOLUNTEER' });
+  const social = useApplications({ pageSize:1, kind:'SOCIAL_HOURS' });
+  const internship = useApplications({ pageSize:1, kind:'INTERNSHIP' });
+  const changed = () => { all.reload(); employment.reload(); volunteering.reload(); social.reload(); internship.reload(); notifications.reload(); };
   const [confirmLogout, setConfirmLogout] =
     useState(false);
 
@@ -128,30 +98,12 @@ export default function CandidateProfile({
      DATOS
   ========================================================= */
 
-  const myApplications = applications.filter(
-    (app) =>
-      app.candidateEmail === currentUser?.email
-  );
-
-  const myVolunteerSpots =
-    volunteerSpots.filter((spot) =>
-      volunteerApps.includes(spot.id)
-    );
-
-  const myStudentSpots =
-    studentSpots.filter((spot) =>
-      studentApps.includes(spot.id)
-    );
-
   const mySavedJobs =
     jobs.filter((job) =>
       savedJobs.includes(job.id)
     );
 
-  const totalActive =
-    myApplications.length +
-    myVolunteerSpots.length +
-    myStudentSpots.length;
+  const totalActive = all.loading || all.error ? '—' : all.page.total;
 
 
   /* =========================================================
@@ -163,73 +115,13 @@ export default function CandidateProfile({
     setMobileMenuOpen(false);
   };
 
-  const goToVolunteers = () => {
-    navigateTo('volunteers');
-    setMobileMenuOpen(false);
-  };
 
-  const goToStudents = () => {
-    navigateTo('students');
-    setMobileMenuOpen(false);
-  };
 
   const goToHelp = () => {
     navigateTo('help');
     setMobileMenuOpen(false);
   };
 
-
-  /* =========================================================
-     RETIRAR POSTULACIÓN
-  ========================================================= */
-
-  const handleConfirmRetire = () => {
-    if (!confirmRetire) return;
-
-    if (confirmRetire.kind === 'job') {
-      setApplications((prev) =>
-        prev.filter(
-          (application) =>
-            application.id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación retirada exitosamente'
-      );
-    }
-
-    if (confirmRetire.kind === 'volunteer') {
-      setVolunteerApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación de voluntariado retirada'
-      );
-    }
-
-    if (confirmRetire.kind === 'student') {
-      setStudentApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación estudiantil retirada'
-      );
-    }
-
-    setConfirmRetire(null);
-  };
-
-
-  /* =========================================================
-     CV
-  ========================================================= */
 
   const handleConfirmLogout = () => {
     setConfirmLogout(false);
@@ -335,8 +227,8 @@ export default function CandidateProfile({
 
           <button
             type="button"
-            className="profile-sidebar-item"
-            onClick={goToJobs}
+            className={`profile-sidebar-item ${activeSection === 'applications' ? 'active' : ''}`}
+            onClick={() => {setActiveSection('applications'); setMobileMenuOpen(false);}}
           >
             <BriefcaseBusiness size={19} />
 
@@ -349,11 +241,7 @@ export default function CandidateProfile({
           <button
             type="button"
             className="profile-sidebar-item"
-            onClick={() =>
-              showToast(
-                'No tienes nuevas notificaciones'
-              )
-            }
+            onClick={() => {setActiveSection('notifications'); setMobileMenuOpen(false);}}
           >
             <Bell size={19} />
 
@@ -362,7 +250,7 @@ export default function CandidateProfile({
             </span>
 
             <span className="profile-notification-count">
-              0
+              {notifications.result.unreadCount}
             </span>
           </button>
 
@@ -484,6 +372,10 @@ export default function CandidateProfile({
               </section>
               <CandidateProfileEditor state={candidateState} />
             </>
+          ) : activeSection === 'applications' ? (
+            <ApplicationList onResume={onResume} onChanged={changed} initialId={initialApplication} />
+          ) : activeSection === 'notifications' ? (
+            <CandidateNotifications onChanged={notifications.reload} />
           ) : (
             <>
 
@@ -562,7 +454,7 @@ export default function CandidateProfile({
                     </strong>
 
                     <span>
-                      Postulaciones activas
+                      Postulaciones
                     </span>
                   </div>
 
@@ -579,7 +471,7 @@ export default function CandidateProfile({
 
                   <div>
                     <strong>
-                      {myApplications.length}
+                      {employment.loading || employment.error ? '—' : employment.page.total}
                     </strong>
 
                     <span>
@@ -600,7 +492,7 @@ export default function CandidateProfile({
 
                   <div>
                     <strong>
-                      {myVolunteerSpots.length}
+                      {volunteering.loading || volunteering.error ? '—' : volunteering.page.total}
                     </strong>
 
                     <span>
@@ -621,7 +513,7 @@ export default function CandidateProfile({
 
                   <div>
                     <strong>
-                      {myStudentSpots.length}
+                      {social.loading || internship.loading || social.error || internship.error ? '—' : social.page.total + internship.page.total}
                     </strong>
 
                     <span>
@@ -661,80 +553,7 @@ export default function CandidateProfile({
                   TABS
               ============================================= */}
 
-              <nav className="profile-tabs">
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'jobs'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('jobs')
-                  }
-                >
-                  <BriefcaseBusiness size={16} />
-
-                  Empleos ({myApplications.length})
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'volunteer'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('volunteer')
-                  }
-                >
-                  <Heart size={16} />
-
-                  Voluntariado (
-                  {myVolunteerSpots.length}
-                  )
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'student'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('student')
-                  }
-                >
-                  <GraduationCap size={16} />
-
-                  Estudiantes (
-                  {myStudentSpots.length}
-                  )
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'saved'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('saved')
-                  }
-                >
-                  <Star size={16} />
-
-                  Guardadas ({mySavedJobs.length})
-                </button>
-
-              </nav>
+              <nav className="profile-tabs"><button type="button" className="active"><Star size={16}/> Guardadas ({mySavedJobs.length})</button></nav>
 
 
               {/* =============================================
@@ -749,356 +568,6 @@ export default function CandidateProfile({
                 =========================================== */}
 
                 <section className="profile-card profile-applications-card">
-
-                  {activeTab === 'jobs' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <BriefcaseBusiness size={19} />
-                          </div>
-
-                          <div>
-                            <h2>
-                              Mis Postulaciones a Empleos
-                            </h2>
-                          </div>
-
-                        </div>
-
-                      </div>
-
-
-                      {myApplications.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myApplications.map((app) => (
-
-                            <article
-                              key={app.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {app.jobTitle}
-                                </h3>
-
-                                <p>
-                                  {app.orgName}
-                                  {' · '}
-                                  Enviado: {app.date}
-                                </p>
-
-                                <small>
-                                  CV adjunto:{' '}
-                                  {app.cvName}
-                                </small>
-
-                              </div>
-
-
-                              <div className="profile-list-actions">
-
-                                <span
-                                  className={`profile-status ${
-                                    app.status ===
-                                    'Pendiente'
-                                      ? 'pending'
-                                      : app.status ===
-                                        'Aprobado para Entrevista'
-                                      ? 'approved'
-                                      : 'rejected'
-                                  }`}
-                                >
-                                  {app.status}
-                                </span>
-
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button"
-                                  onClick={() =>
-                                    setConfirmRetire({
-                                      kind: 'job',
-                                      id: app.id,
-                                      title:
-                                        app.jobTitle,
-                                    })
-                                  }
-                                >
-                                  Retirar
-                                </button>
-
-                              </div>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-state">
-
-                          <div className="profile-empty-copy">
-
-                            <p>
-                              Aún no te has postulado
-                              a ninguna vacante laboral.
-                            </p>
-
-                            <button
-                              type="button"
-                              className="profile-primary-button"
-                              onClick={goToJobs}
-                            >
-                              <Search size={16} />
-
-                              Explorar vacantes
-
-                              <ChevronRight
-                                size={15}
-                              />
-                            </button>
-
-                          </div>
-
-
-                          <div className="profile-empty-illustration">
-
-                            <div className="profile-document-illustration">
-                              <div />
-                              <div />
-                              <div />
-                            </div>
-
-                            <span>
-                              ✓
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      VOLUNTARIADO
-                  ========================================= */}
-
-                  {activeTab === 'volunteer' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <Heart size={19} />
-                          </div>
-
-                          <h2>
-                            Mis Voluntariados Activos
-                          </h2>
-
-                        </div>
-
-                      </div>
-
-
-                      {myVolunteerSpots.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myVolunteerSpots.map((spot) => (
-
-                            <article
-                              key={spot.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {spot.title}
-                                </h3>
-
-                                <p>
-                                  {spot.org}
-                                  {' · '}
-                                  {spot.location}
-                                </p>
-
-                              </div>
-
-
-                              <button
-                                type="button"
-                                className="profile-small-button"
-                                onClick={() =>
-                                  setConfirmRetire({
-                                    kind: 'volunteer',
-                                    id: spot.id,
-                                    title:
-                                      spot.title,
-                                  })
-                                }
-                              >
-                                Retirar
-                              </button>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <Heart size={34} />
-
-                          <p>
-                            No te has postulado como
-                            voluntario.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToVolunteers}
-                          >
-                            Ver oportunidades
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      ESTUDIANTES
-                  ========================================= */}
-
-                  {activeTab === 'student' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <GraduationCap size={19} />
-                          </div>
-
-                          <h2>
-                            Mis Postulaciones Estudiantiles
-                          </h2>
-
-                        </div>
-
-                      </div>
-
-
-                      {myStudentSpots.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myStudentSpots.map((spot) => (
-
-                            <article
-                              key={spot.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {spot.title}
-                                </h3>
-
-                                <p>
-                                  {spot.org}
-                                  {' · '}
-                                  {spot.location}
-                                </p>
-
-                                <small>
-                                  {spot.tipo === 'social'
-                                    ? '🤝 Voluntariado social'
-                                    : '🎓 Práctica profesional'}
-                                </small>
-
-                              </div>
-
-
-                              <button
-                                type="button"
-                                className="profile-small-button"
-                                onClick={() =>
-                                  setConfirmRetire({
-                                    kind: 'student',
-                                    id: spot.id,
-                                    title:
-                                      spot.title,
-                                  })
-                                }
-                              >
-                                Retirar
-                              </button>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <GraduationCap size={34} />
-
-                          <p>
-                            No te has postulado a
-                            oportunidades para
-                            estudiantes.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToStudents}
-                          >
-                            Ver oportunidades
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      GUARDADAS
-                  ========================================= */}
 
                   {activeTab === 'saved' && (
                     <>
@@ -1256,73 +725,6 @@ export default function CandidateProfile({
       {/* =====================================================
           MODAL RETIRAR
       ===================================================== */}
-
-      {confirmRetire && (
-
-        <div
-          className="profile-modal-overlay"
-          onClick={() =>
-            setConfirmRetire(null)
-          }
-        >
-
-          <div
-            className="profile-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            <div className="profile-modal-warning-icon">
-              !
-            </div>
-
-            <h3>
-              Retirar postulación
-            </h3>
-
-            <p>
-              ¿Estás seguro de que deseas
-              retirar tu postulación a
-              <strong>
-                {' '}
-                {confirmRetire.title}
-              </strong>
-              ?
-            </p>
-
-            <small>
-              Esta acción no se puede deshacer.
-            </small>
-
-            <div className="profile-modal-actions">
-
-              <button
-                type="button"
-                className="profile-modal-cancel"
-                onClick={() =>
-                  setConfirmRetire(null)
-                }
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                className="profile-modal-danger"
-                onClick={handleConfirmRetire}
-              >
-                Sí, retirar
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
 
       {/* =====================================================
           MODAL CERRAR SESIÓN

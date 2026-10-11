@@ -1,6 +1,6 @@
 # PB-129 — Vacantes y categorías
 
-El panel y el catálogo público usan la API y PostgreSQL para empleos, voluntariados, horas sociales y prácticas profesionales. Las postulaciones de candidatos, su revisión, favoritos y notificaciones quedan para otros tickets; sus flujos existentes no se convierten en persistentes con PB-129.
+El panel y el catálogo público usan la API y PostgreSQL para empleos, voluntariados, horas sociales y prácticas profesionales. PB-238 añade [postulaciones, revisión y notificaciones persistentes](APPLICATION_FLOW.md), además del control de cupos seleccionados. Favoritos mantiene su alcance anterior.
 
 ## Datos y migración
 

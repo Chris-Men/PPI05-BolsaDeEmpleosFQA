@@ -31,7 +31,7 @@ Cada enlace dura 30 minutos, se usa una sola vez y solo se guarda su hash SHA-25
 
 Los servicios `enqueueApplicationConfirmation` y `enqueueApplicationDecision` preparan mensajes para el candidato dentro de la transacción que guardará la postulación o decisión. El llamador debe proporcionar una `eventKey` estable y única por evento para evitar duplicados. Hay textos de confirmación para empleo, voluntariado, horas sociales y prácticas, y textos de aprobación o rechazo para futuras postulaciones con estado.
 
-Actualmente no hay APIs de postulaciones en el backend, así que estas funciones no tienen disparadores reales. Los registros de voluntariado no tienen estado individual y solo podrán generar confirmación hasta que se modele su decisión.
+PB-238 conecta estos servicios al envío y a las decisiones de selección/rechazo de los cuatro tipos, dentro de sus respectivas transacciones. Las revisiones también generan notificaciones internas; los motivos opcionales se incluyen en el correo de resultado. Consulta [Flujo de postulación](APPLICATION_FLOW.md).
 
 ## Reconciliación de una base creada por la rama anterior
 

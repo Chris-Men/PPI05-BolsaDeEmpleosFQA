@@ -6,7 +6,7 @@ import type { ApplicationEmailInput, EmailPayload, RenderedEmail } from '../type
 
 const opportunityTypeSchema = z.enum(['EMPLEO', 'VOLUNTARIADO', 'HORAS_SOCIALES', 'PRACTICA']);
 const applicationFields = {
-  candidateName: z.string().max(150),
+  candidateName: z.string().max(201),
   opportunityTitle: z.string().max(150),
   opportunityType: opportunityTypeSchema,
   referenceNumber: z.string().max(64).optional(),
@@ -18,6 +18,7 @@ const payloadSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('APPLICATION_DECIDED'), ...applicationFields,
     decision: z.enum(['APPROVED', 'REJECTED']),
+    reason: z.string().max(2000).optional(),
   }).strict(),
 ]);
 
@@ -88,6 +89,7 @@ export const enqueueApplicationDecision = (
   opportunityTitle: input.opportunityTitle,
   opportunityType: input.opportunityType,
   decision,
+  ...(input.reason ? { reason: input.reason } : {}),
   ...(input.referenceNumber ? { referenceNumber: input.referenceNumber } : {}),
 });
 
@@ -132,6 +134,7 @@ export const renderEmail = (payload: EmailPayload, resetPasswordUrl: string): Re
   return {
     subject: 'Resultado de tu postulación | FQA Empleos',
     text: opening + '\n\nTu postulación a ' + target + ' fue ' +
-      (payload.decision === 'APPROVED' ? 'aprobada.' : 'rechazada.') + reference,
+      (payload.decision === 'APPROVED' ? 'seleccionada.' : 'rechazada.') + reference +
+      (payload.reason ? '\n\nExplicación: ' + payload.reason : ''),
   };
 };

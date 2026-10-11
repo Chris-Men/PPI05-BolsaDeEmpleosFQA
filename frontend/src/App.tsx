@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useOpportunityListing, useOpportunityCatalogs, useHomeStatistics } from './hooks/useOpportunities';
 import { getOpportunity } from './services/opportunityService';
 import { opportunityToJob, opportunityToVolunteer, opportunityToStudent } from './utils/opportunityPresentation';
@@ -8,26 +8,23 @@ import { OpportunityDetailsDialog } from './components/OpportunityDetailsDialog'
 import type { OpportunityListingControls } from './components/OpportunityListingLayout';
 import './styles/admin/vacancies.css';
 import type {
-    ApplicationTarget,
-    CandidateApplication,
     CurrentUser,
     Job,
     ScreenName,
     StudentOpportunityType,
     StudentSpot,
-    SuccessContact,
     VolunteerSpot,
 } from './types/models';
 
 import { useAuth } from './hooks/useAuth';
 import { useCandidateProfile } from './hooks/useCandidateProfile';
-import { profileToPersonalForm } from './utils/profileForm';
+import type { Application } from './types/application';
 import { AuthenticatedDashboard } from './components/admin/AuthenticatedDashboard';
 import Home from './screens/Home';
 import JobsListing from './screens/JobsListing';
 import JobDetail from './screens/JobDetail';
-import FormFlow from './screens/FormFlow';
-import Confirmation from './screens/Confirmation';
+import { ApplicationForm } from './screens/ApplicationForm';
+import { ApplicationConfirmation } from './screens/ApplicationConfirmation';
 import Volunteers from './screens/Volunteers';
 import Students from './screens/student';
 import Nosotros from './screens/Nosotros';
@@ -51,7 +48,7 @@ import Navbar from './components/users/navbar';
 // DATOS INICIALES
 // ============================================================
 
-/** Remounts account-scoped demo state whenever the real identity changes. */
+/** Remounts account-scoped state whenever the real identity changes. */
 export default function App() {
     const { status, session, error, retry } = useAuth();
 
@@ -130,6 +127,9 @@ function PublicApp() {
             return 'forgot-password';
         }
 
+        const params = new URLSearchParams(window.location.search);
+        if (/^(job|volunteer)-[1-9][0-9]*$/.test(params.get('postular') ?? '')) return 'form';
+        if (/^[1-9][0-9]*$/.test(params.get('postulacion') ?? '')) return 'profile';
         return 'home';
     };
 
@@ -158,6 +158,8 @@ function PublicApp() {
             : null;
 
     const candidateState = useCandidateProfile(Boolean(currentUser));
+    const beforeApplicationLeave = useRef<(() => Promise<unknown>) | null>(null);
+    const registerApplicationGuard = useCallback((save: (() => Promise<unknown>) | null): void => { beforeApplicationLeave.current = save; }, []);
 
 
     // ==========================================================
@@ -171,18 +173,8 @@ function PublicApp() {
         useState<number[]>([]);
 
 
-    const [applications, setApplications] =
-        useState<CandidateApplication[]>([]);
-
-
-    const [volunteerApps, setVolunteerApps] =
-        useState<number[]>([]);
-
-
-    const [studentApps, setStudentApps] =
-        useState<number[]>([]);
-
-
+    const volunteerApps: number[] = [];
+    const studentApps: number[] = [];
     const [activeStudentTab, setActiveStudentTab] =
         useState<StudentOpportunityType>(
             'social'
@@ -211,25 +203,8 @@ function PublicApp() {
 
 
 
-    const [volSuccessContact, setVolSuccessContact] =
-        useState<SuccessContact | null>(null);
-
-
-    // ==========================================================
-    // FLUJO DE POSTULACIÓN
-    // ==========================================================
-
-    const [applyFlowType, setApplyFlowType] =
-        useState<
-            'job' | 'volunteer' | 'student'
-        >('job');
-
-
-    const [applyFlowTarget, setApplyFlowTarget] =
-        useState<ApplicationTarget | null>(
-            null
-        );
-
+    const [applicationKey, setApplicationKey] = useState<string | null>(new URLSearchParams(window.location.search).get('postular'));
+    const [submittedApplication, setSubmittedApplication] = useState<Application | null>(null);
 
     // ==========================================================
     // QUICK VIEW
@@ -292,54 +267,6 @@ function PublicApp() {
 
 
     // ==========================================================
-    // FORMULARIO
-    // ==========================================================
-
-    const [formStep, setFormStep] =
-        useState(1);
-
-    const [formInitialized, setFormInitialized] =
-        useState(false);
-
-
-    const [formPersonal, setFormPersonal] =
-        useState({
-            name: currentUser?.name ?? '',
-            lastname: '',
-            email: currentUser?.email ?? '',
-            phone: '',
-            municipio: '',
-            dept: '',
-            level: '',
-            profession: ''
-        });
-
-
-    const [formExp, setFormExp] =
-        useState({
-            lastRole: '',
-            lastOrg: '',
-            years: '',
-            salary: '',
-            motivation: '',
-            skills: ''
-        });
-
-
-    const uploadedCVName = candidateState.resume?.originalName ?? '';
-
-    useEffect(() => {
-        if (screen !== 'form' || formInitialized || !candidateState.profile) return;
-        const profile = candidateState.profile;
-        setFormPersonal(profileToPersonalForm(profile));
-        const experience = profile.workExperiences[0];
-        setFormExp({ lastRole: experience?.position ?? '', lastOrg: experience?.companyName ?? '',
-            years: '', salary: '', motivation: '', skills: profile.skills.join(', ') });
-        setFormInitialized(true);
-    }, [screen, formInitialized, candidateState.profile]);
-
-
-    // ==========================================================
     // TOAST
     // ==========================================================
 
@@ -359,11 +286,16 @@ function PublicApp() {
         nextScreen: ScreenName,
         data: Job | null = null
     ) => {
-
+        if (screen === 'form' && nextScreen !== 'form' && beforeApplicationLeave.current) {
+            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; navigateTo(nextScreen, data); }).catch(() => undefined);
+            return;
+        }
         const requestId = ++detailRequest.current;
         publicDetailRequest.current += 1; setPublicDetail(null); setPublicDetailLoading(false); setPublicDetailError('');
-        if (nextScreen === 'form') {
-            setFormInitialized(false);
+        if (!['form', 'login', 'register', 'forgot-password'].includes(nextScreen)) {
+            const url = new URL(window.location.href); url.searchParams.delete('postular');
+            if (nextScreen !== 'profile') url.searchParams.delete('postulacion');
+            window.history.replaceState(null, '', url);
         }
 
         setScreenHistory(prev => [
@@ -383,13 +315,12 @@ function PublicApp() {
             if (data.opportunityKey) {
                 void getOpportunity(data.opportunityKey).then((value) => {
                     if (detailRequest.current !== requestId) return;
-                    const fresh = opportunityToJob(value); setSelectedJob(fresh); setApplyFlowTarget(fresh);
+                    const fresh = opportunityToJob(value); setSelectedJob(fresh);
                 }).catch((failure: unknown) => {
                     if (detailRequest.current === requestId) setDetailError(failure instanceof Error ? failure.message : 'La vacante no está disponible.');
                 });
             }
-            setApplyFlowType('job');
-            setApplyFlowTarget(data);
+
         }
 
 
@@ -401,6 +332,10 @@ function PublicApp() {
 
 
     const goBack = () => {
+        if (screen === 'form' && beforeApplicationLeave.current) {
+            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; goBack(); }).catch(() => undefined);
+            return;
+        }
         detailRequest.current += 1;
 
         if (screenHistory.length > 0) {
@@ -550,153 +485,21 @@ function PublicApp() {
     // POSTULACIONES
     // ==========================================================
 
-    const handleVolunteerApplyClick = (
-        spot: VolunteerSpot
-    ) => {
-
-        setApplyFlowType('volunteer');
-
-        setApplyFlowTarget(spot);
-
-        setFormStep(1);
-
-        navigateTo('form');
+    /** Preserves the vacancy in a public URL through login, registration and reload. */
+    const openApplication = (key: string): void => {
+        const url = new URL(window.location.href); url.searchParams.set('postular', key); url.searchParams.delete('postulacion');
+        window.history.replaceState(null, '', url);
+        setApplicationKey(key); setQvOpen(false); setPublicDetail(null);
+        setScreenHistory(previous => [...previous, screen]); setScreen('form'); window.scrollTo({top:0,behavior:'smooth'});
     };
-
-
-    const handleStudentApplyClick = (
-        spot: StudentSpot
-    ) => {
-
-        setApplyFlowType('student');
-
-        setApplyFlowTarget(spot);
-
-        setFormStep(1);
-
-        navigateTo('form');
+    const handleVolunteerApplyClick = (spot: VolunteerSpot) => openApplication(spot.opportunityKey ?? 'volunteer-'+spot.id);
+    const handleStudentApplyClick = (spot: StudentSpot) => openApplication(spot.opportunityKey ?? 'job-'+spot.id);
+    const handleSubmittedApplication = (value: Application): void => { beforeApplicationLeave.current = null; setSubmittedApplication(value); navigateTo('confirm'); };
+    const viewSubmittedApplication = (): void => {
+        if (!submittedApplication) return;
+        const url = new URL(window.location.href); url.searchParams.set('postulacion', String(submittedApplication.id));
+        window.history.replaceState(null, '', url); navigateTo('profile');
     };
-
-
-    // ==========================================================
-    // ENVÍO DE POSTULACIÓN
-    // ==========================================================
-
-    const handleSubmitApplication = () => {
-
-        const target =
-            applyFlowTarget;
-
-
-        if (!target) return;
-
-
-        if (applyFlowType === 'job') {
-
-            const refNum =
-                'FQA-2025-' +
-                Math.floor(
-                    Math.random() * 90000 +
-                    10000
-                );
-
-
-            const newApp = {
-
-                id: refNum,
-
-                jobId: target.id,
-
-                jobTitle: target.title,
-
-                orgName: target.org,
-
-                candidateName:
-                    formPersonal.name +
-                    ' ' +
-                    formPersonal.lastname,
-
-                candidateEmail:
-                    formPersonal.email,
-
-                phone:
-                    formPersonal.phone,
-
-                cvName:
-                    uploadedCVName,
-
-                status: 'Pendiente',
-
-                date: 'Hoy mismo'
-            };
-
-
-            setApplications(prev => [
-                newApp,
-                ...prev
-            ]);
-
-
-            navigateTo('confirm');
-
-            return;
-        }
-
-
-        if (
-            applyFlowType ===
-            'volunteer'
-        ) {
-
-            setVolunteerApps(prev => [
-                ...prev,
-                target.id
-            ]);
-
-
-            setVolSuccessContact({
-                title: target.title,
-                org: target.org,
-                contact:
-                    'contact' in target
-                        ? target.contact
-                        : ''
-            });
-
-
-            goBack();
-
-            return;
-        }
-
-
-        if (
-            applyFlowType ===
-            'student'
-        ) {
-
-            setStudentApps(prev => [
-                ...prev,
-                target.id
-            ]);
-
-
-            setVolSuccessContact({
-                title: target.title,
-                org: target.org,
-                contact:
-                    'contact' in target
-                        ? target.contact
-                        : ''
-            });
-
-
-            goBack();
-
-            return;
-        }
-    };
-
 
     // ==========================================================
     // FILTROS
@@ -818,6 +621,7 @@ function PublicApp() {
                 setUserMenuOpen={setUserMenuOpen}
                 navigateTo={navigateTo}
                 handleLogout={handleLogout}
+                beforeLogout={() => beforeApplicationLeave.current?.() ?? Promise.resolve()}
             />
 
 
@@ -901,24 +705,10 @@ function PublicApp() {
 
                                 <span
                                     onClick={() =>
-                                        navigateTo(
-                                            applyFlowType ===
-                                                'volunteer'
-                                                ? 'volunteers'
-                                                : applyFlowType ===
-                                                    'student'
-                                                    ? 'students'
-                                                    : 'jobs'
-                                        )
+                                        navigateTo(applicationKey?.startsWith('volunteer-') ? 'volunteers' : 'jobs')
                                     }
                                 >
-                                    {applyFlowType ===
-                                        'volunteer'
-                                        ? 'Voluntariado'
-                                        : applyFlowType ===
-                                            'student'
-                                            ? 'Estudiantes'
-                                            : 'Empleos'}
+                                    Oportunidades
                                 </span>
 
 
@@ -1121,12 +911,7 @@ function PublicApp() {
                         toggleSaveJob={
                             toggleSaveJob
                         }
-                        navigateTo={
-                            navigateTo
-                        }
-                        setFormStep={
-                            setFormStep
-                        }
+                        onApply={() => openApplication(selectedJob.opportunityKey ?? 'job-'+selectedJob.id)}
                     />
 
                 )}
@@ -1138,22 +923,7 @@ function PublicApp() {
 
                 {screen === 'form' && (
 
-                    formInitialized ? <FormFlow
-                        applyingTo={applyFlowTarget}
-                        formStep={formStep}
-                        setFormStep={setFormStep}
-                        formPersonal={formPersonal}
-                        setFormPersonal={setFormPersonal}
-                        formExp={formExp}
-                        setFormExp={setFormExp}
-                        uploadedCVName={uploadedCVName}
-                        candidateState={candidateState}
-                        onSubmitApplication={handleSubmitApplication}
-                        showToast={showToast}
-                    /> : <div role={candidateState.error ? 'alert' : 'status'}>
-                        {candidateState.error || 'Cargando los datos de tu perfil…'}
-                        {candidateState.error && <button type="button" onClick={() => void candidateState.reload()}>Reintentar</button>}
-                    </div>
+                    applicationKey ? <ApplicationForm key={applicationKey} opportunityKey={applicationKey} candidateState={candidateState} onSubmitted={handleSubmittedApplication} onExit={() => navigateTo('profile')} onBeforeLeave={registerApplicationGuard} /> : <div className="session-status"><p>Selecciona una vacante para iniciar tu postulación.</p><button onClick={() => navigateTo('jobs')}>Ver empleos</button></div>
 
                 )}
 
@@ -1162,19 +932,8 @@ function PublicApp() {
                     CONFIRMACIÓN
                 ================================================== */}
 
-                {screen === 'confirm' && (
-
-                    <Confirmation
-                        applications={
-                            applications
-                        }
-                        navigateTo={
-                            navigateTo
-                        }
-                        formPersonal={
-                            formPersonal
-                        }
-                    />
+                {screen === 'confirm' && submittedApplication && (
+                    <ApplicationConfirmation application={submittedApplication} onView={viewSubmittedApplication} onBrowse={() => navigateTo(submittedApplication.opportunity.kind === 'VOLUNTEER' ? 'volunteers' : 'jobs')} />
 
                 )}
 
@@ -1243,7 +1002,7 @@ function PublicApp() {
                 ================================================== */}
 
                 {screen === 'help' && (
-                    <Help />
+                    <Help navigateTo={navigateTo} />
                 )}
 
 
@@ -1256,14 +1015,7 @@ function PublicApp() {
                     <CandidateProfile
                         currentUser={currentUser}
                         handleLogout={handleLogout}
-                        applications={applications}
-                        setApplications={setApplications}
-                        volunteerApps={volunteerApps}
-                        setVolunteerApps={setVolunteerApps}
-                        volunteerSpots={volunteerSpots}
-                        studentApps={studentApps}
-                        setStudentApps={setStudentApps}
-                        studentSpots={studentSpots}
+                        onResume={openApplication}
                         savedJobs={savedJobs}
                         jobs={jobs}
                         toggleSaveJob={toggleSaveJob}
@@ -1383,21 +1135,7 @@ function PublicApp() {
                                         false
                                     );
 
-                                    setApplyFlowType(
-                                        'job'
-                                    );
-
-                                    setApplyFlowTarget(
-                                        qvJob
-                                    );
-
-                                    setFormStep(
-                                        1
-                                    );
-
-                                    navigateTo(
-                                        'form'
-                                    );
+                                    openApplication(qvJob.opportunityKey ?? 'job-'+qvJob.id);
 
                                 }}
                             >
@@ -1428,145 +1166,6 @@ function PublicApp() {
             {/* ======================================================
                 ORGANIZACIÓN DE VOLUNTARIADO
             ====================================================== */}
-
-            {volSuccessContact && (
-
-                <div
-                    className="modal-overlay"
-                    onClick={() =>
-                        setVolSuccessContact(
-                            null
-                        )
-                    }
-                >
-
-                    <div
-                        className="modal-content"
-                        onClick={e =>
-                            e.stopPropagation()
-                        }
-                    >
-
-                        <div
-                            style={{
-                                textAlign:
-                                    'center',
-                                marginBottom:
-                                    '15px'
-                            }}
-                        >
-
-                            <span
-                                style={{
-                                    fontSize:
-                                        '40px'
-                                }}
-                            >
-                                🎉
-                            </span>
-
-                        </div>
-
-
-                        <h3>
-                            ¡Postulación Enviada!
-                        </h3>
-
-
-                        <p>
-                            Tu solicitud para participar
-                            en{' '}
-                            <strong>
-                                {
-                                    volSuccessContact.title
-                                }
-                            </strong>{' '}
-                            ha sido registrada con éxito.
-                        </p>
-
-
-                        <div
-                            style={{
-                                background:
-                                    'var(--gl)',
-                                padding:
-                                    '15px',
-                                borderRadius:
-                                    'var(--rad)',
-                                marginBottom:
-                                    '15px',
-                                textAlign:
-                                    'center'
-                            }}
-                        >
-
-                            <p
-                                style={{
-                                    fontSize:
-                                        '12px',
-                                    color:
-                                        'var(--c500)',
-                                    marginBottom:
-                                        '5px'
-                                }}
-                            >
-                                Comunícate directamente al
-                                número del administrador:
-                            </p>
-
-
-                            <strong
-                                style={{
-                                    fontSize:
-                                        '20px',
-                                    color:
-                                        'var(--gd)'
-                                }}
-                            >
-                                {
-                                    volSuccessContact.contact
-                                }
-                            </strong>
-
-
-                            <p
-                                style={{
-                                    fontSize:
-                                        '11px',
-                                    color:
-                                        'var(--c400)',
-                                    marginTop:
-                                        '5px'
-                                }}
-                            >
-                                O bien, espera pacientemente
-                                a que se comuniquen contigo.
-                            </p>
-
-                        </div>
-
-
-                        <div className="modal-actions">
-
-                            <button
-                                className="modal-btn-confirm"
-                                onClick={() =>
-                                    setVolSuccessContact(
-                                        null
-                                    )
-                                }
-                            >
-                                Entendido
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            )}
-
 
             {/* ======================================================
                 TOAST

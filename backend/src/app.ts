@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { profileRouter } from './routes/profile.routes.js';
+import { applicationRouter, applicationDraftRouter, adminApplicationRouter, notificationRouter } from './routes/application.routes.js';
 import { adminCategoryRouter, adminOpportunityRouter, publicCategoryRouter, publicOpportunityRouter } from './routes/vacancy.routes.js';
 
 /** Creates the configured Express application without binding a network port. */
@@ -19,6 +20,10 @@ export const createApp = (): express.Express => {
   app.use('/api', healthRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/profile', profileRouter);
+  app.use('/api/applications', applicationRouter);
+  app.use('/api/application-drafts', applicationDraftRouter);
+  app.use('/api/admin/applications', adminApplicationRouter);
+  app.use('/api/notifications', notificationRouter);
   app.use('/api/admin/users', adminUserRouter);
   app.use('/api/admin/organizations', organizationRouter);
   app.use('/api/opportunities', publicOpportunityRouter);

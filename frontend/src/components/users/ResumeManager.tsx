@@ -1,11 +1,12 @@
 import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { downloadResume } from '../../services/profileService';
 import type { CandidateProfileState } from '../../hooks/useCandidateProfile';
+import type { ResumeMetadata } from '../../types/profile';
 
-interface ResumeManagerProps { state: CandidateProfileState }
+interface ResumeManagerProps { state: CandidateProfileState; onUploaded?: (file: ResumeMetadata) => void }
 
 /** Shared real document controls for profile and application flow. */
-export function ResumeManager({ state }: ResumeManagerProps) {
+export function ResumeManager({ state, onUploaded }: ResumeManagerProps) {
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
@@ -20,9 +21,9 @@ export function ResumeManager({ state }: ResumeManagerProps) {
     if (!file) return;
     setError(''); setNotice('');
     if (!/\.pdf$/i.test(file.name) || file.type !== 'application/pdf' || !file.size || file.size > 5 * 1024 * 1024) {
-      setError('Selecciona un PDF válido de hasta 5 MB.'); return;
+      setError('Selecciona un PDF válido de hasta 5 MiB.'); return;
     }
-    try { await state.upload(file); setNotice('CV guardado correctamente.'); setConfirmDelete(false); }
+    try { const result = await state.upload(file); onUploaded?.(result); setNotice('CV guardado correctamente.'); setConfirmDelete(false); }
     catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No fue posible subir tu CV.'); }
   };
   /** Creates a short-lived browser URL only after an authorized download succeeds. */
@@ -45,7 +46,7 @@ export function ResumeManager({ state }: ResumeManagerProps) {
   };
   return <div className="resume-manager" aria-busy={busy}>
     <h3>Mi currículum</h3>
-    <p>PDF · Máximo 5 MB · Documento privado</p>
+    <p>PDF · Máximo 5 MiB · Documento privado</p>
     {state.resumeLoading && <p role="status">Cargando CV…</p>}
     {(error || state.resumeError) && <p role="alert">{error || state.resumeError}
       {state.resumeError && <button type="button" disabled={busy} onClick={() => void state.reloadResume()}>Reintentar</button>}</p>}

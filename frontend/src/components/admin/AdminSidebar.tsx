@@ -1,3 +1,4 @@
+import { canManageApplications } from '../../utils/applicationManagement';
 import { canManageUsers } from '../../utils/userManagement';
 import { canManageOrganizations } from '../../utils/organizationManagement';
 import { canManageVacancies } from '../../utils/vacancyManagement';
@@ -15,7 +16,7 @@ const menuItems: Array<{ icon: string; name: AdminMenuName }> = [
   { icon: '🏠', name: 'Dashboard' },
   { icon: '➕', name: 'Nueva Vacante' },
   { icon: '📄', name: 'Administrar Vacantes' },
-  { icon: '📁', name: 'CV Recibidos' },
+  { icon: '📁', name: 'Postulaciones' },
   { icon: '🏢', name: 'Organizaciones' },
   { icon: '📚', name: 'Categorías' },
   { icon: '📊', name: 'Estadísticas' },
@@ -47,7 +48,7 @@ export default function AdminSidebar({
         </picture>
       </button>
       <nav className="menu">
-        {menuItems.filter((item) => (item.name !== 'Usuarios' || canManageUsers(session)) &&
+        {menuItems.filter((item) => (item.name !== 'Postulaciones' || canManageApplications(session)) && (item.name !== 'Usuarios' || canManageUsers(session)) &&
           (item.name !== 'Organizaciones' || canManageOrganizations(session)) &&
           (item.name !== 'Nueva Vacante' || canManageVacancies(session, 'opportunities.create')) &&
           (item.name !== 'Administrar Vacantes' || canManageVacancies(session)) &&

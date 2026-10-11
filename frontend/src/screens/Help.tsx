@@ -26,7 +26,7 @@ import ayudaDesktop from "../components/imagenes/img/ayuda.png";
 import ayudaMobile from "../components/imagenes/img/ayuda-responsiv.png";
 
 interface HelpProps {
-  navigateTo?: (page: string) => void;
+  navigateTo?: import('../types/models').NavigateTo;
 }
 
 const steps = [
@@ -71,7 +71,7 @@ const steps = [
     title: "Sube tu hoja de vida",
     icon: FileText,
     description:
-      "En “Mis documentos” carga una hoja de vida reciente para tenerla disponible al realizar tus postulaciones.",
+      "En “Mi perfil” carga una hoja de vida en PDF de hasta 5 MiB. Es obligatoria para empleos y prácticas, y opcional para voluntariado y horas sociales.",
     details: [
       "Verifica que tus datos de contacto sean correctos.",
       "Incluye formación, experiencia y habilidades relevantes.",
@@ -112,7 +112,8 @@ const steps = [
     details: [
       "Guardar una oferta no significa que ya te hayas postulado.",
       "Antes de enviar, revisa tus datos y que tu hoja de vida esté actualizada.",
-      "Completa todos los campos solicitados y espera la confirmación del sistema.",
+      "El formulario guarda un borrador automáticamente. Puedes retomarlo desde “Mis postulaciones”, incluso en otro dispositivo.",
+      "Completa los campos solicitados y espera la confirmación con tu referencia de postulación.",
     ],
   },
   {
@@ -153,12 +154,12 @@ const faqs = [
   {
     question: "¿Puedo cambiar mi hoja de vida después de subirla?",
     answer:
-      "Sí, cuando la plataforma permita actualizar documentos desde “Mis documentos”, puedes reemplazarla por una versión más reciente.",
+      "Sí. Puedes reemplazar el CV en “Mi perfil”. Los borradores y las postulaciones enviadas conservan el documento seleccionado anteriormente.",
   },
   {
     question: "¿Qué pasa después de postularme?",
     answer:
-      "La organización responsable revisa las candidaturas y administra su proceso de selección. Según la oportunidad, podría contactarte para solicitar información adicional, realizar una entrevista o avanzar a otra etapa.",
+      "El equipo administrador puede pasar tu postulación a revisión, seleccionarla o rechazarla. Verás el estado y una explicación, cuando se incluya, en “Mis postulaciones” y “Notificaciones”. Puedes retirarla mientras esté pendiente o en revisión y volver a enviar otro intento.",
   },
   {
     question: "¿Quién decide si soy seleccionado?",
@@ -235,6 +236,7 @@ export default function Help({ navigateTo }: HelpProps) {
               Explorar la guía
               <ArrowRight size={17} aria-hidden="true" />
             </a>
+            {navigateTo && <button type="button" className="help-hero-link" onClick={() => navigateTo('jobs')}>Explorar vacantes <ArrowRight size={17} aria-hidden="true" /></button>}
           </div>
         </section>
 

@@ -130,7 +130,8 @@ export default function RegisterForm({
         password: formData.password,
       });
 
-      navigateTo('home');
+      const intent = new URLSearchParams(window.location.search);
+      navigateTo(intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
 
       showToast(
         'Cuenta de candidato creada correctamente.'

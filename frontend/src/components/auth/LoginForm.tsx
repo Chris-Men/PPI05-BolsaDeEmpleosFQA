@@ -29,7 +29,8 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
     try {
       await login({ email: email.trim().toLowerCase(), password });
       setPassword('');
-      navigateTo('home');
+      const intent = new URLSearchParams(window.location.search);
+      navigateTo(intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
     } catch (failure: unknown) {
       setError(failure instanceof ApiError
         ? failure.validationErrors[0]?.message ?? failure.message
