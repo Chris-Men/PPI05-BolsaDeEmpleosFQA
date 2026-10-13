@@ -1291,3 +1291,254 @@
     padding: 24px;
   }
 }
+
+/* =========================================
+   HERO RESPONSIVE — TABLETAS Y MÓVILES
+   ========================================= */
+
+/* Evita que padding y bordes alteren las dimensiones */
+.fqa-page .fqa-hero,
+.fqa-page .fqa-hero * {
+  box-sizing: border-box;
+}
+
+/* TABLETAS Y PANTALLAS MEDIANAS */
+@media (max-width: 1050px) {
+  .fqa-page .fqa-hero {
+    position: relative;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+  }
+
+  /* La imagen funciona como fondo del hero */
+  .fqa-page .hero-image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .fqa-page .hero-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Capa de contraste */
+  .fqa-page .hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg,
+        rgba(13, 27, 4, 0.91) 0%,
+        rgba(13, 27, 4, 0.78) 55%,
+        rgba(13, 27, 4, 0.45) 100%);
+  }
+
+  /* El contenedor deja crecer el hero según el contenido */
+  .fqa-page .hero-text-container {
+    position: relative;
+    inset: auto;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    min-height: 520px;
+    padding: 36px 32px;
+  }
+
+  .fqa-page .hero-content {
+    width: 72%;
+    max-width: 600px;
+    min-width: 0;
+  }
+
+  .fqa-page .hero-badge {
+    font-size: 10px;
+  }
+
+  .fqa-page .hero-axis {
+    margin: 14px 0 10px;
+    font-size: 13px;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(30px, 4.2vw, 42px);
+    line-height: 1.12;
+    letter-spacing: -1px;
+  }
+
+  .fqa-page .hero-description {
+    max-width: 540px;
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .fqa-page .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .fqa-page .hero-button {
+    min-height: 42px;
+    padding: 10px 13px;
+    font-size: 12px;
+  }
+}
+
+
+/* MÓVILES */
+@media (max-width: 560px) {
+  .fqa-page .hero-image img {
+    object-position: center;
+  }
+
+  .fqa-page .hero-overlay {
+    background: linear-gradient(180deg,
+        rgba(13, 27, 4, 0.70) 0%,
+        rgba(13, 27, 4, 0.86) 40%,
+        rgba(13, 27, 4, 0.96) 100%);
+  }
+
+  .fqa-page .hero-text-container {
+    align-items: center;
+    min-height: 0;
+    padding: 36px 22px;
+  }
+
+  .fqa-page .hero-content {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .fqa-page .hero-badge {
+    padding: 7px 10px;
+    font-size: 9px;
+    letter-spacing: 0.7px;
+  }
+
+  .fqa-page .hero-axis {
+    margin: 15px 0 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(29px, 7.2vw, 36px);
+    line-height: 1.12;
+    letter-spacing: -0.8px;
+  }
+
+  .fqa-page .hero-description {
+    max-width: 100%;
+    margin-top: 15px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .fqa-page .hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .fqa-page .hero-button {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 12px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .fqa-page .hero-button svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}
+
+
+/* TELÉFONOS PEQUEÑOS */
+@media (max-width: 380px) {
+  .fqa-page .hero-text-container {
+    padding: 30px 17px;
+  }
+
+  .fqa-page .hero-badge {
+    font-size: 8px;
+  }
+
+  .fqa-page .hero-axis {
+    font-size: 11px;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: 28px;
+  }
+
+  .fqa-page .hero-description {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .fqa-page .hero-button {
+    font-size: 12px;
+  }
+}
+
+
+/* MÓVILES EN HORIZONTAL */
+@media (max-width: 950px) and (orientation: landscape) and (max-height: 500px) {
+
+  .fqa-page .hero-text-container {
+    align-items: flex-start;
+    min-height: 0;
+    padding: 22px 28px;
+  }
+
+  .fqa-page .hero-content {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .fqa-page .hero-axis {
+    margin: 8px 0;
+    font-size: 11px;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(25px, 4vw, 32px);
+    line-height: 1.1;
+  }
+
+  .fqa-page .hero-description {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .fqa-page .hero-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .fqa-page .hero-button {
+    width: auto;
+    min-height: 38px;
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+}
