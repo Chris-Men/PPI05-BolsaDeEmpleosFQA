@@ -22,5 +22,7 @@ export interface ApplicationFilters { page?:number;pageSize?:number;kind?:Opport
 export interface ApplicationStatistics { total:number;candidates:number;withResume:number;states:Array<{status:ApplicationStatus;count:number}> }
 export interface CandidateNotification { id:number;applicationId:number|null;title:string;message:string;readAt:string|null;createdAt:string|null }
 export interface NotificationPage extends Page<CandidateNotification> { unreadCount:number }
+/** Summary cards select a compact profile view; student applications include both student kinds. */
+export type CandidateSummarySection = 'applications' | 'employment' | 'volunteering' | 'students' | 'saved';
 /** Blank draft shape is replaced by server prefill before editing begins. */
 export const emptyApplicationData = (): ApplicationData => ({ personal:{firstName:'',lastName:'',phone:'',department:'',municipality:'',profession:'',educationLevel:''}, experience:{lastRole:'',lastOrg:'',skills:'',motivation:''} });

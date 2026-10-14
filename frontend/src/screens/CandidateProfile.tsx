@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useApplications, useNotifications } from '../hooks/useApplications';
 import { ApplicationList } from '../components/applications/ApplicationList';
 import { CandidateNotifications } from '../components/applications/CandidateNotifications';
@@ -23,6 +23,9 @@ import {
 import { CandidateSettings } from '../components/users/CandidateSettings';
 import { CandidateProfileEditor } from '../components/users/CandidateProfileEditor';
 import { ResumeManager } from '../components/users/ResumeManager';
+import { ProfileApplicationSummary } from '../components/users/ProfileApplicationSummary';
+import type { CandidateSummarySection } from '../types/application';
+import type { LucideIcon } from 'lucide-react';
 import type { CandidateProfileState } from '../hooks/useCandidateProfile';
 
 import '../styles/users/profileuser.css';
@@ -53,6 +56,15 @@ interface CandidateProfileProps {
   notificationsRequest: number;
 }
 
+/** Summary card metadata keeps the selected card, counter and panel heading consistent. */
+interface ProfileSummaryOption {
+  section: CandidateSummarySection;
+  label: string;
+  title: string;
+  count: number | string;
+  icon: LucideIcon;
+}
+
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
 type ProfileSection = 'overview' | 'personal' | 'settings' | 'applications' | 'notifications';
 
@@ -79,7 +91,9 @@ export default function CandidateProfile({
      ESTADOS
   ========================================================= */
 
-  const activeTab = 'saved';
+  const [activeTab, setActiveTab] = useState<CandidateSummarySection>('saved');
+  const summaryPanelId = useId();
+  const summaryTitleId = useId();
   const initialApplication = Number(new URLSearchParams(window.location.search).get('postulacion')) || undefined;
   const [activeSection, setActiveSection] = useState<ProfileSection>(notificationsRequest > 0 ? 'notifications' : initialApplication ? 'applications' : 'overview');
   // Repeated header navigation must also work while another profile section is open.
@@ -108,6 +122,22 @@ export default function CandidateProfile({
     );
 
   const totalActive = all.loading || all.error ? '—' : all.page.total;
+  const summaryOptions: ProfileSummaryOption[] = [
+    { section: 'applications', label: 'Postulaciones', title: 'Mis postulaciones recientes', count: totalActive, icon: BriefcaseBusiness },
+    { section: 'employment', label: 'Empleos', title: 'Postulaciones a empleos', count: employment.loading || employment.error ? '—' : employment.page.total, icon: FileText },
+    { section: 'volunteering', label: 'Voluntariados', title: 'Postulaciones a voluntariados', count: volunteering.loading || volunteering.error ? '—' : volunteering.page.total, icon: Heart },
+    { section: 'students', label: 'Estudiantes', title: 'Postulaciones de estudiantes', count: social.loading || internship.loading || social.error || internship.error ? '—' : social.page.total + internship.page.total, icon: GraduationCap },
+    { section: 'saved', label: 'Guardadas', title: 'Vacantes Guardadas', count: mySavedJobs.length, icon: Star },
+  ];
+  const selection = summaryOptions.find(option => option.section === activeTab)!;
+  const SummaryIcon = selection.icon;
+  /** Opens the complete list instead of reopening an earlier notification's deep-linked detail. */
+  const viewApplications = (): void => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('postulacion');
+    window.history.replaceState(null, '', url);
+    setActiveSection('applications');
+  };
 
 
   /* =========================================================
@@ -444,112 +474,18 @@ export default function CandidateProfile({
                   ESTADÍSTICAS
               ============================================= */}
 
-              <section className="profile-stats">
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <BriefcaseBusiness size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {totalActive}
-                    </strong>
-
-                    <span>
-                      Postulaciones
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <FileText size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {employment.loading || employment.error ? '—' : employment.page.total}
-                    </strong>
-
-                    <span>
-                      Empleos
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <Heart size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {volunteering.loading || volunteering.error ? '—' : volunteering.page.total}
-                    </strong>
-
-                    <span>
-                      Voluntariados
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <GraduationCap size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {social.loading || internship.loading || social.error || internship.error ? '—' : social.page.total + internship.page.total}
-                    </strong>
-
-                    <span>
-                      Estudiantes
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <Star size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {mySavedJobs.length}
-                    </strong>
-
-                    <span>
-                      Guardadas
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
+              <section className="profile-stats" aria-label="Resumen de actividad">
+                {summaryOptions.map(({ section, label, count, icon: Icon }) => (
+                  <button type="button" key={section}
+                    className={`profile-stat-card ${activeTab === section ? 'active' : ''}`}
+                    aria-label={`Ver resumen de ${label.toLowerCase()}`}
+                    aria-pressed={activeTab === section} aria-controls={summaryPanelId}
+                    onClick={() => setActiveTab(section)}>
+                    <div className="profile-stat-icon"><Icon size={20} aria-hidden="true" /></div>
+                    <div><strong>{count}</strong><span>{label}</span></div>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                ))}
               </section>
 
 
@@ -557,7 +493,7 @@ export default function CandidateProfile({
                   TABS
               ============================================= */}
 
-              <nav className="profile-tabs"><button type="button" className="active"><Star size={16}/> Guardadas ({mySavedJobs.length})</button></nav>
+              <div className="profile-tabs" aria-live="polite"><span className="profile-summary-label"><SummaryIcon size={16} aria-hidden="true" /> {selection.label} ({selection.count})</span></div>
 
 
               {/* =============================================
@@ -571,27 +507,16 @@ export default function CandidateProfile({
                     POSTULACIONES
                 =========================================== */}
 
-                <section className="profile-card profile-applications-card">
+                <section className="profile-card profile-applications-card" id={summaryPanelId} aria-labelledby={summaryTitleId}>
+                  <div className="profile-card-heading">
+                    <div><div className="profile-heading-icon"><SummaryIcon size={19} aria-hidden="true" /></div>
+                      <h2 id={summaryTitleId}>{selection.title}</h2>
+                    </div>
+                  </div>
+                  {activeTab !== 'saved' && <ProfileApplicationSummary key={activeTab} section={activeTab} onViewAll={viewApplications} />}
 
                   {activeTab === 'saved' && (
                     <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <Star size={19} />
-                          </div>
-
-                          <h2>
-                            Vacantes Guardadas
-                          </h2>
-
-                        </div>
-
-                      </div>
-
 
                       {mySavedJobs.length > 0 ? (
 
