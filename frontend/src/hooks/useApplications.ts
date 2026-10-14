@@ -1,5 +1,5 @@
 import { useEffect,useState,useCallback } from 'react';
-import { listApplications,getApplicationStatistics,getNotifications } from '../services/applicationService';
+import { listApplications,getApplicationStatistics,getNotifications,NOTIFICATIONS_CHANGED } from '../services/applicationService';
 import type { Application,ApplicationFilters,ApplicationStatistics,NotificationPage } from '../types/application';
 import type { Page } from '../types/opportunity';
 /** Requests are scoped to their filter identity; late responses cannot overwrite another page. */
@@ -24,12 +24,13 @@ export function useApplicationStatistics(enabled=true,filters:ApplicationFilters
   useEffect(()=>{if(!enabled)return;const refresh=()=>{if(!document.hidden)reload();};const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};},[enabled,reload]);
   return {statistics,error,reload};
 }
-/** Notification state is mounted inside the account-scoped candidate profile. */
-export function useNotifications(enabled=true,page=1) {
+/** Account-scoped notification views refresh together after successful mutations. */
+export function useNotifications(enabled=true,page=1,pageSize=20) {
   const [result,setResult]=useState<NotificationPage>({items:[],total:0,unreadCount:0,page:1,pageSize:20});
   const [error,setError]=useState('');const [loading,setLoading]=useState(enabled);const [revision,setRevision]=useState(0);
   const reload=useCallback(()=>setRevision(value=>value+1),[]);
-  useEffect(()=>{if(!enabled)return;let current=true;setLoading(true);setError('');void getNotifications(page).then(value=>{if(current)setResult(value);}).catch((failure:unknown)=>{if(current)setError(failure instanceof Error?failure.message:'No se pudieron cargar las notificaciones.');}).finally(()=>{if(current)setLoading(false);});return()=>{current=false;};},[enabled,page,revision]);
+  useEffect(()=>{if(!enabled)return;let current=true;setLoading(true);setError('');void getNotifications(page,pageSize).then(value=>{if(current)setResult(value);}).catch((failure:unknown)=>{if(current)setError(failure instanceof Error?failure.message:'No se pudieron cargar las notificaciones.');}).finally(()=>{if(current)setLoading(false);});return()=>{current=false;};},[enabled,page,pageSize,revision]);
   useEffect(()=>{if(!enabled)return;const refresh=()=>{if(!document.hidden)reload();};const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};},[enabled,reload]);
+  useEffect(()=>{if(!enabled)return;window.addEventListener(NOTIFICATIONS_CHANGED,reload);return()=>window.removeEventListener(NOTIFICATIONS_CHANGED,reload);},[enabled,reload]);
   return {result,error,loading,reload};
 }

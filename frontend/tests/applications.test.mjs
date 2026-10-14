@@ -32,3 +32,47 @@ test('la navegación administrativa requiere rol y permiso vigente',()=>{
   assert.equal(canManageApplications({roles:['ADMINISTRATOR'],permissions:['applications.read.any']}),true);
   assert.equal(canManageApplications({roles:['ADMINISTRATOR'],permissions:['applications.read.any']},'applications.select'),false);
 });
+
+test('la campana obtiene cinco notificaciones y el contador total desde la API autenticada',async context=>{
+  const calls=[];
+  configureAuthentication({getToken:()=> 'test-session',refresh:async()=>{},invalidate:()=>{}});
+  context.mock.method(globalThis,'fetch',async(url,options)=>{
+    calls.push({url,options});
+    return Response.json({items:[],total:42,unreadCount:29,page:1,pageSize:5});
+  });
+  const preview=await service.getNotifications(1,5);
+  await service.getNotifications(2);
+  assert.equal(preview.unreadCount,29);
+  assert.equal(new URL(calls[0].url,'http://localhost').searchParams.get('pageSize'),'5');
+  assert.equal(new URL(calls[1].url,'http://localhost').searchParams.get('pageSize'),'20');
+  assert.equal(new URL(calls[1].url,'http://localhost').searchParams.get('page'),'2');
+  assert.ok(calls.every(call=>call.options.headers.get('Authorization')==='Bearer test-session'));
+});
+
+test('los contadores se invalidan solo tras confirmar lecturas o envíos; un error conserva el estado',async context=>{
+  const previous=Object.getOwnPropertyDescriptor(globalThis,'window');
+  const events=new EventTarget();
+  Object.defineProperty(globalThis,'window',{value:events,configurable:true});
+  context.after(()=>{if(previous)Object.defineProperty(globalThis,'window',previous);else delete globalThis.window;});
+  let updates=0;
+  events.addEventListener(service.NOTIFICATIONS_CHANGED,event=>{updates++;assert.equal(event.detail,undefined);});
+  configureAuthentication({getToken:()=> 'test-session',refresh:async()=>{},invalidate:()=>{}});
+  let complete;
+  context.mock.method(globalThis,'fetch',()=>new Promise(resolve=>{complete=resolve;}));
+  const pending=service.markNotificationRead(3);
+  assert.equal(updates,0);
+  complete(new Response(null,{status:204}));
+  await pending;
+  assert.equal(updates,1);
+  context.mock.method(globalThis,'fetch',async()=>new Response(null,{status:204}));
+  await service.markAllNotificationsRead();
+  assert.equal(updates,2);
+  context.mock.method(globalThis,'fetch',async()=>Response.json({id:8,referenceNumber:'FQA-prueba'}));
+  assert.equal((await service.submitApplication('draft',1)).id,8);
+  assert.equal(updates,3);
+  context.mock.method(globalThis,'fetch',async()=>Response.json({message:'Permiso revocado'},{status:403}));
+  await assert.rejects(service.markNotificationRead(3),error=>error instanceof ApiError&&error.status===403);
+  await assert.rejects(service.markAllNotificationsRead());
+  await assert.rejects(service.submitApplication('draft',1));
+  assert.equal(updates,3);
+});

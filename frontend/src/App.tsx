@@ -187,6 +187,7 @@ function PublicApp() {
 
     const [userMenuOpen, setUserMenuOpen] =
         useState(false);
+    const [notificationsRequest, setNotificationsRequest] = useState(0);
 
 
     // ==========================================================
@@ -282,19 +283,21 @@ function PublicApp() {
     // NAVEGACIÓN
     // ==========================================================
 
+    /** Saves application drafts before leaving; header requests can select the notifications tab. */
     const navigateTo = (
         nextScreen: ScreenName,
-        data: Job | null = null
+        data: Job | null = null,
+        showNotifications = false
     ) => {
         if (screen === 'form' && nextScreen !== 'form' && beforeApplicationLeave.current) {
-            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; navigateTo(nextScreen, data); }).catch(() => undefined);
+            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; navigateTo(nextScreen, data, showNotifications); }).catch(() => undefined);
             return;
         }
         const requestId = ++detailRequest.current;
         publicDetailRequest.current += 1; setPublicDetail(null); setPublicDetailLoading(false); setPublicDetailError('');
         if (!['form', 'login', 'register', 'forgot-password'].includes(nextScreen)) {
             const url = new URL(window.location.href); url.searchParams.delete('postular');
-            if (nextScreen !== 'profile') url.searchParams.delete('postulacion');
+            if (nextScreen !== 'profile' || showNotifications) url.searchParams.delete('postulacion');
             window.history.replaceState(null, '', url);
         }
 
@@ -305,6 +308,7 @@ function PublicApp() {
 
 
         setScreen(nextScreen);
+        if (nextScreen === 'profile') setNotificationsRequest(value => showNotifications ? value + 1 : 0);
 
 
         if (
@@ -621,6 +625,7 @@ function PublicApp() {
                 setUserMenuOpen={setUserMenuOpen}
                 navigateTo={navigateTo}
                 handleLogout={handleLogout}
+                onViewNotifications={() => navigateTo('profile', null, true)}
                 beforeLogout={() => beforeApplicationLeave.current?.() ?? Promise.resolve()}
             />
 
@@ -1022,6 +1027,7 @@ function PublicApp() {
                         navigateTo={navigateTo}
                         candidateState={candidateState}
                         showToast={showToast}
+                        notificationsRequest={notificationsRequest}
                     />
 
                 )}

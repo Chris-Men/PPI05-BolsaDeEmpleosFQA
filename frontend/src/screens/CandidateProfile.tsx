@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApplications, useNotifications } from '../hooks/useApplications';
 import { ApplicationList } from '../components/applications/ApplicationList';
 import { CandidateNotifications } from '../components/applications/CandidateNotifications';
@@ -50,6 +50,7 @@ interface CandidateProfileProps {
   candidateState: CandidateProfileState;
 
   showToast: (message: string) => void;
+  notificationsRequest: number;
 }
 
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
@@ -71,6 +72,7 @@ export default function CandidateProfile({
   candidateState,
 
   showToast,
+  notificationsRequest,
 }: CandidateProfileProps) {
 
   /* =========================================================
@@ -79,7 +81,9 @@ export default function CandidateProfile({
 
   const activeTab = 'saved';
   const initialApplication = Number(new URLSearchParams(window.location.search).get('postulacion')) || undefined;
-  const [activeSection, setActiveSection] = useState<ProfileSection>(initialApplication ? 'applications' : 'overview');
+  const [activeSection, setActiveSection] = useState<ProfileSection>(notificationsRequest > 0 ? 'notifications' : initialApplication ? 'applications' : 'overview');
+  // Repeated header navigation must also work while another profile section is open.
+  useEffect(() => { if (notificationsRequest > 0) setActiveSection('notifications'); }, [notificationsRequest]);
   const notifications = useNotifications();
   const all = useApplications({ pageSize:1 });
   const employment = useApplications({ pageSize:1, kind:'EMPLOYMENT' });
@@ -240,7 +244,7 @@ export default function CandidateProfile({
 
           <button
             type="button"
-            className="profile-sidebar-item"
+            className={`profile-sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`}
             onClick={() => {setActiveSection('notifications'); setMobileMenuOpen(false);}}
           >
             <Bell size={19} />
