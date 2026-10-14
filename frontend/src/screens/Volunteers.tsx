@@ -1,3 +1,4 @@
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { VolunteerSpot } from '../types/models';
 import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
 
@@ -33,6 +34,7 @@ export default function Volunteers({
               <span>📚 {spot.area}</span>
             </div>
             <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
+              <SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'volunteer-' + spot.id} />
             <button 
               className="btn-vol-apply" 
               onClick={(e) => { e.stopPropagation(); handleVolunteerApplyClick(spot); }}

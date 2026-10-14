@@ -1,15 +1,14 @@
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { Job } from '../types/models';
 
 interface JobDetailProps {
   selectedJob: Job;
-  savedJobs: number[];
-  toggleSaveJob: (id: number) => void;
   onApply: () => void;
 }
 
 /** Detailed view for a demonstration employment opportunity. */
 export default function JobDetail({
-  selectedJob, savedJobs, toggleSaveJob, onApply,
+  selectedJob, onApply,
 }: JobDetailProps) {
   return (
     <div className="screen">
@@ -33,9 +32,7 @@ export default function JobDetail({
         </div>
         <div className="dh-right">
           <button className="btn-apply-h" onClick={onApply}>Aplicar ahora →</button>
-          <button className="btn-save-h" onClick={() => toggleSaveJob(selectedJob.id)}>
-            {savedJobs.includes(selectedJob.id) ? '♥ Guardado' : '♡ Guardar vacante'}
-          </button>
+          <SaveOpportunityButton opportunityKey={selectedJob.opportunityKey ?? 'job-' + selectedJob.id} className="btn-save-h" />
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type {
   StateSetter, StudentOpportunityType, StudentSpot,
 } from '../types/models';
@@ -181,6 +182,7 @@ export default function Students({
 
               {/* POSTULACIÓN */}
               <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
+              <SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'job-' + spot.id} />
               <button
                 className="btn-vol-apply"
                 onClick={() => handleStudentApplyClick(spot)}

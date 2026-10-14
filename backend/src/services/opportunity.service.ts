@@ -3,13 +3,14 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
-import { OPPORTUNITY_STATUS_NAMES, type OpportunityStatus, type OpportunityType } from '../constants/opportunity.constants.js';
+import { OPPORTUNITY_STATUS_NAMES, type OpportunityType } from '../constants/opportunity.constants.js';
 import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
 import type { CreateOpportunityDTO, OpportunityQuery, UpdateOpportunityDTO } from '../validation/opportunity.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { assertVacancyAccess, mutateVacancy, vacancySlug } from './vacancy-policy.service.js';
 import { assertCapacity, selectedCount } from './application-capacity.service.js';
+import { isOpportunityAvailable, opportunityStatusCode as statusFor, publicOpportunityWhere as publicWhere } from './opportunity-visibility.js';
 
 /** Shared projection excludes candidates, files, user identities and internal audit records. */
 const commonSelect = {
@@ -32,9 +33,6 @@ const volunteerSelect = { ...commonSelect, volunteerStatuses: { select: { name: 
 type JobRow = Prisma.JobsGetPayload<{ select: typeof jobSelect }>;
 type VolunteerRow = Prisma.VolunteerOpportunitiesGetPayload<{ select: typeof volunteerSelect }>;
 
-/** Stable state conversion never treats an unknown historical label as published. */
-const statusFor = (name: string): OpportunityStatus | 'UNKNOWN' =>
-  (Object.keys(OPPORTUNITY_STATUS_NAMES) as OpportunityStatus[]).find((key) => OPPORTUNITY_STATUS_NAMES[key] === name) ?? 'UNKNOWN';
 /** Produces one safe DTO without leaking internal status catalogs or registration counts publicly. */
 const mapOpportunity = (row: JobRow | VolunteerRow) => {
   const job = 'kind' in row ? row : null;
@@ -65,12 +63,6 @@ const findRow = async (key: string, database: Prisma.TransactionClient = prisma)
   if (!row) throw new AppError(404, 'La vacante no existe.');
   return row;
 };
-/** The public contract includes only published, current, non-archived, eligible records. */
-const publicWhere = (now: Date) => ({
-  archivedAt: null, publishedAt: { lte: now }, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-  organizations: { organizationStatuses: { name: ORGANIZATION_STATUS_NAMES.ACTIVE } },
-  jobCategories: { isActive: true },
-});
 /** Unfiltered homepage counts share vacancy visibility and expose no account information. */
 export const getPublicStatistics = async () => {
   const visible = publicWhere(new Date());
@@ -139,8 +131,7 @@ export const getOpportunity = async (key: string, actor?: AccessContext): Promis
 export const readApplicationOpportunity = async (key: string, database: Prisma.TransactionClient, requireOpen = false): Promise<Opportunity> => {
   const row = await findRow(key, database);
   const value = mapOpportunity(row);
-  if (requireOpen && (value.status !== 'OPEN' || !row.publishedAt || row.publishedAt > new Date() || row.archivedAt ||
-    (row.expiresAt && row.expiresAt <= new Date()) || row.organizations?.organizationStatuses.name !== ORGANIZATION_STATUS_NAMES.ACTIVE || !row.jobCategories?.isActive)) {
+  if (requireOpen && !isOpportunityAvailable(row)) {
     throw new AppError(404, 'La vacante no está disponible.');
   }
   return value;

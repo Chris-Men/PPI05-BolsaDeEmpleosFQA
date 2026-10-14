@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { ApiError } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
+import { PendingSavedNotice } from './PendingSavedNotice';
 import {
   getRegistrationValidationError,
   type RegistrationFormValues,
@@ -131,7 +132,7 @@ export default function RegisterForm({
       });
 
       const intent = new URLSearchParams(window.location.search);
-      navigateTo(intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
+      navigateTo(intent.has('guardar') ? 'profile' : intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
 
       showToast(
         'Cuenta de candidato creada correctamente.'
@@ -163,6 +164,7 @@ export default function RegisterForm({
       onSubmit={handleSubmit}
       noValidate
     >
+      <PendingSavedNotice />
 
       {/* =================================================
           NOMBRE

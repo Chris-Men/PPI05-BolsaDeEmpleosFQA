@@ -22,6 +22,8 @@ import {
 
 import { CandidateSettings } from '../components/users/CandidateSettings';
 import { CandidateProfileEditor } from '../components/users/CandidateProfileEditor';
+import { SavedOpportunityList } from '../components/users/SavedOpportunityList';
+import { useSavedOpportunityState } from '../hooks/useSavedOpportunities';
 import { ResumeManager } from '../components/users/ResumeManager';
 import { ProfileApplicationSummary } from '../components/users/ProfileApplicationSummary';
 import type { CandidateSummarySection } from '../types/application';
@@ -32,7 +34,6 @@ import '../styles/users/profileuser.css';
 
 import type {
   CurrentUser,
-  Job,
   NavigateTo,
 } from '../types/models';
 
@@ -43,16 +44,12 @@ interface CandidateProfileProps {
   handleLogout: () => void;
 
   onResume: (key:string) => void;
-  savedJobs: number[];
-  jobs: Job[];
-
-  toggleSaveJob: (id: number) => void;
+  onViewOpportunity: (key: string) => void;
 
   navigateTo: NavigateTo;
 
   candidateState: CandidateProfileState;
 
-  showToast: (message: string) => void;
   notificationsRequest: number;
 }
 
@@ -74,16 +71,12 @@ export default function CandidateProfile({
   handleLogout,
 
   onResume,
-  savedJobs,
-  jobs,
-
-  toggleSaveJob,
+  onViewOpportunity,
 
   navigateTo,
 
   candidateState,
 
-  showToast,
   notificationsRequest,
 }: CandidateProfileProps) {
 
@@ -99,6 +92,7 @@ export default function CandidateProfile({
   // Repeated header navigation must also work while another profile section is open.
   useEffect(() => { if (notificationsRequest > 0) setActiveSection('notifications'); }, [notificationsRequest]);
   const notifications = useNotifications();
+  const savedState = useSavedOpportunityState();
   const all = useApplications({ pageSize:1 });
   const employment = useApplications({ pageSize:1, kind:'EMPLOYMENT' });
   const volunteering = useApplications({ pageSize:1, kind:'VOLUNTEER' });
@@ -116,18 +110,13 @@ export default function CandidateProfile({
      DATOS
   ========================================================= */
 
-  const mySavedJobs =
-    jobs.filter((job) =>
-      savedJobs.includes(job.id)
-    );
-
   const totalActive = all.loading || all.error ? '—' : all.page.total;
   const summaryOptions: ProfileSummaryOption[] = [
     { section: 'applications', label: 'Postulaciones', title: 'Mis postulaciones recientes', count: totalActive, icon: BriefcaseBusiness },
     { section: 'employment', label: 'Empleos', title: 'Postulaciones a empleos', count: employment.loading || employment.error ? '—' : employment.page.total, icon: FileText },
     { section: 'volunteering', label: 'Voluntariados', title: 'Postulaciones a voluntariados', count: volunteering.loading || volunteering.error ? '—' : volunteering.page.total, icon: Heart },
     { section: 'students', label: 'Estudiantes', title: 'Postulaciones de estudiantes', count: social.loading || internship.loading || social.error || internship.error ? '—' : social.page.total + internship.page.total, icon: GraduationCap },
-    { section: 'saved', label: 'Guardadas', title: 'Vacantes Guardadas', count: mySavedJobs.length, icon: Star },
+    { section: 'saved', label: 'Guardadas', title: 'Vacantes Guardadas', count: savedState.error ? '—' : savedState.total ?? '—', icon: Star },
   ];
   const selection = summaryOptions.find(option => option.section === activeTab)!;
   const SummaryIcon = selection.icon;
@@ -515,102 +504,7 @@ export default function CandidateProfile({
                   </div>
                   {activeTab !== 'saved' && <ProfileApplicationSummary key={activeTab} section={activeTab} onViewAll={viewApplications} />}
 
-                  {activeTab === 'saved' && (
-                    <>
-
-                      {mySavedJobs.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {mySavedJobs.map((job) => (
-
-                            <article
-                              key={job.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {job.title}
-                                </h3>
-
-                                <p>
-                                  {job.org}
-                                  {' · '}
-                                  {job.location}
-                                </p>
-
-                              </div>
-
-
-                              <div className="profile-list-actions">
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button"
-                                  onClick={() =>
-                                    navigateTo(
-                                      'detail',
-                                      job
-                                    )
-                                  }
-                                >
-                                  Ver vacante
-                                </button>
-
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button profile-danger-outline"
-                                  onClick={() => {
-
-                                    toggleSaveJob(
-                                      job.id
-                                    );
-
-                                    showToast(
-                                      '✓ Vacante eliminada de guardadas'
-                                    );
-
-                                  }}
-                                >
-                                  Quitar
-                                </button>
-
-                              </div>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <Star size={34} />
-
-                          <p>
-                            No tienes vacantes
-                            guardadas todavía.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToJobs}
-                          >
-                            Explorar vacantes
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
+                  {activeTab === 'saved' && <SavedOpportunityList onView={onViewOpportunity} onExplore={goToJobs} />}
 
                 </section>
 

@@ -2,6 +2,7 @@ import { ApiError, configureAuthentication } from './api';
 import { changeAccountPassword, deleteOwnAccount, getCurrentAccess, loginAccount, logoutAccount, refreshAccount, registerCandidate } from './authService';
 import type { ChangePasswordRequest } from './authService';
 import type { AuthenticationResponse, LoginRequest, RegisterCandidateRequest } from '../types/auth';
+import { clearSavedIntent } from '../utils/savedIntent';
 
 /** In-memory access credential and public identity. Refresh tokens stay in HttpOnly cookies. */
 export interface SessionSnapshot {
@@ -19,6 +20,8 @@ let bootstrapPromise: Promise<void> | undefined;
 
 /** Notifies React subscribers and optionally other tabs without persisting credentials. */
 const publish = (next: SessionSnapshot, broadcast = true): void => {
+  if ((snapshot.session && snapshot.session.userId !== next.session?.userId) ||
+    (next.session && !next.session.roles.every(role => role === 'CANDIDATE'))) clearSavedIntent();
   snapshot = next;
   listeners.forEach((listener) => listener());
   if (broadcast) channel?.postMessage(next);
@@ -73,6 +76,7 @@ if (channel) channel.onmessage = (event: MessageEvent<SessionSnapshot>): void =>
 
 configureAuthentication({
   getToken: () => snapshot.session?.accessToken,
+  getUserId: () => snapshot.session?.userId,
   refresh: () => renew(true),
   invalidate,
 });

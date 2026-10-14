@@ -3,6 +3,7 @@ import { Eye, EyeOff, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ApiError } from '../../services/api';
 import { getLoginValidationError } from '../../validation/login';
+import { PendingSavedNotice } from './PendingSavedNotice';
 import type { NavigateTo } from '../../types/models';
 
 interface LoginFormProps { navigateTo: NavigateTo }
@@ -30,7 +31,7 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
       await login({ email: email.trim().toLowerCase(), password });
       setPassword('');
       const intent = new URLSearchParams(window.location.search);
-      navigateTo(intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
+      navigateTo(intent.has('guardar') ? 'profile' : intent.has('postular') ? 'form' : intent.has('postulacion') ? 'profile' : 'home');
     } catch (failure: unknown) {
       setError(failure instanceof ApiError
         ? failure.validationErrors[0]?.message ?? failure.message
@@ -39,6 +40,7 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
   };
 
   return <form className="login-form" onSubmit={submit} noValidate aria-busy={loading}>
+    <PendingSavedNotice />
     {error && <div id="login-error" className="auth-error" role="alert">{error}</div>}
     <div className="form-group">
       <label htmlFor="login-email">Correo electrónico</label>

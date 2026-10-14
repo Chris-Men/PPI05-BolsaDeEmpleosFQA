@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { Job, NavigateTo, StateSetter } from '../types/models';
 import type { PublicOpportunityStatistics } from '../types/opportunity';
 
@@ -12,8 +13,6 @@ interface HomeProps {
   listingLoading: boolean;
   listingError: string;
   onRetryListing: () => void;
-  savedJobs: number[];
-  toggleSaveJob: (id: number) => void;
   navigateTo: NavigateTo;
   setQvJob: StateSetter<Job | null>;
   setQvOpen: StateSetter<boolean>;
@@ -22,7 +21,7 @@ interface HomeProps {
 
 /** Original homepage layout with unfiltered database metrics and a draft search submitted to Empleos. */
 export default function Home({
-  categories, total, jobs, savedJobs, toggleSaveJob, navigateTo, setQvJob, setQvOpen,
+  categories, total, jobs, navigateTo, setQvJob, setQvOpen,
   statistics, statisticsError, onRetryStatistics, listingLoading, listingError, onRetryListing, onSearch,
 }: HomeProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,9 +144,7 @@ export default function Home({
                 </div>
                 <div className="jcard-actions">
                   <button className="jcard-quick" onClick={(e) => { e.stopPropagation(); setQvJob(job); setQvOpen(true); }} title="Vista rápida">👁</button>
-                  <button className={`jcard-save ${savedJobs.includes(job.id) ? 'saved' : ''}`} onClick={(e) => { e.stopPropagation(); toggleSaveJob(job.id); }}>
-                    {savedJobs.includes(job.id) ? '♥' : '♡'}
-                  </button>
+                  <SaveOpportunityButton opportunityKey={job.opportunityKey ?? 'job-' + job.id} className="jcard-save" variant="icon" />
                 </div>
               </div>
               <div>

@@ -17,6 +17,11 @@ import type {
 } from './types/models';
 
 import { useAuth } from './hooks/useAuth';
+import { useSavedOpportunities } from './hooks/useSavedOpportunities';
+import { SavedOpportunitiesContext } from './state/savedOpportunitiesContext';
+import { clearSavedIntent, getSavedIntent, setSavedIntent } from './utils/savedIntent';
+import { sessionStore } from './services/sessionStore';
+import './styles/users/savedOpportunities.css';
 import { useCandidateProfile } from './hooks/useCandidateProfile';
 import type { Application } from './types/application';
 import { AuthenticatedDashboard } from './components/admin/AuthenticatedDashboard';
@@ -105,6 +110,12 @@ export default function App() {
 /** Keeps public navigation, candidate profile, and applications scoped to one account. */
 function PublicApp() {
     const { session, logout } = useAuth();
+    const savedState = useSavedOpportunities(session);
+    const { canUpdate: savedCanUpdate, loading: savedLoading, total: savedTotal, error: savedError, change: changeSaved } = savedState;
+    const [pendingSaveIntent, setPendingSaveIntent] = useState(getSavedIntent);
+    const [saveIntentError, setSaveIntentError] = useState('');
+    const [saveIntentRetry, setSaveIntentRetry] = useState(0);
+    const attemptedSaveIntent = useRef<string | null>(null);
 
 
     // ==========================================================
@@ -127,6 +138,7 @@ function PublicApp() {
             return 'forgot-password';
         }
 
+        if (getSavedIntent()) return session ? 'profile' : 'login';
         const params = new URLSearchParams(window.location.search);
         if (/^(job|volunteer)-[1-9][0-9]*$/.test(params.get('postular') ?? '')) return 'form';
         if (/^[1-9][0-9]*$/.test(params.get('postulacion') ?? '')) return 'profile';
@@ -169,8 +181,6 @@ function PublicApp() {
 
 
 
-    const [savedJobs, setSavedJobs] =
-        useState<number[]>([]);
 
 
     const volunteerApps: number[] = [];
@@ -369,12 +379,12 @@ function PublicApp() {
     // TOAST
     // ==========================================================
 
-    const showToast = (msg: string) => {
+    const showToast = useCallback((msg: string) => {
 
         setToastMsg(msg);
         setToastShow(true);
 
-    };
+    }, []);
 
     /** Commits Home's draft filters only when navigating to employment results. */
     const searchFromHome = (query: string, location: string, area = 'Todos'): void => {
@@ -455,35 +465,32 @@ function PublicApp() {
     // FAVORITOS
     // ==========================================================
 
-    const toggleSaveJob = (id: number) => {
-
-        if (savedJobs.includes(id)) {
-
-            setSavedJobs(prev =>
-                prev.filter(
-                    jobId => jobId !== id
-                )
-            );
-
-
-            showToast(
-                'Vacante removida de favoritos'
-            );
-
-        } else {
-
-            setSavedJobs(prev => [
-                ...prev,
-                id
-            ]);
-
-
-            showToast(
-                '💚 Vacante guardada en tu perfil'
-            );
-        }
+    /** Preserves the public opportunity through candidate login or registration. */
+    const requestSaveLogin = (key: string): void => {
+        setSavedIntent(key); setPendingSaveIntent(key); navigateTo('login');
     };
 
+    // A deferred start survives StrictMode replay; transport identity guards prevent cross-account retries.
+    useEffect(() => {
+        const userId = session?.userId;
+        if (!userId || !pendingSaveIntent) return;
+        if (!savedCanUpdate) { setSaveIntentError('No tienes permiso para guardar vacantes.'); return; }
+        if (savedLoading || savedTotal === null || savedError) return;
+        const attemptKey = userId + ':' + pendingSaveIntent + ':' + saveIntentRetry;
+        if (attemptedSaveIntent.current === attemptKey) return;
+        const timer = setTimeout(() => {
+            attemptedSaveIntent.current = attemptKey; setSaveIntentError('');
+            void changeSaved(pendingSaveIntent, true).then(() => {
+                if (sessionStore.getSnapshot().session?.userId !== userId) return;
+                clearSavedIntent(); setPendingSaveIntent(null); setScreen('profile');
+                showToast('Vacante guardada en tu perfil.');
+            }).catch((failure: unknown) => {
+                if (sessionStore.getSnapshot().session?.userId === userId)
+                    setSaveIntentError(failure instanceof Error ? failure.message : 'No se pudo guardar la vacante.');
+            });
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [session?.userId, pendingSaveIntent, savedCanUpdate, savedLoading, savedTotal, savedError, changeSaved, saveIntentRetry, showToast]);
 
     // ==========================================================
     // POSTULACIONES
@@ -612,6 +619,7 @@ function PublicApp() {
 
     return (
 
+        <SavedOpportunitiesContext.Provider value={{ ...savedState, requestLogin: requestSaveLogin, notice: showToast }}>
         <div id="app">
 
             {/* ======================================================
@@ -629,6 +637,13 @@ function PublicApp() {
                 beforeLogout={() => beforeApplicationLeave.current?.() ?? Promise.resolve()}
             />
 
+
+            {savedState.error && <div role="alert" className="saved-collection-error">{savedState.error}<button type="button" onClick={savedState.reload}>Reintentar guardadas</button></div>}
+            {session && pendingSaveIntent && <div className="saved-intent-notice" role={saveIntentError ? 'alert' : 'status'}>
+                <p>{saveIntentError || 'Guardando la vacante seleccionada…'}</p>
+                {saveIntentError && <button type="button" onClick={() => { savedState.reload(); setSaveIntentRetry(value => value + 1); }}>Reintentar guardado</button>}
+                <button type="button" disabled={savedState.pending.has(pendingSaveIntent)} onClick={() => { clearSavedIntent(); setPendingSaveIntent(null); setSaveIntentError(''); }}>Cancelar guardado</button>
+            </div>}
 
             {/* ======================================================
                 BREADCRUMB
@@ -849,10 +864,6 @@ function PublicApp() {
                         onRetryListing={homeListing.reload}
                         onSearch={searchFromHome}
                         jobs={jobs}
-                        savedJobs={savedJobs}
-                        toggleSaveJob={
-                            toggleSaveJob
-                        }
                         navigateTo={
                             navigateTo
                         }
@@ -909,12 +920,6 @@ function PublicApp() {
                     <JobDetail
                         selectedJob={
                             selectedJob
-                        }
-                        savedJobs={
-                            savedJobs
-                        }
-                        toggleSaveJob={
-                            toggleSaveJob
                         }
                         onApply={() => openApplication(selectedJob.opportunityKey ?? 'job-'+selectedJob.id)}
                     />
@@ -1019,14 +1024,11 @@ function PublicApp() {
 
                     <CandidateProfile
                         currentUser={currentUser}
+                        onViewOpportunity={viewOpportunity}
                         handleLogout={handleLogout}
                         onResume={openApplication}
-                        savedJobs={savedJobs}
-                        jobs={jobs}
-                        toggleSaveJob={toggleSaveJob}
                         navigateTo={navigateTo}
                         candidateState={candidateState}
-                        showToast={showToast}
                         notificationsRequest={notificationsRequest}
                     />
 
@@ -1197,5 +1199,6 @@ function PublicApp() {
             </div>
 
         </div>
+        </SavedOpportunitiesContext.Provider>
     );
 }
