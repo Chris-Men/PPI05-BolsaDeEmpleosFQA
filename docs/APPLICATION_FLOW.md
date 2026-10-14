@@ -87,6 +87,8 @@ La URL `/?postular=job-123` o `/?postular=volunteer-123` identifica únicamente 
 
 **Postulaciones** sustituye el acceso a **CV Recibidos** en administración. Permite consulta, revisión, selección y rechazo con confirmación, explicación y versión. Los indicadores de postulaciones, candidatos postulantes y documentos proceden de agregados de la API, independientemente de la página visible. No se incluye agenda de entrevistas.
 
+El detalle compartido de candidato y administrador se muestra en un diálogo centrado que restaura explícitamente los márgenes anulados por el reset global. Mantiene la paleta y las tarjetas de la página, una cabecera fija y desplazamiento interno para consultar documentos e historial completos. Se adapta a móvil, evita desbordes horizontales y oculta el bloque profesional cuando no contiene información. El diálogo tiene título accesible, admite cierre con Escape y conserva un foco seguro al desmontarse.
+
 El envío y las decisiones de selección/rechazo encolan mensajes cifrados mediante la cola existente. La revisión también genera notificación interna. Un fallo SMTP no revierte la operación y se reintenta; las claves de evento evitan encolados duplicados. Se mantiene la entrega al menos una vez del trabajador SMTP existente ante un reinicio durante el envío.
 
 ## Instalación y validación
