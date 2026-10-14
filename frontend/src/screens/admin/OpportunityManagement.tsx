@@ -24,6 +24,7 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
   const [revision, setRevision] = useState(0);
   const [viewing, setViewing] = useState<Opportunity | null>(null);
   const mounted = useRef(false);
+  const detailOpener = useRef<HTMLElement | null>(null);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const authorized = canManageVacancies(session);
   useEffect(() => {
@@ -45,6 +46,8 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
   if (!authorized) return <p role="alert">No tienes permiso para gestionar vacantes.</p>;
   /** Fresh detail protects the editor from outdated listing data. */
   const open = async (value: Opportunity, editing: boolean): Promise<void> => {
+    // Disabling the trigger during loading can clear browser focus before the dialog mounts.
+    if (!editing) detailOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setError(''); setLoading(true);
     try { const fresh = await getManagedOpportunity(value.key); if (mounted.current) { if (editing) setEditor({ opportunity: fresh }); else setViewing(fresh); } }
     catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No se pudo consultar la vacante.'); }
@@ -78,6 +81,6 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
       if (action.type === 'ARCHIVED') await archiveOpportunity(action.opportunity.key); else await setOpportunityStatus(action.opportunity.key, action.type);
       setAction(null); setMessage('Estado de la vacante actualizado.'); setRevision(revision + 1); onChanged?.();
     }} />}
-    {viewing && <OpportunityDetailsDialog opportunity={viewing} onClose={() => setViewing(null)} />}
+    {viewing && <OpportunityDetailsDialog opportunity={viewing} onClose={() => setViewing(null)} returnFocus={detailOpener.current} />}
   </section>;
 }

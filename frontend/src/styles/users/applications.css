@@ -2,121 +2,34 @@
 @media(max-width:700px){.application-section{padding:16px}.application-heading{align-items:flex-start;flex-wrap:wrap}.application-filters{gap:10px}.application-filters label{min-width:calc(50% - 10px)}.application-filters label:first-child{flex-basis:100%}.application-data{grid-template-columns:1fr}.application-draft{align-items:flex-start;flex-direction:column}.application-confirmation{margin:20px 12px;padding:20px}.application-table{min-width:660px}}
 .application-form .form-pages{border:0;min-width:0}.application-field-error{color:#a22f40;font-size:13px}.application-prewrap{white-space:pre-wrap;overflow-wrap:anywhere}.application-table td:first-child{overflow-wrap:anywhere;min-width:135px}
 
-/* Native dialogs must restore automatic margins overridden by the global reset. */
-.application-dialog {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: min(840px, calc(100% - 48px));
-  max-width: none;
-  max-height: calc(100dvh - 48px);
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--c100);
-  border-radius: var(--rad-xl);
-  background: var(--off);
-  color: var(--c700);
-  box-shadow: var(--shadow3);
-}
-.application-dialog[open] { display: flex; flex-direction: column; }
-.application-dialog::backdrop {
-  background: rgba(25, 48, 7, .46);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-.application-dialog-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--c100);
-  background: var(--w);
-}
-.application-dialog-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: var(--rad);
-  background: var(--gl);
-  color: var(--g2);
-}
-.application-dialog-header > div { flex: 1; min-width: 0; }
-.application-dialog-header h2 { margin: 0; font-size: 21px; line-height: 1.35; color: var(--gd); }
-.application-dialog-header p { margin-top: 5px; color: var(--c500); font-size: 12px; }
-.application-dialog-close {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border: 1px solid var(--c100);
-  border-radius: var(--rad);
-  background: var(--off);
-  color: var(--c600);
-  cursor: pointer;
-  transition: background var(--trans);
-}
-.application-dialog-close:hover { background: var(--gl); }
-.application-dialog-close:disabled { opacity: .55; cursor: default; }
-.application-dialog-body {
-  min-height: 0;
-  min-width: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 24px;
-}
-.application-detail-summary {
-  align-items: flex-start;
-  margin-bottom: 0;
-  padding: 20px;
-  border: 1px solid var(--c100);
-  border-left: 4px solid var(--g);
-  border-radius: var(--rad-lg);
-  background: var(--w);
-}
-.application-detail-summary > div { flex: 1; min-width: 0; }
-.application-detail-summary h3 { font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
-.application-detail-summary p { font-size: 14px; }
 .application-reference { display: block; margin-top: 10px; font-size: 12px; color: var(--c500); overflow-wrap: anywhere; }
-.application-dialog .application-detail-section {
-  margin-top: 16px;
-  padding: 20px;
-  border: 1px solid var(--c100);
-  border-radius: var(--rad-lg);
-  background: var(--w);
-}
-.application-dialog .application-detail-section h3 { margin-bottom: 16px; color: var(--gd); font-size: 16px; }
-.application-dialog .application-data { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
-.application-dialog .application-data dt { font-size: 12px; font-weight: 600; }
-.application-dialog .application-data dd { margin-top: 5px; font-size: 14px; line-height: 1.6; }
-.application-dialog .application-detail-section > p { margin-top: 8px; line-height: 1.65; overflow-wrap: anywhere; }
+
 .application-detail-motivation { margin-top: 18px; padding: 14px 16px; border-radius: var(--rad); background: var(--off); }
+
 .application-detail-motivation h4 { margin-bottom: 6px; font-size: 12px; color: var(--c500); }
+
 .application-detail-motivation p { font-size: 14px; line-height: 1.7; }
+
 .application-document-name { margin-bottom: 14px; }
+
 .application-dialog .application-history { padding-left: 18px; font-size: 14px; line-height: 1.6; }
+
 .application-dialog .application-history li::marker { color: var(--g2); font-weight: 600; }
+
 .application-dialog .application-confirm { margin-top: 20px; }
+
 .application-dialog .application-confirm h3 { font-size: 17px; margin-bottom: 8px; }
+
 .application-dialog .application-confirm label { margin-top: 14px; }
+
 .application-dialog .application-actions { justify-content: flex-end; gap: 10px; }
+
 .application-dialog .application-button { font-size: 14px; border-radius: var(--rad); }
+
 .application-dialog .application-button.secondary { border-color: var(--c200); background: var(--w); }
+
 .application-dialog .application-button.secondary:hover { background: var(--gl); }
 @media (max-width: 600px) {
-  .application-dialog { width: calc(100% - 24px); max-height: calc(100dvh - 24px); border-radius: var(--rad-lg); }
-  .application-dialog-header { gap: 10px; padding: 16px; }
-  .application-dialog-icon { width: 38px; height: 38px; }
-  .application-dialog-header h2 { font-size: 17px; }
-  .application-dialog-header p { font-size: 11px; }
-  .application-dialog-body { padding: 14px; }
-  .application-detail-summary, .application-dialog .application-detail-section { padding: 16px; }
-  .application-detail-summary h3 { font-size: 18px; }
-  .application-dialog .application-data { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
   .application-dialog .application-actions > button { flex: 1; }
 }

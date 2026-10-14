@@ -1,0 +1,167 @@
+/* Native dialogs must restore automatic margins overridden by the global reset. */
+.detail-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(840px, calc(100% - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--c100);
+  border-radius: var(--rad-xl);
+  background: var(--off);
+  color: var(--c700);
+  box-shadow: var(--shadow3);
+}
+
+.detail-dialog[open] { display: flex; flex-direction: column; }
+
+.detail-dialog::backdrop {
+  background: rgba(25, 48, 7, .46);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.detail-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--c100);
+  background: var(--w);
+}
+
+.detail-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--rad);
+  background: var(--gl);
+  color: var(--g2);
+}
+
+.detail-dialog-header > div { flex: 1; min-width: 0; }
+
+.detail-dialog-header h2 { margin: 0; font-size: 21px; line-height: 1.35; color: var(--gd); }
+
+.detail-dialog-header p { margin-top: 5px; color: var(--c500); font-size: 12px; }
+
+.detail-dialog .detail-dialog-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--c100);
+  border-radius: var(--rad);
+  background: var(--off);
+  color: var(--c600);
+  cursor: pointer;
+  transition: background var(--trans);
+}
+
+.detail-dialog .detail-dialog-close:hover { background: var(--gl); }
+
+.detail-dialog .detail-dialog-close:disabled { opacity: .55; cursor: default; }
+
+.detail-dialog-body {
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px;
+}
+
+.detail-dialog-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 0;
+  padding: 20px;
+  border: 1px solid var(--c100);
+  border-left: 4px solid var(--g);
+  border-radius: var(--rad-lg);
+  background: var(--w);
+}
+
+.detail-dialog-summary > div { flex: 1; min-width: 0; }
+
+.detail-dialog-summary h3 { margin: 0 0 6px; font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
+
+.detail-dialog-summary p { margin: 0; font-size: 14px; color: var(--c500); }
+
+.detail-dialog .detail-dialog-section {
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--c100);
+  border-radius: var(--rad-lg);
+  background: var(--w);
+}
+
+.detail-dialog .detail-dialog-section h3 { margin-bottom: 16px; color: var(--gd); font-size: 16px; }
+
+.detail-dialog .detail-dialog-data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
+
+.detail-dialog .detail-dialog-data dt { color: var(--c500); font-size: 12px; font-weight: 600; }
+
+.detail-dialog .detail-dialog-data dd { overflow-wrap: anywhere; margin-top: 5px; font-size: 14px; line-height: 1.6; }
+
+.detail-dialog .detail-dialog-section > p { margin-top: 8px; line-height: 1.65; overflow-wrap: anywhere; }
+
+/* Detail footers stay visible while long descriptions scroll. */
+.detail-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 18px 24px;
+  border-top: 1px solid var(--c100);
+  background: var(--w);
+}
+.detail-dialog .detail-dialog-button {
+  padding: 10px 16px;
+  border: 1px solid var(--c200);
+  border-radius: var(--rad);
+  background: var(--w);
+  color: var(--gd);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.detail-dialog .detail-dialog-button:hover { background: var(--gl); }
+.detail-dialog-list { padding-left: 20px; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.detail-dialog-list li + li { margin-top: 8px; }
+.detail-dialog-list li::marker { color: var(--g2); }
+.detail-dialog-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail-dialog-status { flex-shrink: 0; padding: 5px 10px; border-radius: 20px; background: #edf0f2; color: #56646d; font-size: 13px; }
+.detail-dialog-status[data-status="OPEN"] { background: var(--gl); color: var(--g2); }
+.detail-dialog-status[data-status="DRAFT"] { background: #fff4d7; color: #775414; }
+@media (max-width: 600px) {
+  .detail-dialog { width: calc(100% - 24px); max-height: calc(100dvh - 24px); border-radius: var(--rad-lg); }
+
+  .detail-dialog-header { gap: 10px; padding: 16px; }
+
+  .detail-dialog-icon { width: 38px; height: 38px; }
+
+  .detail-dialog-header h2 { font-size: 17px; }
+
+  .detail-dialog-header p { font-size: 11px; }
+
+  .detail-dialog-body { padding: 14px; }
+
+  .detail-dialog-summary, .detail-dialog .detail-dialog-section { padding: 16px; }
+
+  .detail-dialog-summary h3 { font-size: 18px; }
+
+  .detail-dialog .detail-dialog-data { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .detail-dialog-summary { flex-wrap: wrap; }
+  .detail-dialog-footer { padding: 14px 16px; }
+  .detail-dialog-footer .detail-dialog-button { flex: 1; }
+}
