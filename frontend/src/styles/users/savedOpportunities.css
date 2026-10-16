@@ -16,5 +16,10 @@
 .saved-intent-notice p { margin: 0 0 8px; }
 .saved-intent-notice button { padding: 7px 12px; border: 1px solid var(--c200); border-radius: 7px; background: #fff; color: var(--gd); font: inherit; cursor: pointer; }
 .saved-intent-notice button + button { margin-left: 8px; }
-.volunteer-card > .save-opportunity-button { width: 100%; margin-top: 12px; }
+.vol-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.vol-card-header .vol-slots { min-width: 0; overflow-wrap: anywhere; }
+.vol-card-save { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
+.opportunity-save-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 26px; line-height: 1; }
+.opportunity-save-icon:focus-visible { outline: 2px solid var(--g2); outline-offset: 3px; }
+.vol-card-save .saved-operation-error { width: 180px; max-width: 40vw; margin-top: 6px; font-size: 11px; }
 @media (max-width: 600px) { .saved-opportunity-item { flex-wrap: wrap; align-items: flex-start; } .saved-opportunity-item .profile-list-actions { width: 100%; justify-content: flex-start; } .saved-intent-notice, .saved-collection-error { margin: 12px; } }

@@ -6,7 +6,7 @@ interface JobDetailProps {
   onApply: () => void;
 }
 
-/** Detailed view for a demonstration employment opportunity. */
+/** Employment detail keeps saving in the header and application in the position summary. */
 export default function JobDetail({
   selectedJob, onApply,
 }: JobDetailProps) {
@@ -31,7 +31,6 @@ export default function JobDetail({
           </div>
         </div>
         <div className="dh-right">
-          <button className="btn-apply-h" onClick={onApply}>Aplicar ahora →</button>
           <SaveOpportunityButton opportunityKey={selectedJob.opportunityKey ?? 'job-' + selectedJob.id} className="btn-save-h" />
         </div>
       </div>

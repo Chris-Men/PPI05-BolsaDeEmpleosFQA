@@ -6,7 +6,7 @@ import type { CandidateProfileState } from '../hooks/useCandidateProfile';
 import type { Application,ApplicationData } from '../types/application';
 import type { ResumeMetadata } from '../types/profile';
 import { KIND_LABELS } from '../types/opportunity';
-import { downloadDraftResume,saveDownloadedResume } from '../services/applicationService';
+import { downloadDraftResume } from '../services/applicationService';
 import '../styles/users/candidateEditor.css';
 import '../styles/users/applications.css';
 interface ApplicationFormProps { opportunityKey:string;candidateState:CandidateProfileState;onSubmitted:(value:Application)=>void;onExit:()=>void; onBeforeLeave:(save:(()=>Promise<unknown>)|null)=>void }
@@ -14,13 +14,15 @@ interface ApplicationFormProps { opportunityKey:string;candidateState:CandidateP
 export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExit,onBeforeLeave}:ApplicationFormProps) {
   const form=useApplicationDraft(opportunityKey,onSubmitted);const fieldId=useId();
   const {session}=useAuth();
-  const [document,setDocument]=useState<ResumeMetadata|null>(null);const [downloadError,setDownloadError]=useState('');const [leaving,setLeaving]=useState(false);
+  const [document,setDocument]=useState<ResumeMetadata|null>(null);const [leaving,setLeaving]=useState(false);
   const storedDraft=form.draft;const saveBeforeLeave=form.flush;const resumeBusy=candidateState.busy;
   useEffect(()=>{onBeforeLeave(storedDraft?()=>resumeBusy?Promise.reject(new Error('Espera a que termine la operación del CV.')):saveBeforeLeave():null);return()=>onBeforeLeave(null);},[storedDraft,saveBeforeLeave,onBeforeLeave,resumeBusy]);
   if(form.loading)return <div className="session-status" role="status">Cargando tu borrador…</div>;
   if(!form.draft)return <div className="session-status"><p role="alert">{form.error}</p><button onClick={()=>void form.reload()}>Reintentar</button><button onClick={onExit}>Volver</button></div>;
   const draft=form.draft;const required=['EMPLOYMENT','INTERNSHIP'].includes(draft.opportunity.kind);
   const selected=form.resumeId===document?.id?document:form.resumeId===candidateState.resume?.id?candidateState.resume:form.resumeId===draft.resume?.id?draft.resume:null;
+  /** One selection path keeps uploaded and existing profile documents in the same autosaved draft. */
+  const selectResume=(file:ResumeMetadata|null):void=>{setDocument(file);form.chooseResume(file?.id??null);form.setFields({...form.fields,resumeId:''});};
   const personal=(field:keyof ApplicationData['personal'],label:string,maxLength:number,mandatory=false) => <div className="ff" key={field}>
     <label htmlFor={fieldId+'-'+field}>{label}{mandatory?' *':''}</label>
     <input id={fieldId+'-'+field} type={field==='phone'?'tel':'text'} maxLength={maxLength} value={form.data.personal[field]}
@@ -64,15 +66,10 @@ export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExi
         {experience('motivation','¿Por qué deseas participar? *',5000,true)}{experience('skills','Habilidades clave (separadas por coma)',5000)}
       </div></div>}
       {form.step===3&&<div className="form-page"><div className="fp-hd"><h3>Documentos de postulación</h3><p>{required?'Adjunta un CV para completar esta postulación.':'El CV es opcional para esta oportunidad.'}</p></div>
-        <ResumeManager state={candidateState} onUploaded={file=>{setDocument(file);form.chooseResume(file.id);}}/>
-        <div className="review-block"><h4>CV seleccionado para esta postulación</h4><p>{selected?.originalName??(form.resumeId?'Documento seleccionado':'Sin CV')}</p>
-          <p>El documento seleccionado se conservará aunque actualices el CV de tu perfil.</p>
-          <div className="candidate-editor-actions">
-            {candidateState.resume&&<button type="button" onClick={()=>{setDocument(candidateState.resume);form.chooseResume(candidateState.resume!.id);}}>Usar CV del perfil</button>}
-            {!required&&<button type="button" onClick={()=>form.chooseResume(null)}>Continuar sin CV</button>}
-            {form.resumeId&&draft.resume?.id===form.resumeId&&<button type="button" onClick={()=>void saveDownloadedResume(downloadDraftResume(draft.id),selected?.originalName??'curriculum.pdf').catch((failure:unknown)=>setDownloadError(failure instanceof Error?failure.message:'No se pudo descargar el CV.'))}>Descargar CV seleccionado</button>}
-          </div>{(form.fields.resumeId||downloadError)&&<p role="alert" className="application-field-error">{form.fields.resumeId||downloadError}</p>}
-        </div>
+        <ResumeManager state={candidateState} onUploaded={selectResume}
+          application={{selected,required,error:form.fields.resumeId,
+            onSelect:selectResume,
+            onDownload:async()=>{const saved=await form.flush();return downloadDraftResume(saved.id);}}}/>
       </div>}
       {form.step===4&&<div className="form-page"><div className="fp-hd"><h3>Revisa tu postulación</h3><p>Verifica los datos antes de enviarlos.</p></div>
         <div className="review-block"><div className="rb-hd"><span>Datos personales</span><button onClick={()=>void form.changeStep(1)}>Editar</button></div><p>{form.data.personal.firstName} {form.data.personal.lastName}</p><p>{session?.user.email??draft.professionalProfile?.email} · {form.data.personal.phone}</p><p>{form.data.personal.municipality}, {form.data.personal.department}</p><p>{form.data.personal.profession} · {form.data.personal.educationLevel}</p></div>

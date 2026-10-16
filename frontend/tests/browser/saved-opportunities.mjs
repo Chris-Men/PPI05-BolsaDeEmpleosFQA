@@ -86,8 +86,15 @@ try {
   await wait(`document.querySelectorAll('.jcard').length>0`, 'Home después de recargar');
   await evaluate(`document.querySelector('.jcard').click()`);
   await wait(`Boolean(document.querySelector('.btn-save-h'))`, 'detalle empleo');
+  assert.equal(await evaluate(`document.querySelectorAll('.btn-apply-h').length`), 0);
+  assert.equal(await evaluate(`document.querySelectorAll('.ds-apply').length`), 1);
   assert.equal(await evaluate(`document.querySelector('.btn-save-h').getAttribute('aria-pressed')`), 'true');
   await openProfile(); await total(13);
+  await evaluate(`document.querySelector('.profile-brand-home').focus()`);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', text: '\r' });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter' });
+  await wait(`document.querySelectorAll('.jcard').length>0`, 'logo del perfil vuelve a Home');
+  await openProfile();
   await wait(`Boolean(document.querySelector('.saved-unavailable'))`, 'vacante cerrada tras volver al perfil');
   await evaluate(`document.querySelector('.saved-unavailable').closest('article').querySelector('[aria-label="Quitar vacante de guardadas"]').click()`);
   await total(12);
@@ -99,6 +106,10 @@ try {
     const vacancy = fixture.spares.find(item => item.kind === kind);
     await wait(`Array.from(document.querySelectorAll('.volunteer-card')).some(item=>item.textContent.includes(${JSON.stringify(vacancy.title)}))`, 'tarjeta ' + kind);
     const selector = `Array.from(document.querySelectorAll('.volunteer-card')).find(item=>item.textContent.includes(${JSON.stringify(vacancy.title)})).querySelector('.save-opportunity-button')`;
+    assert.equal(await evaluate(selector + `.closest('.vol-card-header')!==null`), true);
+    const position = await evaluate(`(()=>{const button=${selector};const header=button.closest('.vol-card-header');const rectangle=button.getBoundingClientRect();const container=header.getBoundingClientRect();return {right:container.right-rectangle.right,width:rectangle.width,height:rectangle.height,text:button.textContent.trim()};})()`);
+    assert.ok(Math.abs(position.right) <= 1 && position.width >= 44 && position.height >= 44);
+    assert.ok(['♡','♥'].includes(position.text));
     if (kind === 'VOLUNTEER') {
       await evaluate(`(()=>{const previous=window.fetch;let fail=true;window.fetch=(input,options)=>{if(fail&&new URL(input,location.href).pathname.includes('/saved-opportunities/')&&options?.method==='PUT'){fail=false;return Promise.resolve(Response.json({message:'Fallo recuperable de guardado.'},{status:503}));}return previous(input,options);};})()`);
       await evaluate(selector + '.click()');
@@ -122,6 +133,10 @@ try {
     await wait(selector + `.getAttribute('aria-pressed')==='true'`, 'guardado ' + kind);
     expectedTotal += 1;
     await screenshot('tarjeta-' + kind.toLowerCase());
+    await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await wait(`(()=>{const button=${selector};const header=button.closest('.vol-card-header');return Math.abs(button.getBoundingClientRect().right-header.getBoundingClientRect().right)<=1;})()`, 'corazón móvil ' + kind);
+    await assertWidth(); await screenshot('tarjeta-' + kind.toLowerCase() + '-mobile');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1050, deviceScaleFactor: 1, mobile: false });
     await openProfile(); await total(expectedTotal);
   }
   await navigate(web + '/'); await openProfile(); await total(15);
@@ -130,6 +145,11 @@ try {
   await screenshot('guardadas-mobile'); await assertWidth();
   await send('Emulation.setDeviceMetricsOverride', { width: 320, height: 740, deviceScaleFactor: 1, mobile: true });
   await screenshot('guardadas-mobile-320'); await assertWidth();
+  await evaluate(`document.querySelector('.profile-mobile-menu').click()`);
+  await wait(`document.querySelector('.profile-sidebar').getBoundingClientRect().left>=-1`, 'sidebar móvil abierta');
+  await evaluate(`document.querySelector('.profile-brand-home').click()`);
+  await wait(`document.querySelectorAll('.jcard').length>0`, 'logo móvil vuelve a Home');
+  assert.equal(await evaluate(`Boolean(document.querySelector('.profile-sidebar-open'))`), false);
   await logout();
   assert.equal(await evaluate(`new URLSearchParams(location.search).has('guardar')`), false);
   await navigate(web + '/?guardar=' + employment.key); await wait(`Boolean(document.querySelector('#login-email'))`, 'login para cancelar'); await click('Cancelar guardado');

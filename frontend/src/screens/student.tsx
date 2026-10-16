@@ -125,10 +125,13 @@ export default function Students({
             >
 
               {/* CUPOS / TIPO */}
-              <div className="vol-slots">
-                {spot.tipo === 'social'
-                  ? '🤝 Horas sociales disponibles'
-                  : '🎓 Práctica disponible'}
+              <div className="vol-card-header">
+                <div className="vol-slots">
+                  {spot.tipo === 'social'
+                    ? '🤝 Horas sociales disponibles'
+                    : '🎓 Práctica disponible'}
+                </div>
+                <div className="vol-card-save"><SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'job-' + spot.id} className="save-opportunity-button opportunity-save-icon" variant="icon" /></div>
               </div>
 
               {/* TÍTULO */}
@@ -182,7 +185,6 @@ export default function Students({
 
               {/* POSTULACIÓN */}
               <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
-              <SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'job-' + spot.id} />
               <button
                 className="btn-vol-apply"
                 onClick={() => handleStudentApplyClick(spot)}

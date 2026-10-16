@@ -25,7 +25,10 @@ export default function Volunteers({
       <div className="volunteer-grid">
         {volunteerSpots.map(spot => (
           <div key={spot.id} className="volunteer-card">
-            <div className="vol-slots">{spot.slots == null ? 'Cupos sin límite especificado' : spot.slots + ' cupos'}</div>
+            <div className="vol-card-header">
+              <div className="vol-slots">{spot.slots == null ? 'Cupos sin límite especificado' : spot.slots + ' cupos'}</div>
+              <div className="vol-card-save"><SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'volunteer-' + spot.id} className="save-opportunity-button opportunity-save-icon" variant="icon" /></div>
+            </div>
             <h3 className="vol-title">{spot.title}</h3>
             <div className="vol-org">🏢 {spot.org}</div>
             <p className="vol-desc">{spot.desc}</p>
@@ -34,7 +37,6 @@ export default function Volunteers({
               <span>📚 {spot.area}</span>
             </div>
             <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
-              <SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'volunteer-' + spot.id} />
             <button 
               className="btn-vol-apply" 
               onClick={(e) => { e.stopPropagation(); handleVolunteerApplyClick(spot); }}

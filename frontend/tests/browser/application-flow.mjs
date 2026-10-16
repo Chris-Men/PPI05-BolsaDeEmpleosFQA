@@ -23,6 +23,15 @@ const fill=async(selector,value)=>evaluate(`(()=>{const input=document.querySele
 const screenshot=async(name)=>{const result=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(output,name+'.png'),Buffer.from(result.data,'base64'));};
 const step=async(number)=>wait(`document.querySelector('.prog-txt')?.textContent.includes('Paso ${number} de 4')`,'paso '+number);
 const login=async(email)=>{await wait(`Boolean(document.querySelector('#login-email'))`,'login');await fill('#login-email',email);await fill('#login-password','Postulaciones de prueba 2026');await evaluate(`document.querySelector('.login-form').requestSubmit()`);};
+/** Uploads controlled test PDFs through the same input used by candidates. */
+const uploadCv=async(name,content=browserPdf)=>evaluate(`(()=>{const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(content)}],${JSON.stringify(name)},{type:'application/pdf'}));const input=document.querySelector('input[type=file]');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+/** Downloads are checked against original bytes, without exposing session credentials. */
+const assertDownload=async(content)=>{
+  const before=await evaluate(`window.__cvDownloads.length`);await click('Descargar CV');
+  await wait(`window.__cvDownloads.length>${before}`,'descarga del documento seleccionado');
+  const result=await evaluate(`window.__cvDownloads.at(-1)`);
+  assert.match(result.path,/\/application-drafts\/[0-9a-f-]{36}\/resume\/download$/);assert.equal(result.content,content);
+};
 const logout=async()=>{
   await evaluate(`(document.querySelector('.nav-avatar')??document.querySelector('.topbar button.profile')).click()`);
   await click('Cerrar sesión');
@@ -30,8 +39,8 @@ const logout=async()=>{
   if(modal)await click('Sí, cerrar sesión');
   await wait(`Boolean(document.querySelector('#login-email'))||Boolean(document.querySelector('.navbar'))`,'cierre de sesión');
 };
-await send('Page.enable');await send('Runtime.enable');
-await send('Page.addScriptToEvaluateOnNewDocument',{source:`const originalFetch=window.fetch.bind(window);window.fetch=(input,options)=>{const url=new URL(typeof input==='string'?input:input.url,location.href);if(url.pathname.startsWith('/api'))return originalFetch(${JSON.stringify(api)}+url.pathname+url.search,options);return originalFetch(input,options);};`});
+await send('Page.enable');await send('Runtime.enable');await send('Network.clearBrowserCookies');
+await send('Page.addScriptToEvaluateOnNewDocument',{source:`const originalFetch=window.fetch.bind(window);window.__cvDownloads=[];window.fetch=(input,options)=>{const url=new URL(typeof input==='string'?input:input.url,location.href);const request=url.pathname.startsWith('/api')?originalFetch(${JSON.stringify(api)}+url.pathname+url.search,options):originalFetch(input,options);if(url.pathname.endsWith('/resume/download'))return request.then(async response=>{if(response.ok)window.__cvDownloads.push({path:url.pathname,content:await response.clone().text()});return response;});return request;};`});
 const submissions=[];
 try {
   for(let index=0;index<fixture.vacancies.length;index++){
@@ -49,9 +58,40 @@ try {
       const loaded=nextLoad();await send('Page.reload');await loaded;await step(2);assert.equal(await evaluate(`document.querySelector('textarea[id$="-motivation"]').value`),'Motivación persistente '+vacancy.kind);
     }
     await click('Continuar →');await step(3);
+    assert.equal(await evaluate(`document.querySelectorAll('.form-page .resume-manager').length`),1);
+    assert.equal(await evaluate(`document.querySelectorAll('.form-page > .review-block').length`),0);
     if(vacancy.kind==='EMPLOYMENT'||vacancy.kind==='INTERNSHIP'){
-      await evaluate(`(()=>{const transfer=new DataTransfer();transfer.items.add(new File([${JSON.stringify(browserPdf)}],'browser-cv.pdf',{type:'application/pdf'}));const input=document.querySelector('input[type=file]');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+      if(index===0){await click('Continuar →');await step(3);await wait(`document.querySelector('.resume-manager [role=alert]')?.textContent.includes('requiere un CV')`,'CV obligatorio');}
+      await uploadCv('browser-cv.pdf');
       await wait(`document.body.textContent.includes('CV guardado correctamente.')`,'subida del CV');
+      await assertDownload(browserPdf);
+      if(index===0){
+        await click('Guardar y salir');await wait(`Boolean(document.querySelector('.profile-documents-card input[type=file]'))`,'CV del perfil');
+        assert.equal(await evaluate(`document.querySelector('.profile-documents-card h3')?.textContent`),'Mi currículum');
+        await uploadCv('profile-new.pdf',browserPdf+'\n% Documento nuevo del perfil');
+        await wait(`document.querySelector('.profile-documents-card strong')?.textContent==='profile-new.pdf'`,'reemplazo desde el perfil');
+        await navigate(web+'/?postular='+vacancy.key);await step(3);
+        assert.equal(await evaluate(`document.querySelector('.resume-manager strong').textContent`),'browser-cv.pdf');
+        await wait(`Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Usar CV del perfil'&&!button.disabled)`,'CV del perfil diferente del borrador');
+        await assertDownload(browserPdf);
+        await click('Usar CV del perfil');await wait(`document.querySelector('.resume-manager strong').textContent==='profile-new.pdf'`,'selección explícita del perfil');
+        await assertDownload(browserPdf+'\n% Documento nuevo del perfil');
+        await click('Eliminar CV del perfil');await click('Confirmar eliminación');
+        await wait(`document.querySelector('.resume-manager [role=status]')?.textContent.includes('se conserva')`,'eliminar perfil conserva el CV del borrador');
+        assert.equal(await evaluate(`document.querySelector('.resume-manager strong').textContent`),'profile-new.pdf');
+        await assertDownload(browserPdf+'\n% Documento nuevo del perfil');
+        await navigate(web+'/?postular='+vacancy.key);await step(3);
+        assert.equal(await evaluate(`document.querySelector('.resume-manager strong').textContent`),'profile-new.pdf');
+        await assertDownload(browserPdf+'\n% Documento nuevo del perfil');
+        await evaluate(`(()=>{const previous=window.fetch;let fail=true;window.fetch=(input,options)=>{if(fail&&new URL(input,location.href).pathname.endsWith('/profile/me/resume')&&options?.method==='PUT'){fail=false;return Promise.resolve(Response.json({message:'Fallo recuperable de CV.'},{status:503}));}return previous(input,options);};})()`);
+        await uploadCv('replacement.pdf',browserPdf+'\n% Documento reemplazado');
+        await wait(`document.querySelector('.resume-manager [role=alert]')?.textContent.includes('Fallo recuperable')`,'reemplazo fallido');
+        assert.equal(await evaluate(`document.querySelector('.resume-manager strong').textContent`),'profile-new.pdf');
+        await uploadCv('replacement.pdf',browserPdf+'\n% Documento reemplazado');
+        await wait(`document.querySelector('.resume-manager strong').textContent==='replacement.pdf'`,'reemplazo confirmado');
+        await assertDownload(browserPdf+'\n% Documento reemplazado');
+        await screenshot('cv-unificado-desktop');
+      }
     }else await click('Continuar sin CV');
     await screenshot('documentos-'+vacancy.kind+(mobile?'-mobile':'-desktop'));
     await click('Continuar →');await step(4);

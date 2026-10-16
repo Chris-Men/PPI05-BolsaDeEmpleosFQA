@@ -4,6 +4,8 @@ Empleos, prácticas, horas sociales y voluntariado comparten un formulario persi
 
 El CV es obligatorio en empleos y prácticas y opcional en voluntariado y horas sociales. Se mantienen las comprobaciones de PDF de hasta **5 MiB** de PB-214. La selección del documento queda referenciada en el borrador y posteriormente en el intento: reemplazar o eliminar el CV activo no altera estos documentos.
 
+El paso de documentos reúne todos los controles en un único bloque que muestra el CV seleccionado para esa postulación. Permite subir o reemplazar el documento, descargar el seleccionado y utilizar explícitamente el CV actual del perfil cuando sea diferente; en los tipos opcionales también permite continuar sin CV. La descarga guarda primero los cambios pendientes del borrador. «Eliminar CV del perfil» mantiene el documento del borrador y explica esa diferencia; la gestión de documentos dentro del perfil conserva sus controles habituales.
+
 ## Modelo y compatibilidad
 
 La migración generada por Prisma `20261011203922_application_flow` conserva las filas existentes. Amplía `Applications` con origen opcional de voluntariado, número de intento, versión, clave de envío y snapshots JSON del formulario, perfil profesional y vacante. Cada escritura de la API establece exactamente un origen y comprueba su identidad. `VolunteerRegistrations` conserva su unicidad por candidato y oportunidad; varios intentos se vinculan a la misma inscripción.

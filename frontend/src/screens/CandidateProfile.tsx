@@ -133,6 +133,12 @@ export default function CandidateProfile({
      NAVEGACIÓN DEL SIDEBAR
   ========================================================= */
 
+  /** Returns to the public homepage and closes the mobile sidebar. */
+  const goToHome = (): void => {
+    setMobileMenuOpen(false);
+    navigateTo('home');
+  };
+
   const goToJobs = () => {
     navigateTo('jobs');
     setMobileMenuOpen(false);
@@ -177,7 +183,7 @@ export default function CandidateProfile({
             LOGO FQA
         =================================================== */}
 
-        <div className="profile-brand">
+        <button type="button" className="profile-brand profile-brand-home" aria-label="Ir al inicio" onClick={goToHome}>
 
           <img
             src={fqaLogo}
@@ -185,7 +191,7 @@ export default function CandidateProfile({
             className="profile-brand-logo"
           />
 
-        </div>
+        </button>
 
 
         {/* ===================================================
