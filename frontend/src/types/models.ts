@@ -15,7 +15,8 @@ export type ScreenName =
   | "login"
   | "register"
   | "forgot-password"
-  | "reset-password";
+  | "reset-password"
+  | "collaborators";
 
 /** Candidate information used by the local profile demo. */
 export interface CurrentUser {

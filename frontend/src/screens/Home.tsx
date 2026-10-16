@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { Job, NavigateTo, StateSetter } from '../types/models';
 import type { PublicOpportunityStatistics } from '../types/opportunity';
-
 interface HomeProps {
   jobs: Job[];
   categories: string[];
@@ -200,9 +199,35 @@ export default function Home({
             <span>San Salvador, El Salvador</span>
           </div>
         </div>
+
+
         <div className="footer-bottom">
-          <span>© 2026 Fundación Quintanilla Amaya. Todos los derechos reservados.</span>
-          <span className="footer-hash">#ConectamosConHistorias</span>
+          
+  <span>
+    © 2026 Fundación Quintanilla Amaya.
+    <br />
+    Todos los derechos reservados.
+  </span>
+ 
+
+<a
+  href="/colaboradores"
+  className="footer-collaborators"
+  onClick={(event) => {
+    event.preventDefault();
+    navigateTo('collaborators');
+    window.history.pushState({}, '', '/colaboradores');
+  }}
+>
+  Proyecto realizado en colaboración con estudiantes de la ULS
+</a>
+
+
+  <span className="footer-hash">
+    #ConectamosConHistorias
+  </span>
+
+
         </div>
       </footer>
     </div>
