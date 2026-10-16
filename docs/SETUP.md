@@ -211,6 +211,18 @@ docker compose -f docker-compose.dev.yml down
 
 No añadas `--volumes` o `-v` salvo que quieras borrar también la base local y reinstalar desde cero.
 
+### Recarga automática al guardar archivos
+
+El Compose de desarrollo activa `CHOKIDAR_USEPOLLING=true` y `CHOKIDAR_INTERVAL=300` en frontend y backend. Vite y `tsx watch` revisan los archivos cada 300 ms para detectar cambios guardados desde Windows, donde Docker puede no transmitir los eventos de archivos del volumen montado. Esto permite actualizar la vista y reiniciar el proceso de la API al guardar código sin reiniciar los contenedores. El sondeo consume más CPU que la detección por eventos.
+
+Si los contenedores ya estaban ejecutándose cuando se añadió esta configuración, aplica las variables una sola vez:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --no-deps frontend backend
+```
+
+Un `docker compose restart` no aplica cambios en las variables de Compose; `up -d` recrea los servicios cuya configuración cambió. Después abre `http://localhost:5173` y guarda un archivo del frontend para comprobar la actualización automática.
+
 ### Después de actualizar el repositorio
 
 Si un `git pull` cambia `package.json`, `package-lock.json`, Dockerfiles o el esquema Prisma, detén los procesos antes de reemplazar `node_modules`:

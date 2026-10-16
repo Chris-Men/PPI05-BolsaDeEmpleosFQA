@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { Job, NavigateTo, StateSetter } from '../types/models';
 import type { PublicOpportunityStatistics } from '../types/opportunity';
@@ -135,21 +135,14 @@ export default function Home({
           {!listingLoading && !listingError && jobs.slice(0, 6).map(job => (
             <div key={job.id} className={`jcard ${job.isFqa ? 'fqa-f' : ''}`} onClick={() => navigateTo('detail', job)}>
               <div className="jcard-top">
-                <div className="org-logo" style={{background: job.isFqa ? 'var(--g)' : 'var(--gd)'}}>
-                  <svg viewBox="0 0 28 28" fill="none" width="24" height="24">
-                    <circle cx="14" cy="5.5" r="3.8" stroke="#fff" strokeWidth="2"/>
-                    <path d="M7 11c0-4 3-6 7-6s7 2 7 6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M10 19l4 6 4-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                <div>
+                  <h4>{job.title}</h4>
+                  <p className="jcard-org">{job.org} · {job.location}</p>
                 </div>
                 <div className="jcard-actions">
                   <button className="jcard-quick" onClick={(e) => { e.stopPropagation(); setQvJob(job); setQvOpen(true); }} title="Vista rápida">👁</button>
                   <SaveOpportunityButton opportunityKey={job.opportunityKey ?? 'job-' + job.id} className="jcard-save" variant="icon" />
                 </div>
-              </div>
-              <div>
-                <h4>{job.title}</h4>
-                <p className="jcard-org">{job.org} · {job.location}</p>
               </div>
               <div className="tags">
                 <span className="tag tag-area">{job.area}</span>
@@ -189,11 +182,6 @@ export default function Home({
       <footer className="footer">
         <div className="footer-top">
           <div className="footer-brand">
-            <svg viewBox="0 0 36 36" fill="none" width="30">
-              <circle cx="18" cy="7.5" r="4.5" stroke="#82BA2E" strokeWidth="2.2"/>
-              <path d="M9.5 14.5c0-5 4-8 8.5-8s8.5 3 8.5 8" stroke="#82BA2E" strokeWidth="2.2" strokeLinecap="round"/>
-              <path d="M13.5 26l4.5 6.5 4.5-6.5" stroke="#82BA2E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
             <p>Transformando su manera de pensar para cambiar su manera de vivir.</p>
           </div>
           <div className="footer-col">
