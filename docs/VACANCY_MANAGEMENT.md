@@ -1,6 +1,6 @@
 # PB-129 — Vacantes y categorías
 
-El panel y el catálogo público usan la API y PostgreSQL para empleos, voluntariados, horas sociales y prácticas profesionales. Las postulaciones de candidatos, su revisión, favoritos y notificaciones quedan para otros tickets; sus flujos existentes no se convierten en persistentes con PB-129.
+El panel y el catálogo público usan la API y PostgreSQL para empleos, voluntariados, horas sociales y prácticas profesionales. PB-238 añade [postulaciones, revisión y notificaciones persistentes](APPLICATION_FLOW.md), además del control de cupos seleccionados. Favoritos mantiene su alcance anterior.
 
 ## Datos y migración
 
@@ -65,6 +65,10 @@ Las categorías admiten búsqueda, `state=ACTIVE|INACTIVE` y paginación. El nom
 «Nueva Vacante» y «Administrar Vacantes» comparten el editor para los cuatro tipos. Guardar y publicar son operaciones separadas: si falla la publicación, el borrador ya guardado se conserva y puede corregirse sin crear otra vacante. Categorías usa modales nativos, confirmación de eliminación y errores dentro del modal. La navegación y los botones respetan permisos; la API conserva la autoridad.
 
 Empleos, voluntariados y las pestañas de horas sociales y prácticas consultan vacantes reales con búsqueda, categorías y paginación. Todos los tipos permiten consultar su detalle actualizado; voluntariados y estudiantes comparten el modal de consulta con administración. No se muestran salarios, visualizaciones ni compatibilidades ficticias. El estado público de las vacantes es independiente de la cuenta; el estado administrativo se desmonta al salir o cambiar de identidad.
+
+El detalle de vacantes de candidatos y administradores comparte los estilos de los detalles de postulaciones en `styles/components/detailDialog.css`: modal centrado, cabecera fija con cierre, tarjetas sobre fondo verde suave y datos en dos columnas (una en móvil). El contenido largo se desplaza dentro del modal y el botón inferior de cierre permanece accesible. Se conservan todos los campos específicos de cada tipo, las descripciones multilínea y las listas de responsabilidades, requisitos y beneficios. Ambos detalles usan `useModalDialog` para la apertura nativa y la recuperación segura del foco, incluidos los efectos repetidos de StrictMode. Escape cierra la consulta; los modales de edición de categorías y cambio de estado conservan sus estilos propios.
+
+La revisión visual de este ajuste usa respuestas de API aisladas en Edge: los cuatro tipos en administración y voluntariado, horas sociales y prácticas en candidato, con anchos de 1440, 390 y 320 píxeles. Se verificaron centrado, campos específicos, textos largos, desplazamiento interno, cabecera y pie fijos, cierres superior/inferior, Escape y recuperación del foco. También se revisó el detalle de postulaciones en ambas vistas, en escritorio y móvil. Las 35 pruebas existentes del frontend, tipos, lint y compilación pasaron.
 
 Empleos muestra directamente los filtros y resultados, sin banner. Voluntariado y Estudiantes mantienen sus banners y sitúan los filtros debajo. Las tres páginas comparten la barra lateral, las etiquetas de áreas y el buscador de Empleos. En móvil, los filtros se muestran completos encima de los resultados. La paginación aparece al final del listado; las tarjetas y pestañas de estudiantes conservan sus estilos.
 

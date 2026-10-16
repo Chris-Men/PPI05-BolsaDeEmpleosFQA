@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { useApplications, useNotifications } from '../hooks/useApplications';
+import { ApplicationList } from '../components/applications/ApplicationList';
+import { CandidateNotifications } from '../components/applications/CandidateNotifications';
 
 import {
   BriefcaseBusiness,
@@ -10,7 +13,6 @@ import {
   House,
   LogOut,
   Menu,
-  Search,
   Settings,
   Star,
   UserRound,
@@ -20,20 +22,19 @@ import {
 
 import { CandidateSettings } from '../components/users/CandidateSettings';
 import { CandidateProfileEditor } from '../components/users/CandidateProfileEditor';
+import { SavedOpportunityList } from '../components/users/SavedOpportunityList';
+import { useSavedOpportunityState } from '../hooks/useSavedOpportunities';
 import { ResumeManager } from '../components/users/ResumeManager';
+import { ProfileApplicationSummary } from '../components/users/ProfileApplicationSummary';
+import type { CandidateSummarySection } from '../types/application';
+import type { LucideIcon } from 'lucide-react';
 import type { CandidateProfileState } from '../hooks/useCandidateProfile';
 
 import '../styles/users/profileuser.css';
 
 import type {
-  CandidateApplication,
   CurrentUser,
-  Job,
   NavigateTo,
-  RetireSelection,
-  StateSetter,
-  StudentSpot,
-  VolunteerSpot,
 } from '../types/models';
 
 import fqaLogo from '../components/imagenes/logo/logo 1.png';
@@ -42,81 +43,62 @@ interface CandidateProfileProps {
   currentUser: CurrentUser | null;
   handleLogout: () => void;
 
-  applications: CandidateApplication[];
-  setApplications: StateSetter<CandidateApplication[]>;
-
-  volunteerApps: number[];
-  setVolunteerApps: StateSetter<number[]>;
-
-  volunteerSpots: VolunteerSpot[];
-
-  studentApps: number[];
-  setStudentApps: StateSetter<number[]>;
-
-  studentSpots: StudentSpot[];
-
-  savedJobs: number[];
-  jobs: Job[];
-
-  toggleSaveJob: (id: number) => void;
+  onResume: (key:string) => void;
+  onViewOpportunity: (key: string) => void;
 
   navigateTo: NavigateTo;
 
   candidateState: CandidateProfileState;
 
-  showToast: (message: string) => void;
+  notificationsRequest: number;
 }
 
-type ProfileTab =
-  | 'jobs'
-  | 'volunteer'
-  | 'student'
-  | 'saved';
+/** Summary card metadata keeps the selected card, counter and panel heading consistent. */
+interface ProfileSummaryOption {
+  section: CandidateSummarySection;
+  label: string;
+  title: string;
+  count: number | string;
+  icon: LucideIcon;
+}
 
 /** Sidebar destinations keep personal editing separate from the candidate overview. */
-type ProfileSection = 'overview' | 'personal' | 'settings';
+type ProfileSection = 'overview' | 'personal' | 'settings' | 'applications' | 'notifications';
 
 /** Renders the candidate overview, personal editor, and account settings. */
 export default function CandidateProfile({
   currentUser,
   handleLogout,
 
-  applications,
-  setApplications,
-
-  volunteerApps,
-  setVolunteerApps,
-  volunteerSpots,
-
-  studentApps,
-  setStudentApps,
-  studentSpots,
-
-  savedJobs,
-  jobs,
-
-  toggleSaveJob,
+  onResume,
+  onViewOpportunity,
 
   navigateTo,
 
   candidateState,
 
-  showToast,
+  notificationsRequest,
 }: CandidateProfileProps) {
 
   /* =========================================================
      ESTADOS
   ========================================================= */
 
-  const [activeTab, setActiveTab] =
-    useState<ProfileTab>('jobs');
-
-  const [activeSection, setActiveSection] =
-    useState<ProfileSection>('overview');
-
-  const [confirmRetire, setConfirmRetire] =
-    useState<RetireSelection | null>(null);
-
+  const [activeTab, setActiveTab] = useState<CandidateSummarySection>('saved');
+  const summaryPanelId = useId();
+  const summaryTitleId = useId();
+  const initialApplication = Number(new URLSearchParams(window.location.search).get('postulacion')) || undefined;
+  const [activeSection, setActiveSection] = useState<ProfileSection>(notificationsRequest > 0 ? 'notifications' : initialApplication ? 'applications' : 'overview');
+  // Repeated header navigation must also work while another profile section is open.
+  useEffect(() => { if (notificationsRequest > 0) setActiveSection('notifications'); }, [notificationsRequest]);
+  const notifications = useNotifications();
+  const savedState = useSavedOpportunityState();
+  const all = useApplications({ pageSize:1 });
+  const employment = useApplications({ pageSize:1, kind:'EMPLOYMENT' });
+  const volunteering = useApplications({ pageSize:1, kind:'VOLUNTEER' });
+  const social = useApplications({ pageSize:1, kind:'SOCIAL_HOURS' });
+  const internship = useApplications({ pageSize:1, kind:'INTERNSHIP' });
+  const changed = () => { all.reload(); employment.reload(); volunteering.reload(); social.reload(); internship.reload(); notifications.reload(); };
   const [confirmLogout, setConfirmLogout] =
     useState(false);
 
@@ -128,108 +110,47 @@ export default function CandidateProfile({
      DATOS
   ========================================================= */
 
-  const myApplications = applications.filter(
-    (app) =>
-      app.candidateEmail === currentUser?.email
-  );
-
-  const myVolunteerSpots =
-    volunteerSpots.filter((spot) =>
-      volunteerApps.includes(spot.id)
-    );
-
-  const myStudentSpots =
-    studentSpots.filter((spot) =>
-      studentApps.includes(spot.id)
-    );
-
-  const mySavedJobs =
-    jobs.filter((job) =>
-      savedJobs.includes(job.id)
-    );
-
-  const totalActive =
-    myApplications.length +
-    myVolunteerSpots.length +
-    myStudentSpots.length;
+  const totalActive = all.loading || all.error ? '—' : all.page.total;
+  const summaryOptions: ProfileSummaryOption[] = [
+    { section: 'applications', label: 'Postulaciones', title: 'Mis postulaciones recientes', count: totalActive, icon: BriefcaseBusiness },
+    { section: 'employment', label: 'Empleos', title: 'Postulaciones a empleos', count: employment.loading || employment.error ? '—' : employment.page.total, icon: FileText },
+    { section: 'volunteering', label: 'Voluntariados', title: 'Postulaciones a voluntariados', count: volunteering.loading || volunteering.error ? '—' : volunteering.page.total, icon: Heart },
+    { section: 'students', label: 'Estudiantes', title: 'Postulaciones de estudiantes', count: social.loading || internship.loading || social.error || internship.error ? '—' : social.page.total + internship.page.total, icon: GraduationCap },
+    { section: 'saved', label: 'Guardadas', title: 'Vacantes Guardadas', count: savedState.error ? '—' : savedState.total ?? '—', icon: Star },
+  ];
+  const selection = summaryOptions.find(option => option.section === activeTab)!;
+  const SummaryIcon = selection.icon;
+  /** Opens the complete list instead of reopening an earlier notification's deep-linked detail. */
+  const viewApplications = (): void => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('postulacion');
+    window.history.replaceState(null, '', url);
+    setActiveSection('applications');
+  };
 
 
   /* =========================================================
      NAVEGACIÓN DEL SIDEBAR
   ========================================================= */
 
+  /** Returns to the public homepage and closes the mobile sidebar. */
+  const goToHome = (): void => {
+    setMobileMenuOpen(false);
+    navigateTo('home');
+  };
+
   const goToJobs = () => {
     navigateTo('jobs');
     setMobileMenuOpen(false);
   };
 
-  const goToVolunteers = () => {
-    navigateTo('volunteers');
-    setMobileMenuOpen(false);
-  };
 
-  const goToStudents = () => {
-    navigateTo('students');
-    setMobileMenuOpen(false);
-  };
 
   const goToHelp = () => {
     navigateTo('help');
     setMobileMenuOpen(false);
   };
 
-
-  /* =========================================================
-     RETIRAR POSTULACIÓN
-  ========================================================= */
-
-  const handleConfirmRetire = () => {
-    if (!confirmRetire) return;
-
-    if (confirmRetire.kind === 'job') {
-      setApplications((prev) =>
-        prev.filter(
-          (application) =>
-            application.id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación retirada exitosamente'
-      );
-    }
-
-    if (confirmRetire.kind === 'volunteer') {
-      setVolunteerApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación de voluntariado retirada'
-      );
-    }
-
-    if (confirmRetire.kind === 'student') {
-      setStudentApps((prev) =>
-        prev.filter(
-          (id) => id !== confirmRetire.id
-        )
-      );
-
-      showToast(
-        '✓ Postulación estudiantil retirada'
-      );
-    }
-
-    setConfirmRetire(null);
-  };
-
-
-  /* =========================================================
-     CV
-  ========================================================= */
 
   const handleConfirmLogout = () => {
     setConfirmLogout(false);
@@ -262,7 +183,7 @@ export default function CandidateProfile({
             LOGO FQA
         =================================================== */}
 
-        <div className="profile-brand">
+        <button type="button" className="profile-brand profile-brand-home" aria-label="Ir al inicio" onClick={goToHome}>
 
           <img
             src={fqaLogo}
@@ -270,7 +191,7 @@ export default function CandidateProfile({
             className="profile-brand-logo"
           />
 
-        </div>
+        </button>
 
 
         {/* ===================================================
@@ -335,8 +256,8 @@ export default function CandidateProfile({
 
           <button
             type="button"
-            className="profile-sidebar-item"
-            onClick={goToJobs}
+            className={`profile-sidebar-item ${activeSection === 'applications' ? 'active' : ''}`}
+            onClick={() => {setActiveSection('applications'); setMobileMenuOpen(false);}}
           >
             <BriefcaseBusiness size={19} />
 
@@ -348,12 +269,8 @@ export default function CandidateProfile({
 
           <button
             type="button"
-            className="profile-sidebar-item"
-            onClick={() =>
-              showToast(
-                'No tienes nuevas notificaciones'
-              )
-            }
+            className={`profile-sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`}
+            onClick={() => {setActiveSection('notifications'); setMobileMenuOpen(false);}}
           >
             <Bell size={19} />
 
@@ -362,7 +279,7 @@ export default function CandidateProfile({
             </span>
 
             <span className="profile-notification-count">
-              0
+              {notifications.result.unreadCount}
             </span>
           </button>
 
@@ -484,6 +401,10 @@ export default function CandidateProfile({
               </section>
               <CandidateProfileEditor state={candidateState} />
             </>
+          ) : activeSection === 'applications' ? (
+            <ApplicationList onResume={onResume} onChanged={changed} initialId={initialApplication} />
+          ) : activeSection === 'notifications' ? (
+            <CandidateNotifications onChanged={notifications.reload} />
           ) : (
             <>
 
@@ -548,112 +469,18 @@ export default function CandidateProfile({
                   ESTADÍSTICAS
               ============================================= */}
 
-              <section className="profile-stats">
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <BriefcaseBusiness size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {totalActive}
-                    </strong>
-
-                    <span>
-                      Postulaciones activas
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <FileText size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {myApplications.length}
-                    </strong>
-
-                    <span>
-                      Empleos
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <Heart size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {myVolunteerSpots.length}
-                    </strong>
-
-                    <span>
-                      Voluntariados
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <GraduationCap size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {myStudentSpots.length}
-                    </strong>
-
-                    <span>
-                      Estudiantes
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
-
-                <div className="profile-stat-card">
-
-                  <div className="profile-stat-icon">
-                    <Star size={20} />
-                  </div>
-
-                  <div>
-                    <strong>
-                      {mySavedJobs.length}
-                    </strong>
-
-                    <span>
-                      Guardadas
-                    </span>
-                  </div>
-
-                  <ChevronRight size={17} />
-
-                </div>
-
+              <section className="profile-stats" aria-label="Resumen de actividad">
+                {summaryOptions.map(({ section, label, count, icon: Icon }) => (
+                  <button type="button" key={section}
+                    className={`profile-stat-card ${activeTab === section ? 'active' : ''}`}
+                    aria-label={`Ver resumen de ${label.toLowerCase()}`}
+                    aria-pressed={activeTab === section} aria-controls={summaryPanelId}
+                    onClick={() => setActiveTab(section)}>
+                    <div className="profile-stat-icon"><Icon size={20} aria-hidden="true" /></div>
+                    <div><strong>{count}</strong><span>{label}</span></div>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                ))}
               </section>
 
 
@@ -661,80 +488,7 @@ export default function CandidateProfile({
                   TABS
               ============================================= */}
 
-              <nav className="profile-tabs">
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'jobs'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('jobs')
-                  }
-                >
-                  <BriefcaseBusiness size={16} />
-
-                  Empleos ({myApplications.length})
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'volunteer'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('volunteer')
-                  }
-                >
-                  <Heart size={16} />
-
-                  Voluntariado (
-                  {myVolunteerSpots.length}
-                  )
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'student'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('student')
-                  }
-                >
-                  <GraduationCap size={16} />
-
-                  Estudiantes (
-                  {myStudentSpots.length}
-                  )
-                </button>
-
-
-                <button
-                  type="button"
-                  className={
-                    activeTab === 'saved'
-                      ? 'active'
-                      : ''
-                  }
-                  onClick={() =>
-                    setActiveTab('saved')
-                  }
-                >
-                  <Star size={16} />
-
-                  Guardadas ({mySavedJobs.length})
-                </button>
-
-              </nav>
+              <div className="profile-tabs" aria-live="polite"><span className="profile-summary-label"><SummaryIcon size={16} aria-hidden="true" /> {selection.label} ({selection.count})</span></div>
 
 
               {/* =============================================
@@ -748,471 +502,15 @@ export default function CandidateProfile({
                     POSTULACIONES
                 =========================================== */}
 
-                <section className="profile-card profile-applications-card">
-
-                  {activeTab === 'jobs' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <BriefcaseBusiness size={19} />
-                          </div>
-
-                          <div>
-                            <h2>
-                              Mis Postulaciones a Empleos
-                            </h2>
-                          </div>
-
-                        </div>
-
-                      </div>
-
-
-                      {myApplications.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myApplications.map((app) => (
-
-                            <article
-                              key={app.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {app.jobTitle}
-                                </h3>
-
-                                <p>
-                                  {app.orgName}
-                                  {' · '}
-                                  Enviado: {app.date}
-                                </p>
-
-                                <small>
-                                  CV adjunto:{' '}
-                                  {app.cvName}
-                                </small>
-
-                              </div>
-
-
-                              <div className="profile-list-actions">
-
-                                <span
-                                  className={`profile-status ${
-                                    app.status ===
-                                    'Pendiente'
-                                      ? 'pending'
-                                      : app.status ===
-                                        'Aprobado para Entrevista'
-                                      ? 'approved'
-                                      : 'rejected'
-                                  }`}
-                                >
-                                  {app.status}
-                                </span>
-
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button"
-                                  onClick={() =>
-                                    setConfirmRetire({
-                                      kind: 'job',
-                                      id: app.id,
-                                      title:
-                                        app.jobTitle,
-                                    })
-                                  }
-                                >
-                                  Retirar
-                                </button>
-
-                              </div>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-state">
-
-                          <div className="profile-empty-copy">
-
-                            <p>
-                              Aún no te has postulado
-                              a ninguna vacante laboral.
-                            </p>
-
-                            <button
-                              type="button"
-                              className="profile-primary-button"
-                              onClick={goToJobs}
-                            >
-                              <Search size={16} />
-
-                              Explorar vacantes
-
-                              <ChevronRight
-                                size={15}
-                              />
-                            </button>
-
-                          </div>
-
-
-                          <div className="profile-empty-illustration">
-
-                            <div className="profile-document-illustration">
-                              <div />
-                              <div />
-                              <div />
-                            </div>
-
-                            <span>
-                              ✓
-                            </span>
-
-                          </div>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      VOLUNTARIADO
-                  ========================================= */}
-
-                  {activeTab === 'volunteer' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <Heart size={19} />
-                          </div>
-
-                          <h2>
-                            Mis Voluntariados Activos
-                          </h2>
-
-                        </div>
-
-                      </div>
-
-
-                      {myVolunteerSpots.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myVolunteerSpots.map((spot) => (
-
-                            <article
-                              key={spot.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {spot.title}
-                                </h3>
-
-                                <p>
-                                  {spot.org}
-                                  {' · '}
-                                  {spot.location}
-                                </p>
-
-                              </div>
-
-
-                              <button
-                                type="button"
-                                className="profile-small-button"
-                                onClick={() =>
-                                  setConfirmRetire({
-                                    kind: 'volunteer',
-                                    id: spot.id,
-                                    title:
-                                      spot.title,
-                                  })
-                                }
-                              >
-                                Retirar
-                              </button>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <Heart size={34} />
-
-                          <p>
-                            No te has postulado como
-                            voluntario.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToVolunteers}
-                          >
-                            Ver oportunidades
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      ESTUDIANTES
-                  ========================================= */}
-
-                  {activeTab === 'student' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <GraduationCap size={19} />
-                          </div>
-
-                          <h2>
-                            Mis Postulaciones Estudiantiles
-                          </h2>
-
-                        </div>
-
-                      </div>
-
-
-                      {myStudentSpots.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {myStudentSpots.map((spot) => (
-
-                            <article
-                              key={spot.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {spot.title}
-                                </h3>
-
-                                <p>
-                                  {spot.org}
-                                  {' · '}
-                                  {spot.location}
-                                </p>
-
-                                <small>
-                                  {spot.tipo === 'social'
-                                    ? '🤝 Voluntariado social'
-                                    : '🎓 Práctica profesional'}
-                                </small>
-
-                              </div>
-
-
-                              <button
-                                type="button"
-                                className="profile-small-button"
-                                onClick={() =>
-                                  setConfirmRetire({
-                                    kind: 'student',
-                                    id: spot.id,
-                                    title:
-                                      spot.title,
-                                  })
-                                }
-                              >
-                                Retirar
-                              </button>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <GraduationCap size={34} />
-
-                          <p>
-                            No te has postulado a
-                            oportunidades para
-                            estudiantes.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToStudents}
-                          >
-                            Ver oportunidades
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
-
-
-                  {/* =========================================
-                      GUARDADAS
-                  ========================================= */}
-
-                  {activeTab === 'saved' && (
-                    <>
-
-                      <div className="profile-card-heading">
-
-                        <div>
-
-                          <div className="profile-heading-icon">
-                            <Star size={19} />
-                          </div>
-
-                          <h2>
-                            Vacantes Guardadas
-                          </h2>
-
-                        </div>
-
-                      </div>
-
-
-                      {mySavedJobs.length > 0 ? (
-
-                        <div className="profile-list">
-
-                          {mySavedJobs.map((job) => (
-
-                            <article
-                              key={job.id}
-                              className="profile-list-item"
-                            >
-
-                              <div className="profile-list-info">
-
-                                <h3>
-                                  {job.title}
-                                </h3>
-
-                                <p>
-                                  {job.org}
-                                  {' · '}
-                                  {job.location}
-                                </p>
-
-                              </div>
-
-
-                              <div className="profile-list-actions">
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button"
-                                  onClick={() =>
-                                    navigateTo(
-                                      'detail',
-                                      job
-                                    )
-                                  }
-                                >
-                                  Ver vacante
-                                </button>
-
-
-                                <button
-                                  type="button"
-                                  className="profile-small-button profile-danger-outline"
-                                  onClick={() => {
-
-                                    toggleSaveJob(
-                                      job.id
-                                    );
-
-                                    showToast(
-                                      '✓ Vacante eliminada de guardadas'
-                                    );
-
-                                  }}
-                                >
-                                  Quitar
-                                </button>
-
-                              </div>
-
-                            </article>
-
-                          ))}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="profile-empty-simple">
-
-                          <Star size={34} />
-
-                          <p>
-                            No tienes vacantes
-                            guardadas todavía.
-                          </p>
-
-                          <button
-                            type="button"
-                            className="profile-primary-button"
-                            onClick={goToJobs}
-                          >
-                            Explorar vacantes
-                          </button>
-
-                        </div>
-
-                      )}
-
-                    </>
-                  )}
+                <section className="profile-card profile-applications-card" id={summaryPanelId} aria-labelledby={summaryTitleId}>
+                  <div className="profile-card-heading">
+                    <div><div className="profile-heading-icon"><SummaryIcon size={19} aria-hidden="true" /></div>
+                      <h2 id={summaryTitleId}>{selection.title}</h2>
+                    </div>
+                  </div>
+                  {activeTab !== 'saved' && <ProfileApplicationSummary key={activeTab} section={activeTab} onViewAll={viewApplications} />}
+
+                  {activeTab === 'saved' && <SavedOpportunityList onView={onViewOpportunity} onExplore={goToJobs} />}
 
                 </section>
 
@@ -1256,73 +554,6 @@ export default function CandidateProfile({
       {/* =====================================================
           MODAL RETIRAR
       ===================================================== */}
-
-      {confirmRetire && (
-
-        <div
-          className="profile-modal-overlay"
-          onClick={() =>
-            setConfirmRetire(null)
-          }
-        >
-
-          <div
-            className="profile-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            <div className="profile-modal-warning-icon">
-              !
-            </div>
-
-            <h3>
-              Retirar postulación
-            </h3>
-
-            <p>
-              ¿Estás seguro de que deseas
-              retirar tu postulación a
-              <strong>
-                {' '}
-                {confirmRetire.title}
-              </strong>
-              ?
-            </p>
-
-            <small>
-              Esta acción no se puede deshacer.
-            </small>
-
-            <div className="profile-modal-actions">
-
-              <button
-                type="button"
-                className="profile-modal-cancel"
-                onClick={() =>
-                  setConfirmRetire(null)
-                }
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                className="profile-modal-danger"
-                onClick={handleConfirmRetire}
-              >
-                Sí, retirar
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
 
       {/* =====================================================
           MODAL CERRAR SESIÓN

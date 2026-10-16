@@ -1,16 +1,14 @@
-import type { Job, NavigateTo, StateSetter } from '../types/models';
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
+import type { Job } from '../types/models';
 
 interface JobDetailProps {
   selectedJob: Job;
-  savedJobs: number[];
-  toggleSaveJob: (id: number) => void;
-  navigateTo: NavigateTo;
-  setFormStep: StateSetter<number>;
+  onApply: () => void;
 }
 
-/** Detailed view for a demonstration employment opportunity. */
+/** Employment detail keeps saving in the header and application in the position summary. */
 export default function JobDetail({
-  selectedJob, savedJobs, toggleSaveJob, navigateTo, setFormStep,
+  selectedJob, onApply,
 }: JobDetailProps) {
   return (
     <div className="screen">
@@ -33,10 +31,7 @@ export default function JobDetail({
           </div>
         </div>
         <div className="dh-right">
-          <button className="btn-apply-h" onClick={() => { setFormStep(1); navigateTo('form'); }}>Aplicar ahora →</button>
-          <button className="btn-save-h" onClick={() => toggleSaveJob(selectedJob.id)}>
-            {savedJobs.includes(selectedJob.id) ? '♥ Guardado' : '♡ Guardar vacante'}
-          </button>
+          <SaveOpportunityButton opportunityKey={selectedJob.opportunityKey ?? 'job-' + selectedJob.id} className="btn-save-h" />
         </div>
       </div>
 
@@ -83,7 +78,7 @@ export default function JobDetail({
               <div className="mrow"><span className="ml">Jornada</span><span className="mv">{selectedJob.type}</span></div>
               <div className="mrow"><span className="ml">Ubicación</span><span className="mv">{selectedJob.location}</span></div>
               <div className="mrow"><span className="ml">Sector</span><span className="mv">{selectedJob.area}</span></div>
-              <button className="ds-apply" onClick={() => { setFormStep(1); navigateTo('form'); }}>Aplicar ahora →</button>
+              <button className="ds-apply" onClick={onApply}>Aplicar ahora →</button>
             </div>
           </div>
         </div>

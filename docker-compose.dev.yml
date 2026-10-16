@@ -10,6 +10,9 @@ services:
       - frontend_node_modules:/app/node_modules
     command: npm run dev
     environment:
+      # Detecta cambios del volumen de Windows aunque no lleguen eventos de archivos.
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
     depends_on:
       backend:
@@ -27,6 +30,9 @@ services:
       - resume_data:/app/private/resumes
     command: npm run dev
     environment:
+      # Permite que tsx watch detecte cambios guardados desde Windows.
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
       NODE_ENV: development
       PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}

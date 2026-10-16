@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { seedAccountCatalogs, seedOrganizationCatalogs } from '../services/catalog.service.js';
 import { seedOpportunityCatalogs } from '../services/opportunity-catalog.service.js';
+import { seedApplicationCatalogs } from '../services/application-catalog.service.js';
 
 /** Seeds account, organization and vacancy catalogs and always releases database connections. */
 export const seedDatabase = async (): Promise<void> => {
@@ -10,6 +11,7 @@ export const seedDatabase = async (): Promise<void> => {
     await seedAccountCatalogs(database);
     await seedOrganizationCatalogs(database);
     await seedOpportunityCatalogs(database);
+    await seedApplicationCatalogs(database);
     console.info('Catálogos de usuarios, organizaciones y vacantes preparados correctamente.');
   } catch {
     // Prisma errors may contain connection details; never print the raw error.

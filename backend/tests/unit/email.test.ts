@@ -42,7 +42,7 @@ describe('Correo cifrado y plantillas', () => {
     it('distingue decisiones de ' + opportunityType, () => {
       const base = { candidateName: 'Ana', opportunityTitle: 'Oferta', opportunityType };
       assert.ok(renderEmail({ kind: 'APPLICATION_DECIDED', ...base, decision: 'APPROVED' }, resetUrl)
-        .text.includes('aprobada'));
+        .text.includes('seleccionada'));
       assert.ok(renderEmail({ kind: 'APPLICATION_DECIDED', ...base, decision: 'REJECTED' }, resetUrl)
         .text.includes('rechazada'));
     });

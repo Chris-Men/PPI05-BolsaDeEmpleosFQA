@@ -26,12 +26,12 @@ export default function JobsListing({
                   className={`jrow ${job.isFqa ? 'fqa' : ''} ${selectedJob?.id === job.id ? 'sel' : ''}`}
                   onClick={() => navigateTo('detail', job)}
                 >
-                  <div className="jr-logo" style={{background: job.isFqa ? 'var(--g)' : 'var(--gd)'}}>
+                  {/* <div className="jr-logo" style={{background: job.isFqa ? 'var(--g)' : 'var(--gd)'}}>
                     <svg viewBox="0 0 28 28" fill="none" width="24" height="24">
                       <circle cx="14" cy="5.5" r="3.8" stroke="#fff" strokeWidth="2"/>
                       <path d="M7 11c0-4 3-6 7-6s7 2 7 6" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
-                  </div>
+                  </div> */}
                   <div className="jr-info">
                     {job.isFqa && <div><span className="jr-b">Destacada FQA</span></div>}
                     <div className="jr-t">{job.title}</div>

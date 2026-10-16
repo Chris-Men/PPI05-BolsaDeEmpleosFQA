@@ -18,6 +18,7 @@ export type EmailPayload =
     opportunityTitle: string;
     opportunityType: OpportunityType;
     decision: 'APPROVED' | 'REJECTED';
+    reason?: string;
     referenceNumber?: string;
   };
 
@@ -29,6 +30,7 @@ export interface ApplicationEmailInput {
   opportunityTitle: string;
   opportunityType: OpportunityType;
   referenceNumber?: string;
+  reason?: string;
 }
 
 /** A rendered, text-only message suitable for SMTP delivery. */

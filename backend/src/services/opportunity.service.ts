@@ -3,12 +3,14 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
-import { OPPORTUNITY_STATUS_NAMES, type OpportunityStatus, type OpportunityType } from '../constants/opportunity.constants.js';
+import { OPPORTUNITY_STATUS_NAMES, type OpportunityType } from '../constants/opportunity.constants.js';
 import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
 import type { CreateOpportunityDTO, OpportunityQuery, UpdateOpportunityDTO } from '../validation/opportunity.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { assertVacancyAccess, mutateVacancy, vacancySlug } from './vacancy-policy.service.js';
+import { assertCapacity, selectedCount } from './application-capacity.service.js';
+import { isOpportunityAvailable, opportunityStatusCode as statusFor, publicOpportunityWhere as publicWhere } from './opportunity-visibility.js';
 
 /** Shared projection excludes candidates, files, user identities and internal audit records. */
 const commonSelect = {
@@ -31,9 +33,6 @@ const volunteerSelect = { ...commonSelect, volunteerStatuses: { select: { name: 
 type JobRow = Prisma.JobsGetPayload<{ select: typeof jobSelect }>;
 type VolunteerRow = Prisma.VolunteerOpportunitiesGetPayload<{ select: typeof volunteerSelect }>;
 
-/** Stable state conversion never treats an unknown historical label as published. */
-const statusFor = (name: string): OpportunityStatus | 'UNKNOWN' =>
-  (Object.keys(OPPORTUNITY_STATUS_NAMES) as OpportunityStatus[]).find((key) => OPPORTUNITY_STATUS_NAMES[key] === name) ?? 'UNKNOWN';
 /** Produces one safe DTO without leaking internal status catalogs or registration counts publicly. */
 const mapOpportunity = (row: JobRow | VolunteerRow) => {
   const job = 'kind' in row ? row : null;
@@ -64,12 +63,6 @@ const findRow = async (key: string, database: Prisma.TransactionClient = prisma)
   if (!row) throw new AppError(404, 'La vacante no existe.');
   return row;
 };
-/** The public contract includes only published, current, non-archived, eligible records. */
-const publicWhere = (now: Date) => ({
-  archivedAt: null, publishedAt: { lte: now }, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-  organizations: { organizationStatuses: { name: ORGANIZATION_STATUS_NAMES.ACTIVE } },
-  jobCategories: { isActive: true },
-});
 /** Unfiltered homepage counts share vacancy visibility and expose no account information. */
 export const getPublicStatistics = async () => {
   const visible = publicWhere(new Date());
@@ -132,10 +125,13 @@ export const listOpportunities = async (query: OpportunityQuery, actor?: AccessC
 /** Revalidates visibility on detail requests, including expiration after a listing was loaded. */
 export const getOpportunity = async (key: string, actor?: AccessContext): Promise<Opportunity> => {
   if (actor) assertVacancyAccess(actor, PERMISSIONS.OPPORTUNITY_READ);
-  const row = await findRow(key);
+  return readApplicationOpportunity(key, prisma, !actor);
+};
+/** Internal transactional projection shares public eligibility with application submission. */
+export const readApplicationOpportunity = async (key: string, database: Prisma.TransactionClient, requireOpen = false): Promise<Opportunity> => {
+  const row = await findRow(key, database);
   const value = mapOpportunity(row);
-  if (!actor && (value.status !== 'OPEN' || !row.publishedAt || row.publishedAt > new Date() || row.archivedAt ||
-    (row.expiresAt && row.expiresAt <= new Date()) || row.organizations?.organizationStatuses.name !== ORGANIZATION_STATUS_NAMES.ACTIVE || !row.jobCategories?.isActive)) {
+  if (requireOpen && !isOpportunityAvailable(row)) {
     throw new AppError(404, 'La vacante no está disponible.');
   }
   return value;
@@ -217,11 +213,22 @@ export const updateOpportunity = async (key: string, payload: UpdateOpportunityD
     const before = mapOpportunity(await findRow(key, database));
     if (before.archivedAt) throw new AppError(409, 'Las vacantes archivadas no se pueden editar.');
     const data = await prepareData(payload, before, database);
+    await assertCapacity(database, key, payload.slots === undefined ? before.slots : payload.slots);
     const row = before.kind === 'VOLUNTEER'
       ? await database.volunteerOpportunities.update({ where: { id: before.id }, data, select: volunteerSelect })
       : await database.jobs.update({ where: { id: before.id }, data: { ...data, salaryMin: payload.salaryMin, salaryMax: payload.salaryMax, socialHours: payload.socialHours, duration: payload.duration, employmentTypeId: payload.employmentTypeId, experienceLevelId: payload.experienceLevelId }, select: jobSelect });
-    const after = mapOpportunity(row);
-    if (after.status === 'OPEN') validatePublication(after, row);
+    let after = mapOpportunity(row);
+    if (after.status === 'OPEN') {
+      validatePublication(after, row);
+      // Lowering capacity to the already selected count also fills the vacancy.
+      if (after.slots !== null && await selectedCount(database, key) >= after.slots) {
+        const closed = before.kind === 'VOLUNTEER'
+          ? await database.volunteerOpportunities.update({ where: { id: before.id }, data: { volunteerStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES.CLOSED } } }, select: volunteerSelect })
+          : await database.jobs.update({ where: { id: before.id }, data: { jobStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES.CLOSED } } }, select: jobSelect });
+        after = mapOpportunity(closed);
+        await audit(database, actor, 'CLOSE', mapOpportunity(row), after);
+      }
+    }
     if (before.kind !== 'VOLUNTEER') {
       const revision = await database.jobRevisions.aggregate({ where: { jobId: before.id }, _max: { revisionNumber: true } });
       await database.jobRevisions.create({ data: { jobId: before.id, changedBy: actor.userId, revisionNumber: (revision._max.revisionNumber ?? 0) + 1, title: after.title, description: after.description } });
@@ -236,10 +243,13 @@ export const changeOpportunityStatus = async (key: string, status: 'OPEN' | 'CLO
   return mutateVacancy(async (database) => {
     const original = await findRow(key, database);
     const before = mapOpportunity(original);
-    if (before.status === status) return before;
+    if (before.status === status) {
+      if (status === 'OPEN') await assertCapacity(database, key, before.slots, true);
+      return before;
+    }
     if (before.archivedAt) throw new AppError(409, 'La vacante ya está archivada.');
     if (status === 'CLOSED' && before.status !== 'OPEN') throw new AppError(409, 'Solo puedes cerrar una vacante publicada.');
-    if (status === 'OPEN') validatePublication(before, original);
+    if (status === 'OPEN') { validatePublication(before, original); await assertCapacity(database, key, before.slots, true); }
     const data = { publishedAt: status === 'OPEN' ? (original.publishedAt ?? new Date()) : undefined, archivedAt: status === 'ARCHIVED' ? new Date() : undefined };
     const row = before.kind === 'VOLUNTEER'
       ? await database.volunteerOpportunities.update({ where: { id: before.id }, data: { ...data, volunteerStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES[status] } } }, select: volunteerSelect })

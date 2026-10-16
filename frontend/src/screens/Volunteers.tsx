@@ -1,3 +1,4 @@
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { VolunteerSpot } from '../types/models';
 import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
 
@@ -24,7 +25,10 @@ export default function Volunteers({
       <div className="volunteer-grid">
         {volunteerSpots.map(spot => (
           <div key={spot.id} className="volunteer-card">
-            <div className="vol-slots">{spot.slots == null ? 'Cupos sin límite especificado' : spot.slots + ' cupos'}</div>
+            <div className="vol-card-header">
+              <div className="vol-slots">{spot.slots == null ? 'Cupos sin límite especificado' : spot.slots + ' cupos'}</div>
+              <div className="vol-card-save"><SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'volunteer-' + spot.id} className="save-opportunity-button opportunity-save-icon" variant="icon" /></div>
+            </div>
             <h3 className="vol-title">{spot.title}</h3>
             <div className="vol-org">🏢 {spot.org}</div>
             <p className="vol-desc">{spot.desc}</p>

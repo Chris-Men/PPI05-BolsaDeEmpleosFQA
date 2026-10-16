@@ -2,7 +2,6 @@
 import { useState } from 'react';
 
 import type {
-    CandidateApplication,
     Job,
     StateSetter,
 } from '../../types/models';
@@ -25,7 +24,10 @@ import '../../styles/admin/dashboard.css';
 
 import OpportunityManagement from './OpportunityManagement';
 
-import CVrecibidos from './CVrecibidos';
+import ApplicationManagement from './ApplicationManagement';
+import { useApplicationStatistics } from '../../hooks/useApplications';
+import { useAuth } from '../../hooks/useAuth';
+import { canManageApplications } from '../../utils/applicationManagement';
 import Organizaciones from './Organizaciones';
 import Categorias from './Categorias';
 import Estadisticas from './Estadisticas';
@@ -52,7 +54,6 @@ interface AdminDashboardProps {
     vacancyTotal?: number;
     onVacanciesChanged?: () => void;
 
-    applications?: CandidateApplication[];
 
     configuration: SiteConfiguration;
 
@@ -74,7 +75,6 @@ function AdminDashboard({
     vacancyTotal,
     onVacanciesChanged,
 
-    applications = [],
 
     configuration,
     setConfiguration,
@@ -110,11 +110,13 @@ function AdminDashboard({
     // Los valores se calculan directamente desde las props.
     // =========================================================
 
+    const { session } = useAuth();
+    const indicators = useApplicationStatistics(canManageApplications(session));
     const stats = {
         vacantes: vacancyTotal ?? '—',
-        cvs: applications.length,
+        cvs: indicators.error ? '—' : indicators.statistics?.withResume ?? '—',
         empresas: 18,
-        usuarios: 4,
+        usuarios: indicators.error ? '—' : indicators.statistics?.candidates ?? '—',
     };
 
 
@@ -285,7 +287,7 @@ function AdminDashboard({
                     <div className="card">
 
                         <span>
-                            Usuarios
+                            Candidatos postulantes
                         </span>
 
                         <h2>
@@ -293,7 +295,7 @@ function AdminDashboard({
                         </h2>
 
                         <span className="card-detail">
-                            Usuarios registrados
+                            Candidatos con postulaciones
                         </span>
 
                     </div>
@@ -473,14 +475,14 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        'Administrar Vacantes'
+                                        'Postulaciones'
                                     )
                                 }
                             >
 
                                 <div className="attention-number">
                                     {
-                                        applications.length
+                                        indicators.error ? '—' : indicators.statistics?.total ?? '—'
                                     }
                                 </div>
 
@@ -511,14 +513,14 @@ function AdminDashboard({
                                 className="attention-item"
                                 onClick={() =>
                                     navegarA(
-                                        'CV Recibidos'
+                                        'Postulaciones'
                                     )
                                 }
                             >
 
                                 <div className="attention-number">
                                     {
-                                        applications.length
+                                        indicators.error ? '—' : indicators.statistics?.withResume ?? '—'
                                     }
                                 </div>
 
@@ -615,13 +617,10 @@ function AdminDashboard({
                 );
 
 
-            case 'CV Recibidos':
+            case 'Postulaciones':
 
                 return (
-                    <CVrecibidos
-                        applications={applications}
-                        jobs={jobs}
-                    />
+                    <ApplicationManagement onChanged={indicators.reload} />
                 );
 
 
@@ -646,7 +645,6 @@ function AdminDashboard({
                 return (
                     <Estadisticas
                         jobs={jobs}
-                        applications={applications}
                     />
                 );
 

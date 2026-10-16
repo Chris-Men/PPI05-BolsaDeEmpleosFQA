@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-interface SessionControlsProps { showCurrent?: boolean; showAll?: boolean }
+interface SessionControlsProps { showCurrent?: boolean; showAll?: boolean; beforeClose?: () => Promise<unknown> }
 
 /** Offers server-confirmed logout actions where each control is needed. */
-export function SessionControls({ showCurrent = true, showAll = true }: SessionControlsProps) {
+export function SessionControls({ showCurrent = true, showAll = true, beforeClose }: SessionControlsProps) {
   const { logout } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ export function SessionControls({ showCurrent = true, showAll = true }: SessionC
   const close = async (all: boolean): Promise<void> => {
     if (busy) return;
     setBusy(true); setError('');
-    try { await logout(all); }
+    try { await beforeClose?.(); await logout(all); }
     catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No fue posible cerrar la sesión. Inténtalo de nuevo.');
     } finally { setBusy(false); }

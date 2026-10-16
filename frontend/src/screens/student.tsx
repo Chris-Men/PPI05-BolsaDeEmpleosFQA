@@ -1,3 +1,4 @@
+import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type {
   StateSetter, StudentOpportunityType, StudentSpot,
 } from '../types/models';
@@ -124,10 +125,13 @@ export default function Students({
             >
 
               {/* CUPOS / TIPO */}
-              <div className="vol-slots">
-                {spot.tipo === 'social'
-                  ? '🤝 Horas sociales disponibles'
-                  : '🎓 Práctica disponible'}
+              <div className="vol-card-header">
+                <div className="vol-slots">
+                  {spot.tipo === 'social'
+                    ? '🤝 Horas sociales disponibles'
+                    : '🎓 Práctica disponible'}
+                </div>
+                <div className="vol-card-save"><SaveOpportunityButton opportunityKey={spot.opportunityKey ?? 'job-' + spot.id} className="save-opportunity-button opportunity-save-icon" variant="icon" /></div>
               </div>
 
               {/* TÍTULO */}

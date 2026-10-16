@@ -1,0 +1,25 @@
+.save-opportunity-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 14px; border: 1px solid var(--c200); border-radius: 8px; background: var(--w); color: var(--g2); font: inherit; font-size: 13px; cursor: pointer; }
+.save-opportunity-button:hover { background: var(--gl); }
+.save-opportunity-button.saved { background: var(--gl); color: var(--gd); }
+.save-opportunity-button:disabled { opacity: .55; cursor: default; }
+.saved-operation-error { display: block; max-width: 230px; overflow-wrap: anywhere; color: #942e3b; font-size: 11px; }
+.saved-list-loading { padding: 24px 0; color: var(--c500); font-size: 12px; }
+.saved-list-error, .saved-collection-error { padding: 14px; border-radius: 10px; background: #fff0f0; color: #942e3b; font-size: 13px; }
+.saved-list-error p { margin-bottom: 10px; }
+.saved-collection-error { max-width: 1280px; margin: 12px auto; }
+.saved-collection-error button { margin-left: 10px; padding: 5px 10px; background: #fff; border: 1px solid #e2c8c8; border-radius: 6px; color: inherit; cursor: pointer; }
+.saved-opportunity-item time { display: block; margin-top: 6px; color: var(--c500); font-size: 10px; }
+.saved-unavailable { display: inline-block; margin-top: 8px; padding: 4px 8px; background: #edf0f2; color: #56646d; border-radius: 20px; font-size: 10px; }
+.saved-opportunity-item button:disabled { opacity: .5; cursor: default; }
+.saved-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 18px; font-size: 11px; color: var(--c500); }
+.saved-intent-notice { padding: 14px 18px; margin: 14px auto; border: 1px solid var(--c200); border-radius: 10px; background: var(--gl); color: var(--gd); max-width: 1000px; font-size: 13px; }
+.saved-intent-notice p { margin: 0 0 8px; }
+.saved-intent-notice button { padding: 7px 12px; border: 1px solid var(--c200); border-radius: 7px; background: #fff; color: var(--gd); font: inherit; cursor: pointer; }
+.saved-intent-notice button + button { margin-left: 8px; }
+.vol-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.vol-card-header .vol-slots { min-width: 0; overflow-wrap: anywhere; }
+.vol-card-save { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
+.opportunity-save-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; font-size: 26px; line-height: 1; }
+.opportunity-save-icon:focus-visible { outline: 2px solid var(--g2); outline-offset: 3px; }
+.vol-card-save .saved-operation-error { width: 180px; max-width: 40vw; margin-top: 6px; font-size: 11px; }
+@media (max-width: 600px) { .saved-opportunity-item { flex-wrap: wrap; align-items: flex-start; } .saved-opportunity-item .profile-list-actions { width: 100%; justify-content: flex-start; } .saved-intent-notice, .saved-collection-error { margin: 12px; } }

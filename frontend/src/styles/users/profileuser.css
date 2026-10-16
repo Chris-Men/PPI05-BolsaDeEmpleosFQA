@@ -122,6 +122,20 @@
   padding: 0 10px 28px;
 }
 
+.profile-brand-home {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-brand-home:focus-visible {
+  outline: 2px solid var(--fqa-green);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
 .profile-brand-mark {
   width: 40px;
   height: 40px;
@@ -766,6 +780,10 @@
 }
 
 .profile-stat-card {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   min-width: 0;
 
   min-height: 88px;
@@ -795,6 +813,12 @@
   transform: translateY(-2px);
 
   box-shadow: var(--fqa-shadow-hover);
+}
+
+.profile-stat-card.active {
+  border-color: var(--fqa-green);
+  background: var(--fqa-bg);
+  box-shadow: 0 0 0 1px rgba(130, 186, 46, .18);
 }
 
 .profile-stat-icon {
@@ -879,7 +903,8 @@
   display: none;
 }
 
-.profile-tabs button {
+.profile-tabs button,
+.profile-tabs .profile-summary-label {
   min-height: 39px;
 
   flex: 0 0 auto;
@@ -922,7 +947,8 @@
   background: #f8fbf4;
 }
 
-.profile-tabs button.active {
+.profile-tabs button.active,
+.profile-tabs .profile-summary-label {
   border-color: var(--fqa-green);
 
   background:
@@ -934,6 +960,20 @@
 
   box-shadow:
     0 4px 10px rgba(91, 162, 34, 0.17);
+}
+
+.profile-tabs .profile-summary-label { cursor: default; }
+.profile-summary-caption { margin: 0 0 12px; color: var(--fqa-text-soft); font-size: 11px; }
+.profile-summary-loading { padding: 24px 0; color: var(--fqa-text-soft); font-size: 12px; }
+.profile-summary-error { padding: 14px; border-radius: 10px; background: #fff0f0; color: #942e3b; font-size: 12px; }
+.profile-summary-error p { margin: 0 0 10px; }
+.profile-summary-item time { display: block; margin-top: 6px; color: var(--fqa-text-soft); font-size: 10px; }
+.profile-summary-status { flex-shrink: 0; padding: 5px 9px; font-size: 10px; }
+.profile-summary-footer { display: flex; justify-content: flex-end; margin-top: 16px; }
+@media (max-width: 600px) {
+  .profile-summary-item { align-items: flex-start; flex-wrap: wrap; }
+  .profile-summary-footer .profile-small-button { width: 100%; }
+  .profile-tabs .profile-summary-label { font-size: 9px; padding: 7px 10px; }
 }
 
 

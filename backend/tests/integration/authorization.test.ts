@@ -174,6 +174,8 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
         'accounts.delete.own',
         'profiles.read.own', 'profiles.update.own', 'profiles.resume.upload.own',
         'applications.create.own', 'applications.read.own', 'applications.resume.upload.own',
+        'applications.withdraw.own', 'notifications.read.own', 'notifications.update.own',
+        'saved-opportunities.read.own', 'saved-opportunities.update.own',
       ],
       ADMINISTRATOR: [
         'opportunities.read', 'opportunities.update', 'opportunities.status.update', 'opportunities.archive',

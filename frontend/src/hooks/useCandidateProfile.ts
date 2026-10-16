@@ -10,7 +10,7 @@ export interface CandidateProfileState {
   error: string; resumeError: string;
   reload: () => Promise<void>; reloadResume: () => Promise<void>;
   save: (payload: ProfileUpdate) => Promise<void>;
-  upload: (file: File) => Promise<void>; remove: () => Promise<void>;
+  upload: (file: File) => Promise<ResumeMetadata>; remove: () => Promise<void>;
 }
 
 /** One instance lives in the account-keyed application shell; late responses cannot leak across accounts. */
@@ -45,10 +45,10 @@ export function useCandidateProfile(enabled: boolean): CandidateProfileState {
   useEffect(() => { void reload(); void reloadResume(); }, [reload, reloadResume]);
 
   /** Serializes user mutations, preserving existing data until a successful response. */
-  const mutate = async (operation: () => Promise<void>): Promise<void> => {
+  const mutate = async <T,>(operation: () => Promise<T>): Promise<T> => {
     if (mutation.current) throw new Error('Espera a que termine la operación actual.');
     mutation.current = true; setBusy(true);
-    try { await operation(); }
+    try { return await operation(); }
     finally { mutation.current = false; if (mounted.current) setBusy(false); }
   };
   return { profile, resume, loading, resumeLoading, busy, error, resumeError, reload, reloadResume,
@@ -56,7 +56,7 @@ export function useCandidateProfile(enabled: boolean): CandidateProfileState {
       const result = await updateProfile(payload);
       if (mounted.current) { setProfile(result); sessionStore.updateCandidateName(result.firstName, result.lastName); }
     }),
-    upload: (file) => mutate(async () => { const result = await uploadResume(file); if (mounted.current) { setResume(result); setResumeError(''); } }),
+    upload: (file) => mutate(async () => { const result = await uploadResume(file); if (mounted.current) { setResume(result); setResumeError(''); } return result; }),
     remove: () => mutate(async () => { await deleteResume(); if (mounted.current) { setResume(null); setResumeError(''); } }),
   };
 }

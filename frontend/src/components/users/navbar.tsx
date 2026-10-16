@@ -1,5 +1,7 @@
 import { SessionControls } from '../auth/SessionControls';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { NotificationDropdown } from './NotificationDropdown';
 import logo from '../imagenes/logo/logo 1.png';
 import '../../styles/users/navbar.css';
 import type { CurrentUser, NavigateTo, ScreenName, StateSetter } from '../../types/models';
@@ -11,6 +13,8 @@ interface NavbarProps {
   setUserMenuOpen: StateSetter<boolean>;
   navigateTo: NavigateTo;
   handleLogout: () => void;
+  beforeLogout?: () => Promise<unknown>;
+  onViewNotifications: () => void;
 }
 
 /** Main responsive navigation for public and candidate screens. */
@@ -20,11 +24,18 @@ export default function Navbar({
   userMenuOpen,
   setUserMenuOpen,
   navigateTo,
+  beforeLogout,
+  onViewNotifications,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { session } = useAuth();
+  const canReadNotifications = session?.roles.includes('CANDIDATE') && session.permissions.includes('notifications.read.own');
+  useEffect(() => { setNotificationsOpen(false); }, [screen]);
 
   const handleNavigation = (target: ScreenName) => {
     setMenuOpen(false);
+    setNotificationsOpen(false);
     navigateTo(target);
   };
 
@@ -52,12 +63,22 @@ export default function Navbar({
       </div>
 
       <div className="nav-right">
+        {currentUser && canReadNotifications && (
+          <NotificationDropdown
+            open={notificationsOpen}
+            onOpenChange={open => {
+              setNotificationsOpen(open);
+              if (open) { setUserMenuOpen(false); setMenuOpen(false); }
+            }}
+            onViewAll={onViewNotifications}
+          />
+        )}
         {currentUser ? (
           <div className="nav-user-menu" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
               className="nav-avatar"
-              onClick={() => setUserMenuOpen((open) => !open)}
+              onClick={() => { setNotificationsOpen(false); setMenuOpen(false); setUserMenuOpen((open) => !open); }}
               title="Menú de usuario"
             >
               {currentUser.initial}
@@ -73,7 +94,7 @@ export default function Navbar({
                 >
                   Ir al perfil
                 </button>
-                <SessionControls showAll={false} />
+                <SessionControls showAll={false} beforeClose={beforeLogout} />
               </div>
             )}
           </div>
@@ -85,7 +106,7 @@ export default function Navbar({
 
         <button
           className={`nav-menu-button ${menuOpen ? 'open' : ''}`}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => { setNotificationsOpen(false); setUserMenuOpen(false); setMenuOpen((open) => !open); }}
           aria-label="Abrir menú"
           aria-expanded={menuOpen}
         >

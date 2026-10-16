@@ -11,11 +11,12 @@ export class ApiError extends Error {
 }
 
 /** Authentication is explicit; public failures must not trigger token renewal. */
-interface ApiRequestOptions extends RequestInit { authenticated?: boolean; retryAuthentication?: boolean; responseType?: 'json' | 'blob' }
+interface ApiRequestOptions extends RequestInit { authenticated?: boolean; retryAuthentication?: boolean; responseType?: 'json' | 'blob'; expectedUserId?: number }
 
 /** Callbacks avoid coupling the HTTP transport to React or the session store. */
 interface AuthenticationTransport {
   getToken: () => string | undefined;
+  getUserId?: () => number | undefined;
   refresh: () => Promise<void>;
   invalidate: () => void;
 }
@@ -35,8 +36,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export async function apiRequest<TResponse>(
   path: string, options: ApiRequestOptions = {},
 ): Promise<TResponse> {
-  const { authenticated = false, retryAuthentication = true, responseType = 'json', ...requestOptions } = options;
+  const { authenticated = false, retryAuthentication = true, responseType = 'json', expectedUserId, ...requestOptions } = options;
+  const assertIdentity = (): void => {
+    if (expectedUserId !== undefined && authentication?.getUserId?.() !== expectedUserId) {
+      throw new ApiError('La sesión cambió. Intenta nuevamente desde tu cuenta actual.', 409);
+    }
+    if (requestOptions.signal?.aborted) throw new ApiError('La solicitud fue cancelada.', 0);
+  };
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    assertIdentity();
     const headers = new Headers(requestOptions.headers);
     if (!(requestOptions.body instanceof FormData)) headers.set('Content-Type', 'application/json');
     headers.set('X-FQA-Request', '1');
@@ -48,14 +56,18 @@ export async function apiRequest<TResponse>(
     } catch {
       throw new ApiError('No fue posible conectar con el servidor. Inténtalo de nuevo.', 0);
     }
+    assertIdentity();
     if (response.status === 401 && authenticated && retryAuthentication && authentication && attempt === 0) {
       await response.arrayBuffer();
       if (authentication.getToken() === requestToken) await authentication.refresh();
       continue;
     }
     if (response.status === 204) return undefined as TResponse;
-    if (response.ok && responseType === 'blob') return await response.blob() as TResponse;
+    if (response.ok && responseType === 'blob') {
+      const result = await response.blob(); assertIdentity(); return result as TResponse;
+    }
     const payload: unknown = await response.json().catch(() => null);
+    assertIdentity();
     if (!response.ok) {
       if (response.status === 401 && authenticated && authentication?.getToken() === requestToken) {
         authentication?.invalidate();

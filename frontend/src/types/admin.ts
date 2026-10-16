@@ -3,7 +3,7 @@ export type AdminMenuName =
   | 'Dashboard'
   | 'Nueva Vacante'
   | 'Administrar Vacantes'
-  | 'CV Recibidos'
+  | 'Postulaciones'
   | 'Organizaciones'
   | 'Categorías'
   | 'Estadísticas'
