@@ -24,6 +24,9 @@ import {
 import "../styles/users/help.css";
 import ayudaDesktop from "../components/imagenes/img/ayuda.png";
 import ayudaMobile from "../components/imagenes/img/ayuda-responsiv.png";
+import { useSiteSettings } from '../hooks/useSiteSettings';
+import { SiteSocialLinks } from '../components/users/SiteSocialLinks';
+import { telephoneHref, whatsappHref } from '../utils/siteLinks';
 
 interface HelpProps {
   navigateTo?: import('../types/models').NavigateTo;
@@ -183,6 +186,8 @@ const tips = [
 ];
 
 export default function Help({ navigateTo }: HelpProps) {
+  const { configuration } = useSiteSettings();
+  const { contacto } = configuration;
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
@@ -498,8 +503,8 @@ export default function Help({ navigateTo }: HelpProps) {
           </div>
 
           <div className="help-contact-grid">
-            <a
-              href="mailto:soporte@fundacionqa.org"
+            {contacto.correo && <a
+              href={'mailto:' + contacto.correo}
               className="help-contact-card"
             >
               <span className="help-contact-icon">
@@ -507,17 +512,17 @@ export default function Help({ navigateTo }: HelpProps) {
               </span>
               <span className="help-contact-copy">
                 <span>Correo electrónico</span>
-                <strong>soporte@fundacionqa.org</strong>
+                <strong>{contacto.correo}</strong>
                 <small>Escríbenos tu consulta</small>
               </span>
               <ArrowRight
                 className="help-contact-arrow"
                 size={17}
               />
-            </a>
+            </a>}
 
-            <a
-              href="tel:+50376234832"
+            {contacto.telefono && <a
+              href={telephoneHref(contacto.telefono)}
               className="help-contact-card"
             >
               <span className="help-contact-icon">
@@ -525,27 +530,28 @@ export default function Help({ navigateTo }: HelpProps) {
               </span>
               <span className="help-contact-copy">
                 <span>Teléfono</span>
-                <strong>+503 7623-4832</strong>
+                <strong>{contacto.telefono}</strong>
                 <small>Llámanos para solicitar ayuda</small>
               </span>
               <ArrowRight
                 className="help-contact-arrow"
                 size={17}
               />
-            </a>
+            </a>}
 
-            <div className="help-contact-card help-contact-location">
+            {contacto.direccion && <div className="help-contact-card help-contact-location">
               <span className="help-contact-icon">
                 <MapPin size={21} />
               </span>
               <span className="help-contact-copy">
                 <span>Ubicación</span>
-                <strong>San Salvador, El Salvador</strong>
+                <strong>{contacto.direccion}</strong>
                 <small>
                   Atención: lunes a viernes, 8:00 a. m. – 4:00 p. m.
                 </small>
               </span>
-            </div>
+            </div>}
+            {contacto.whatsapp && <a href={whatsappHref(contacto.whatsapp)} className="help-contact-card" target="_blank" rel="noopener noreferrer"><span className="help-contact-copy"><span>WhatsApp</span><strong>{contacto.whatsapp}</strong></span><ArrowRight size={17} /></a>}
           </div>
 
           <div className="help-contact-footnote">
@@ -556,6 +562,7 @@ export default function Help({ navigateTo }: HelpProps) {
               contraseñas ni códigos de acceso.
             </span>
           </div>
+          <SiteSocialLinks />
         </section>
       </main>
 

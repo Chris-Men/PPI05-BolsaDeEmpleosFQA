@@ -34,8 +34,10 @@ import {
 import nosotrosDesktop from "../components/imagenes/img/nosotros.png";
 import nosotrosResponsive from "../components/imagenes/img/nosotros renponsiv.png";
 import "../styles/users/nosotros.css";
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 export default function Nosotros() {
+  const { configuration } = useSiteSettings();
   const ejes = [
     {
       number: "01",
@@ -257,35 +259,29 @@ export default function Nosotros() {
         <section className="mission-vision-section">
           <div className="section-container">
             <div className="mission-vision-wrapper">
-              <article className="mv-card mv-mission">
+              {configuration.institucional.mision && <article className="mv-card mv-mission">
                 <div className="mv-icon">
                   <Target size={25} />
                 </div>
                 <div>
                   <span className="mv-label">MISIÓN</span>
                   <p>
-                    Diseñar, gestionar y ejecutar proyectos de desarrollo
-                    que promuevan el crecimiento integral de las personas,
-                    a través de la promoción de valores y principios
-                    bíblicos que fomenten una cultura de paz e inclusión.
+                    {configuration.institucional.mision}
                   </p>
                 </div>
-              </article>
+              </article>}
 
-              <article className="mv-card mv-vision">
+              {configuration.institucional.vision && <article className="mv-card mv-vision">
                 <div className="mv-icon">
                   <Eye size={25} />
                 </div>
                 <div>
                   <span className="mv-label">VISIÓN</span>
                   <p>
-                    Ser una organización que empodere a las personas,
-                    familias y comunidades en condición de vulnerabilidad
-                    y en las cuales tenemos presencia, promoviendo un
-                    impacto transformador y sostenible en sus vidas.
+                    {configuration.institucional.vision}
                   </p>
                 </div>
-              </article>
+              </article>}
             </div>
           </div>
         </section>

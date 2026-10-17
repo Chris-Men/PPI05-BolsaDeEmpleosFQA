@@ -178,6 +178,7 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
         'saved-opportunities.read.own', 'saved-opportunities.update.own',
       ],
       ADMINISTRATOR: [
+        'statistics.read', 'site-settings.read',
         'opportunities.read', 'opportunities.update', 'opportunities.status.update', 'opportunities.archive',
         'categories.read', 'categories.create', 'categories.update', 'categories.delete',
         'accounts.delete.own', 'candidates.status.update', 'candidates.delete',
@@ -186,6 +187,7 @@ describe('Autorización HTTP con permisos reales en PostgreSQL', () => {
         'applications.select', 'organizations.create', 'organizations.read', 'organizations.update', 'organizations.status.update',
       ],
       SUPER_ADMIN: [
+        'statistics.read', 'site-settings.read', 'site-settings.update',
         'opportunities.read', 'opportunities.update', 'opportunities.status.update', 'opportunities.archive',
         'categories.read', 'categories.create', 'categories.update', 'categories.delete',
         'accounts.delete.own', 'candidates.status.update', 'candidates.delete', 'users.status.update', 'users.restore',
