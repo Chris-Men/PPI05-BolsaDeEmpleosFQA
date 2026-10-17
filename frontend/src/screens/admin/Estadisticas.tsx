@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAdministrativeStatistics } from '../../hooks/useAdministrativeStatistics';
 import { statisticsPresetRange, statisticsRangeError, type StatisticsPreset } from '../../utils/statisticsDates';
 import { APPLICATION_LABELS } from '../../types/application';
@@ -13,6 +13,13 @@ export default function Estadisticas() {
   const [error, setError] = useState('');
   const result = useAdministrativeStatistics(range);
   const data = result.data;
+  const firstActivityDate = data?.range.firstActivityDate;
+  /** A refresh may discover older imported activity; lifetime keeps the calendars and applied range aligned. */
+  useEffect(() => {
+    if (preset !== 'lifetime' || !firstActivityDate) return;
+    const next = statisticsPresetRange('lifetime', new Date(), firstActivityDate);
+    if (next.from !== range.from || next.to !== range.to) { setDraft(next); setRange(next); }
+  }, [preset, firstActivityDate, range.from, range.to]);
   const metric = (value: number | undefined): string => value === undefined ? '—' : value.toLocaleString('es-SV');
   /** Incomplete inputs preserve the last valid applied range. */
   const apply = (event: FormEvent<HTMLFormElement>): void => {
@@ -23,8 +30,8 @@ export default function Estadisticas() {
     <div className="screen-header"><form className="statistics-header-actions statistics-calendar" onSubmit={apply}>
       <label>Período rápido<select className="period-select" value={preset} onChange={event => {
         const next = event.target.value as StatisticsPreset; setPreset(next);
-        if (next !== 'custom') { const value = statisticsPresetRange(next); setDraft(value); setRange(value); setError(''); }
-      }}><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="year">Este año</option><option value="custom">Personalizado</option></select></label>
+        if (next !== 'custom') { const value = statisticsPresetRange(next, new Date(), firstActivityDate); setDraft(value); setRange(value); setError(''); }
+      }}><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="year">Este año</option><option value="lifetime" disabled={!firstActivityDate}>Desde el inicio</option><option value="custom">Personalizado</option></select></label>
       <label>Desde<input type="date" value={draft.from} required onChange={event => { setDraft(value => ({ ...value, from: event.target.value })); setPreset('custom'); }} /></label>
       <label>Hasta<input type="date" value={draft.to} required onChange={event => { setDraft(value => ({ ...value, to: event.target.value })); setPreset('custom'); }} /></label>
       <button type="submit" className="statistics-refresh-button">Aplicar</button>
@@ -50,10 +57,18 @@ export default function Estadisticas() {
         <div className="simple-stat-list">{data?.states.map(item => <div key={item.status}><span>{APPLICATION_LABELS[item.status]}</span><strong>{item.count}</strong></div>)}{data?.applications === 0 && <p>No hubo postulaciones en este período.</p>}</div>
       </div>
     </div>
-    <div className="statistics-box statistics-summary"><div className="statistics-box-header"><div><h3>Resumen operativo</h3><span>Indicadores del período y disponibilidad actual.</span></div></div><div className="summary-grid">
-      <div className="summary-item"><span>Postulaciones por vacante con postulaciones</span><strong>{data?.applicationsPerOpportunity.toFixed(1) ?? '—'}</strong></div>
-      <div className="summary-item"><span>Tasa de selección del período</span><strong>{data ? data.selectionRate.toFixed(1) + '%' : '—'}</strong></div>
-      <div className="summary-item"><span>Oportunidades activas actualmente</span><strong>{metric(data?.activeOpportunities)}</strong></div>
+    <div className="statistics-box statistics-summary"><div className="statistics-box-header"><div><h3>Resumen operativo</h3><span>Totales acumulados, actividad del período y disponibilidad actual.</span></div></div><div className="summary-grid">
+      <div className="summary-item"><span>Usuarios registrados</span><strong>{metric(data?.users.total)}</strong><small>Acumulado · candidatos activos y no eliminados</small></div>
+      <div className="summary-item"><span>Candidatos registrados</span><strong>{metric(data?.users.candidates)}</strong><small>Acumulado · activos y deshabilitados</small></div>
+      <div className="summary-item"><span>Usuarios seleccionados alguna vez</span><strong>{metric(data?.users.selected)}</strong><small>Candidatos activos · cada persona cuenta una vez</small></div>
+      <div className="summary-item"><span>Usuarios con alguna selección</span><strong>{data ? data.users.selectionRate.toFixed(1) + '%' : '—'}</strong><small>Porcentaje de los candidatos activos registrados</small></div>
+      <div className="summary-item"><span>Candidatos nuevos</span><strong>{metric(data?.users.newCandidates)}</strong><small>Registrados en el período seleccionado</small></div>
+      <div className="summary-item"><span>Candidatos con CV activo</span><strong>{metric(data?.users.withResume)}</strong><small>Actual · CV disponible en su perfil</small></div>
+      <div className="summary-item"><span>Vacantes con postulaciones</span><strong>{metric(data?.opportunitiesWithApplications)}</strong><small>Recibieron al menos una en el período</small></div>
+      <div className="summary-item"><span>Postulaciones por revisar</span><strong>{metric(data?.pendingApplications)}</strong><small>Del período · pendientes o en revisión</small></div>
+      <div className="summary-item"><span>Postulaciones por vacante con postulaciones</span><strong>{data?.applicationsPerOpportunity.toFixed(1) ?? '—'}</strong><small>Promedio del período seleccionado</small></div>
+      <div className="summary-item"><span>Tasa de selección del período</span><strong>{data ? data.selectionRate.toFixed(1) + '%' : '—'}</strong><small>Postulaciones seleccionadas del período</small></div>
+      <div className="summary-item"><span>Oportunidades activas actualmente</span><strong>{metric(data?.activeOpportunities)}</strong><small>Actual · disponibles para postular</small></div>
       <div className="summary-item"><span>Período consultado · El Salvador</span><strong>{range.from} — {range.to}</strong></div>
     </div></div>
   </section>;

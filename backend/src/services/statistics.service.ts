@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma.js';
-import { PERMISSIONS } from '../constants/authorization.constants.js';
+import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
 import { OPPORTUNITY_KINDS, OPPORTUNITY_STATUS_NAMES } from '../constants/opportunity.constants.js';
 import { APPLICATION_STATUS_NAMES, applicationStatusFor } from '../constants/application.constants.js';
+import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
 import { statisticsDateBounds, type StatisticsRange } from '../validation/statistics.schema.js';
 import { assertVacancyAccess } from './vacancy-policy.service.js';
@@ -38,19 +39,56 @@ const activeCount = async (database: Prisma.TransactionClient) => {
   return jobs + volunteers;
 };
 
+/** Counts active, non-deleted candidate accounts and their lifetime selections once per person. */
+const userMetrics = async (database: Prisma.TransactionClient, bounds: ReturnType<typeof statisticsDateBounds>) => {
+  const candidate: Prisma.UserWhereInput = { deletedAt: null, userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } } } };
+  const registered: Prisma.UserWhereInput = { ...candidate, status: { name: USER_STATUS_NAMES.ACTIVE },
+    userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } }, every: { roles: { name: ROLE_NAMES.CANDIDATE } } } };
+  const selectedStatus = await database.applicationStatuses.findUnique({ where: { name: APPLICATION_STATUS_NAMES.SELECTED }, select: { id: true } });
+  const [total, candidates, selected, newCandidates, withResume] = await Promise.all([
+    database.user.count({ where: registered }),
+    database.user.count({ where: candidate }),
+    selectedStatus ? database.user.count({ where: { ...registered, applications: { some: { OR: [
+      { statusId: selectedStatus.id },
+      { applicationStatusHistory: { some: { newStatusId: selectedStatus.id } } },
+    ] } } } }) : Promise.resolve(0),
+    database.user.count({ where: { ...candidate, createdAt: bounds } }),
+    database.user.count({ where: { ...candidate, profile: { resumeFileId: { not: null } } } }),
+  ]);
+  return { total, candidates, selected, selectionRate: total ? selected * 100 / total : 0, newCandidates, withResume };
+};
+
+/** Finds the beginning of dated activity across both vacancy sources, applications and candidate registrations. */
+const firstActivityDate = async (database: Prisma.TransactionClient): Promise<string> => {
+  const [jobs, volunteers, applications, candidates] = await Promise.all([
+    database.jobs.aggregate({ _min: { publishedAt: true } }),
+    database.volunteerOpportunities.aggregate({ _min: { publishedAt: true } }),
+    database.applications.aggregate({ _min: { createdAt: true } }),
+    database.user.aggregate({ _min: { createdAt: true }, where: { deletedAt: null, userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } } } } }),
+  ]);
+  const dates = [jobs._min.publishedAt, volunteers._min.publishedAt, applications._min.createdAt, candidates._min.createdAt]
+    .filter((value): value is Date => value !== null).map(value => value.getTime());
+  const first = new Date(Math.min(Date.now(), ...dates));
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit' }).format(first);
+};
+
 /** One consistent snapshot supplies every metric, never a limited listing page. */
 export const getStatistics = async (range: StatisticsRange, actor: AccessContext) => {
   assertVacancyAccess(actor, PERMISSIONS.STATISTICS_READ);
   return prisma.$transaction(async database => {
     const bounds = statisticsDateBounds(range);
-    const [jobs, volunteers, organizations, applications, activeOpportunities] = await Promise.all([
+    const [jobs, volunteers, organizations, applications, activeOpportunities, users, firstDate] = await Promise.all([
       database.jobs.groupBy({ by: ['kind'], where: { publishedAt: bounds }, _count: true }),
       database.volunteerOpportunities.count({ where: { publishedAt: bounds } }),
       database.organizations.count(), applicationMetrics(database, { createdAt: bounds }), activeCount(database),
+      userMetrics(database, bounds),
+      firstActivityDate(database),
     ]);
     const byKind = OPPORTUNITY_KINDS.map(kind => ({ kind, count: kind === 'VOLUNTEER' ? volunteers : jobs.find(row => row.kind === kind)?._count ?? 0 }));
-    return { range: { ...range, timeZone: 'America/El_Salvador' }, publishedOpportunities: byKind.reduce((sum, row) => sum + row.count, 0),
+    return { range: { ...range, timeZone: 'America/El_Salvador', firstActivityDate: firstDate }, publishedOpportunities: byKind.reduce((sum, row) => sum + row.count, 0),
       organizations, applications: applications.total, applicants: applications.candidates, byKind, states: applications.states, activeOpportunities,
+      users, opportunitiesWithApplications: applications.opportunityCount,
+      pendingApplications: applications.states.filter(row => row.status === 'PENDING' || row.status === 'IN_REVIEW').reduce((sum, row) => sum + row.count, 0),
       applicationsPerOpportunity: applications.opportunityCount ? applications.total / applications.opportunityCount : 0,
       selectionRate: applications.total ? (applications.states.find(row => row.status === 'SELECTED')?.count ?? 0) * 100 / applications.total : 0 };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });

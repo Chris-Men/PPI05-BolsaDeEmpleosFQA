@@ -58,12 +58,19 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.cards .card h2')[2].textContent.trim()`), '2');
   await screenshot('dashboard-desktop'); await width();
   await click('Estadísticas'); await wait(`document.querySelector('.stat-card strong')?.textContent==='0'`, 'rango inicial');
-  for (const preset of ['90', 'year', '30']) {
+  const summaryValue = label => evaluate(`Array.from(document.querySelectorAll('.summary-item')).find(item=>item.querySelector('span')?.textContent===${JSON.stringify(label)})?.querySelector('strong')?.textContent`);
+  assert.equal(await summaryValue('Usuarios registrados'), '1');
+  assert.equal(await summaryValue('Candidatos registrados'), '1');
+  assert.equal(await summaryValue('Usuarios seleccionados alguna vez'), '0');
+  assert.equal(await summaryValue('Usuarios con alguna selección'), '0.0%');
+  assert.equal(await summaryValue('Candidatos con CV activo'), '0');
+  for (const preset of ['90', 'year', 'lifetime', '30']) {
     await fill('.period-select', preset);
     await wait(`document.querySelector('.period-select').value===${JSON.stringify(preset)} && !document.querySelector('.estadisticas-screen').getAttribute('aria-busy').includes('true')`, 'período ' + preset);
     const dates = await evaluate(`Array.from(document.querySelectorAll('.statistics-calendar input')).map(item=>item.value)`);
     assert.ok(dates[0] && dates[1] && dates[0] <= dates[1]);
     if (preset === 'year') assert.ok(dates[0].endsWith('-01-01'));
+    if (preset === 'lifetime') assert.equal(dates[0], dates[1]); // Fixture candidate registration is today's first dated activity.
   }
   await fill('.statistics-calendar input:first-of-type', '2030-01-01');
   await fill('.statistics-calendar label:nth-of-type(3) input', '2030-01-31'); await click('Aplicar');
@@ -71,6 +78,7 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.progress-item small').length`), 4);
   assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.progress-item small')).map(item=>Number(item.textContent.split(' ')[0]))`), [36, 4, 36, 36]);
   await screenshot('estadisticas-desktop');
+  await evaluate(`document.querySelector('.statistics-summary').scrollIntoView({block:'start'})`); await screenshot('resumen-operativo-desktop');
   await fill('.statistics-calendar label:nth-of-type(2) input', '2030-02-01'); await click('Aplicar');
   await wait(`document.querySelector('.statistics-error')?.textContent.includes('posterior')`, 'rango inválido');
   assert.equal(await evaluate(`document.querySelector('.stat-card strong').textContent`), '112');
@@ -79,8 +87,14 @@ try {
   await wait(`document.querySelector('.estadisticas-screen')?.getAttribute('aria-busy')==='false'`, 'fin carga'); await click('Actualizar');
   await wait(`document.querySelector('.statistics-error')?.textContent.includes('Fallo recuperable')`, 'error de indicadores');
   assert.equal(await evaluate(`document.querySelector('.stat-card strong').textContent`), '—');
+  assert.equal(await summaryValue('Usuarios registrados'), '—');
+  assert.equal(await summaryValue('Usuarios con alguna selección'), '—');
   await click('Reintentar indicadores'); await wait(`document.querySelector('.stat-card strong')?.textContent==='112'`, 'recuperación');
-  for (const size of [390, 320]) { await send('Emulation.setDeviceMetricsOverride', { width: size, height: 844, deviceScaleFactor: 1, mobile: true }); await width(); await screenshot('estadisticas-mobile-' + size); }
+  for (const size of [390, 320]) {
+    await send('Emulation.setDeviceMetricsOverride', { width: size, height: 844, deviceScaleFactor: 1, mobile: true }); await width();
+    await evaluate(`document.querySelector('.statistics-calendar').scrollIntoView({block:'start'})`); await screenshot('estadisticas-mobile-' + size);
+    await evaluate(`document.querySelector('.statistics-summary').scrollIntoView({block:'start'})`); await screenshot('resumen-operativo-mobile-' + size);
+  }
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1050, deviceScaleFactor: 1, mobile: false });
   await openSettings(); assert.equal(await evaluate(`document.querySelectorAll('.settings-card').length`), 4);
   assert.equal(await evaluate(`Boolean(document.querySelector('#site-institucional-descripcion'))`), false);

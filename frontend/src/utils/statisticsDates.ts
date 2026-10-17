@@ -2,10 +2,11 @@ import type { StatisticsRange } from '../types/statistics';
 
 /** Date controls use the site's calendar rather than the browser's timezone. */
 export const siteToday = (now = new Date()): string => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-export type StatisticsPreset = '30' | '90' | 'year' | 'custom';
+export type StatisticsPreset = '30' | '90' | 'year' | 'lifetime' | 'custom';
 /** Calendar arithmetic at UTC noon avoids host timezone and DST shifts. */
-export const statisticsPresetRange = (preset: Exclude<StatisticsPreset, 'custom'>, now = new Date()): StatisticsRange => {
+export const statisticsPresetRange = (preset: Exclude<StatisticsPreset, 'custom'>, now = new Date(), firstActivityDate?: string): StatisticsRange => {
   const to = siteToday(now);
+  if (preset === 'lifetime') return { from: firstActivityDate && firstActivityDate < to ? firstActivityDate : to, to };
   const start = new Date(to + 'T12:00:00Z');
   if (preset === 'year') return { from: to.slice(0, 4) + '-01-01', to };
   start.setUTCDate(start.getUTCDate() - (Number(preset) - 1));

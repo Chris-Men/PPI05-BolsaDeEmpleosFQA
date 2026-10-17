@@ -24,6 +24,7 @@ let api: TestServer; let organizationId: number; let inactiveOrganizationId: num
 let previousSettings: Awaited<ReturnType<typeof prisma.systemSettings.findUnique>>;
 let jobIds: number[] = []; const volunteerIds: number[] = []; let fileId: number;
 let legacyStatusId: number; let baseline: Dashboard;
+let baselineUsers: Statistics['users'];
 let secondCandidateId: number;
 const period = '?from=2030-01-02&to=2030-01-02';
 
@@ -50,8 +51,9 @@ describe('estadísticas completas y configuración persistente', () => {
       const auth = await json<RegistrationResponse>(await request('POST', '/auth/login', undefined, { email: user.email, password }));
       identities.set(role, { id: user.id, token: auth.accessToken });
     }
-    secondCandidateId = (await prisma.user.create({ data: { email: runId + '-other@example.test', passwordHash, status: { connect: { name: 'Activo' } }, userRoles: { create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } } } } })).id;
+    secondCandidateId = (await prisma.user.create({ data: { email: runId + '-other@example.test', passwordHash, createdAt: new Date('2030-01-02T06:00:00Z'), status: { connect: { name: 'Activo' } }, userRoles: { create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } } } } })).id;
     baseline = await json<Dashboard>(await request('GET', '/admin/statistics/dashboard', actor()));
+    baselineUsers = (await statistics()).users;
     organizationId = (await prisma.organizations.create({ data: { name: runId, organizationStatuses: { connect: { name: ORGANIZATION_STATUS_NAMES.ACTIVE } } } })).id;
     inactiveOrganizationId = (await prisma.organizations.create({ data: { name: runId + '-inactive', organizationStatuses: { connect: { name: ORGANIZATION_STATUS_NAMES.INACTIVE } } } })).id;
     categoryId = (await prisma.jobCategories.create({ data: { name: runId, slug: runId } })).id;
@@ -71,6 +73,7 @@ describe('estadísticas completas y configuración persistente', () => {
       volunteerIds.push(row.id);
     }
     fileId = (await prisma.files.create({ data: { userId: actor('CANDIDATE').id, fileType: 'RESUME', filePath: randomUUID() + '.pdf', originalName: 'fixture.pdf', mimeType: 'application/pdf', sizeBytes: 100 } })).id;
+    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { resumeFileId: fileId } });
     const selected = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Seleccionada' } });
     const withdrawn = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Retirada' } });
     const pending = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Pendiente' } });
@@ -105,6 +108,12 @@ describe('estadísticas completas y configuración persistente', () => {
     assert.deepEqual(result.byKind.map(item => [item.kind, item.count]), [['EMPLOYMENT',35],['VOLUNTEER',2],['SOCIAL_HOURS',35],['INTERNSHIP',35]]);
     assert.equal(result.organizations, baseline.organizations + 2); assert.equal(result.applications, 4); assert.equal(result.applicants, 2);
     assert.equal(result.selectionRate, 25); assert.equal(result.applicationsPerOpportunity, 2);
+    assert.equal(result.opportunitiesWithApplications, 2); assert.equal(result.pendingApplications, 1);
+    assert.equal(result.users.total, baselineUsers.total); assert.equal(result.users.candidates, baselineUsers.candidates);
+    assert.equal(result.users.selected, baselineUsers.selected + 1);
+    assert.equal(result.users.selectionRate, (baselineUsers.selected + 1) * 100 / baselineUsers.total);
+    assert.equal(result.users.newCandidates, baselineUsers.newCandidates); assert.ok(result.users.newCandidates >= 1);
+    assert.equal(result.users.withResume, baselineUsers.withResume + 1);
     assert.equal(result.states.find(item => item.status === 'UNKNOWN')?.count, 1);
     assert.equal(result.states.find(item => item.status === 'WITHDRAWN')?.count, 1);
     assert.equal(result.range.timeZone, 'America/El_Salvador');
@@ -122,8 +131,61 @@ describe('estadísticas completas y configuración persistente', () => {
     const result = await statistics('?from=2099-01-01&to=2099-01-02');
     assert.equal(result.applications, 0); assert.equal(result.publishedOpportunities, 0); assert.equal(result.selectionRate, 0); assert.equal(result.applicationsPerOpportunity, 0);
     assert.equal(result.organizations, baseline.organizations + 2);
+    assert.equal(result.opportunitiesWithApplications, 0); assert.equal(result.pendingApplications, 0);
+    assert.equal(result.users.selected, baselineUsers.selected + 1); assert.equal(result.users.total, baselineUsers.total);
+    assert.equal(result.users.newCandidates, 0);
     for (const query of ['', '?from=2023-02-29&to=2024-01-01', '?from=2026-02-01&to=2026-01-01', period + '&userId=1']) assert.equal((await request('GET', '/admin/statistics' + query, actor())).status, 400);
     assert.equal((await request('GET', '/admin/statistics/dashboard?from=2026-01-01', actor())).status, 400);
+  });
+  it('cuenta personas únicas seleccionadas alguna vez, conserva el historial y separa usuarios eliminados y CV activos', async () => {
+    const before = await statistics(); const userIds: number[] = []; const applicationIds: number[] = [];
+    const selected = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Seleccionada' } });
+    const rejected = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Rechazada' } });
+    const owner = await prisma.user.findUniqueOrThrow({ where: { id: actor('CANDIDATE').id }, select: { passwordHash: true } });
+    try {
+      for (const variant of ['historical', 'deleted', 'new']) {
+        const user = await prisma.user.create({ data: { email: runId + '-' + variant + '@example.test', passwordHash: owner.passwordHash,
+          status: { connect: { name: variant === 'historical' ? 'Deshabilitado' : 'Activo' } },
+          createdAt: new Date(variant === 'new' ? '2030-01-03T06:00:00Z' : '2030-01-03T05:59:59.999Z'),
+          deletedAt: variant === 'deleted' ? new Date() : null, userRoles: { create: { roles: { connect: { name: ROLE_NAMES.CANDIDATE } } } } } });
+        userIds.push(user.id);
+      }
+      for (const [index, userId] of [actor('CANDIDATE').id, actor('CANDIDATE').id, userIds[0]!, userIds[1]!].entries()) {
+        const application = await prisma.applications.create({ data: { jobId: jobIds[index + 3]!, userId, referenceNumber: randomUUID(),
+          statusId: index === 2 ? rejected.id : selected.id, createdAt: new Date('2020-01-01T12:00:00Z') } });
+        applicationIds.push(application.id);
+        if (index === 2) await prisma.applicationStatusHistory.create({ data: { applicationId: application.id, changedBy: actor().id, newStatusId: selected.id, createdAt: new Date('2020-01-02T12:00:00Z') } });
+      }
+      const registration = await prisma.volunteerRegistrations.create({ data: { userId: userIds[0]!, volunteerOpportunityId: volunteerIds[0]! } });
+      const volunteer = await prisma.applications.create({ data: { volunteerRegistrationId: registration.id, userId: userIds[0]!, referenceNumber: randomUUID(), statusId: rejected.id, createdAt: new Date('2020-01-01T12:00:00Z') } });
+      applicationIds.push(volunteer.id);
+      await prisma.applicationStatusHistory.create({ data: { applicationId: volunteer.id, changedBy: actor().id, newStatusId: selected.id, createdAt: new Date('2020-01-02T12:00:00Z') } });
+      await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { resumeFileId: null } });
+      const result = await statistics();
+      assert.equal(result.range.firstActivityDate, before.range.firstActivityDate < '2020-01-01' ? before.range.firstActivityDate : '2020-01-01');
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const lifetime = await statistics('?from=' + result.range.firstActivityDate + '&to=' + today);
+      assert.ok(lifetime.applications >= applicationIds.length);
+      assert.equal(result.users.total, before.users.total + 1); assert.equal(result.users.candidates, before.users.candidates + 2);
+      assert.equal(result.users.selected, before.users.selected);
+      assert.equal(result.users.selectionRate, before.users.selected * 100 / (before.users.total + 1));
+      assert.equal(result.users.newCandidates, before.users.newCandidates + 1);
+      assert.equal(result.users.withResume, before.users.withResume - 1);
+      assert.equal(result.applications, before.applications); assert.equal(result.pendingApplications, before.pendingApplications);
+      await prisma.user.update({ where: { id: userIds[0]! }, data: { status: { connect: { name: 'Activo' } } } });
+      const enabled = await statistics();
+      assert.equal(enabled.users.total, before.users.total + 2); assert.equal(enabled.users.selected, before.users.selected + 1);
+      assert.equal(enabled.users.selectionRate, (before.users.selected + 1) * 100 / (before.users.total + 2));
+      const administrator = await prisma.role.findUniqueOrThrow({ where: { name: ROLE_NAMES.ADMINISTRATOR } });
+      await prisma.userRoles.create({ data: { userId: userIds[0]!, roleId: administrator.id } });
+      const privileged = await statistics();
+      assert.equal(privileged.users.total, before.users.total + 1); assert.equal(privileged.users.selected, before.users.selected);
+      assert.equal(privileged.users.selectionRate, before.users.selected * 100 / (before.users.total + 1));
+    } finally {
+      await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { resumeFileId: fileId } });
+      await prisma.applications.deleteMany({ where: { id: { in: applicationIds } } });
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
   });
   it('guarda el contenido completo y su auditoría, y el seed conserva las personalizaciones', async () => {
     const before = await document(); const configuration = structuredClone(DEFAULT_SITE_SETTINGS); configuration.inicio.titulo = 'Contenido persistente ' + runId;

@@ -15,6 +15,9 @@ test('períodos rápidos incluyen hoy en El Salvador y conservan fechas calendar
   assert.deepEqual(dates.statisticsPresetRange('30', now), { from: '2025-12-02', to: '2025-12-31' });
   assert.deepEqual(dates.statisticsPresetRange('year', now), { from: '2025-01-01', to: '2025-12-31' });
   assert.equal(dates.statisticsPresetRange('90', new Date('2024-03-01T12:00:00Z')).from, '2023-12-03');
+  assert.deepEqual(dates.statisticsPresetRange('lifetime', now, '2012-04-15'), { from: '2012-04-15', to: '2025-12-31' });
+  assert.deepEqual(dates.statisticsPresetRange('lifetime', now), { from: '2025-12-31', to: '2025-12-31' });
+  assert.deepEqual(dates.statisticsPresetRange('lifetime', now, '2030-01-01'), { from: '2025-12-31', to: '2025-12-31' });
   for (const value of [{ from: '', to: '' }, { from: '2023-02-29', to: '2023-03-01' }, { from: '2026-02-01', to: '2026-01-01' }]) assert.notEqual(dates.statisticsRangeError(value), '');
 });
 

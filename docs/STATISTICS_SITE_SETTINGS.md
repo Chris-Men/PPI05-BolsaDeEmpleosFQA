@@ -36,11 +36,21 @@ El backend vuelve a consultar los permisos vigentes en cada solicitud. El rol de
 | `selectionRate` | Seleccionadas / intentos del rango × 100. |
 | `applicationsPerOpportunity` | Intentos del rango / vacantes distintas que recibieron esos intentos. |
 | `activeOpportunities` | Disponibilidad pública actual: publicada, vigente, sin archivar y con organización y categoría activas. No representa la disponibilidad histórica del rango. |
-| `range` | Fechas aplicadas y zona horaria. |
+| `opportunitiesWithApplications` | Vacantes distintas de los cuatro tipos que recibieron postulaciones en el rango. |
+| `pendingApplications` | Intentos recibidos en el rango cuyo estado actual es Pendiente o En revisión. |
+| `users.total` | Únicamente candidatos activos y no eliminados, sin roles administrativos adicionales. Excluye administradores, Super Admin y candidatos deshabilitados. Acumulado independiente del rango. |
+| `users.candidates` | Usuarios registrados que tienen el rol Candidato, excluyendo cuentas eliminadas. Acumulado independiente del rango. |
+| `users.selected` | Candidatos activos y no eliminados, sin roles administrativos adicionales, seleccionados al menos una vez en cualquier vacante. Se consulta tanto el estado actual como el historial de selección de sus intentos, sin filtrar fechas ni duplicar personas. Utiliza la misma población que `users.total`. |
+| `users.selectionRate` | `users.selected / users.total × 100`; cero cuando no hay candidatos activos registrados. El porcentaje utiliza exclusivamente esa población y se identifica expresamente en la interfaz. |
+| `users.newCandidates` | Candidatos registrados dentro del rango, con días completos salvadoreños y sin cuentas eliminadas. |
+| `users.withResume` | Candidatos registrados con un CV activo vinculado a su perfil actualmente. No cuenta CV que solo pertenecen a postulaciones históricas. |
+| `range` | Fechas aplicadas, zona horaria y `firstActivityDate`, el primer día con publicaciones, postulaciones o registros de candidatos con fecha guardada. Se consulta toda la DB, independientemente del rango. Si no hay actividad pasada se utiliza hoy. |
 
 Los cocientes sin denominador devuelven cero. Los registros históricos sin fecha de publicación o envío no se asignan a una fecha inventada; siguen incluidos en los totales acumulados que les correspondan. Cada respuesta se obtiene mediante agregados Prisma dentro de una transacción con snapshot consistente.
 
-La interfaz abre los últimos treinta días, incluyendo hoy en El Salvador. Los períodos rápidos de treinta días, noventa días y este año aplican inmediatamente y sincronizan Desde/Hasta. La edición manual requiere **Aplicar**. Un rango inválido conserva el último rango aplicado. Una solicitud fallida muestra error, reintento y valores desconocidos (`—`), sin presentar el fallo como un resultado vacío.
+La interfaz abre los últimos treinta días, incluyendo hoy en El Salvador. Los períodos rápidos de treinta días, noventa días, este año y **Desde el inicio** aplican inmediatamente y sincronizan Desde/Hasta. **Desde el inicio** consulta desde el primer día de actividad guardada hasta hoy, ambos en horario salvadoreño; si al actualizar se encuentra actividad más antigua, amplía automáticamente el rango. La edición manual requiere **Aplicar** y cambia el selector a Personalizado. Un rango inválido conserva el último rango aplicado. Una solicitud fallida muestra error, reintento y valores desconocidos (`—`), sin presentar el fallo como un resultado vacío.
+
+El resumen operativo diferencia mediante sus etiquetas los datos acumulados, los del período y los actuales. **Usuarios registrados** y **Usuarios con alguna selección** utilizan únicamente candidatos activos y no eliminados; el segundo representa personas únicas seleccionadas sobre esa misma población. **Candidatos registrados** conserva el total de candidatos activos y deshabilitados, sin eliminados. **Tasa de selección del período** representa postulaciones seleccionadas sobre intentos recibidos en las fechas consultadas. Una misma persona puede tener varias postulaciones seleccionadas y solo cuenta una vez en el indicador de usuarios.
 
 ## Contratos de configuración
 
@@ -89,9 +99,9 @@ docker compose -f docker-compose.dev.yml exec -T backend npm run prisma:seed
 
 Ejecutar `npm run typecheck`, `npm run lint`, `npm test` y `npm run build` en ambos proyectos. La suite de integración utiliza el ejecutor existente `npm run test:integration` y exige `TEST_DATABASE_URL` de una base independiente terminada en `_test`. Nunca utilizar la URL de desarrollo o producción como base de integración. El ejecutor prepara sus migraciones y seeds antes de ejecutar las pruebas.
 
-Las pruebas nuevas cubren más de cien vacantes, cuatro tipos, fechas límite salvadoreñas, intentos repetidos, candidatos únicos, documentos/estados históricos, resultados vacíos, permisos revocados, auditoría atómica, fallos de DB, seeds idempotentes y conflictos entre editores.
+Las pruebas nuevas cubren más de cien vacantes, cuatro tipos, fechas límite salvadoreñas, intentos repetidos, candidatos únicos, usuarios seleccionados alguna vez sin duplicados, cuentas deshabilitadas/eliminadas, CV activos frente a históricos, documentos/estados históricos, resultados vacíos, permisos revocados, auditoría atómica, fallos de DB, seeds idempotentes y conflictos entre editores.
 
-Validación de esta entrega: 88 pruebas unitarias del backend, 43 del frontend y 132 de integración aprobadas, además de tipos, lint y compilación de ambos proyectos. Los seeds se aplicaron después al desarrollo local y se verificaron la clave inicial, los tres permisos y sus cinco asignaciones canónicas. No se aplicaron migraciones ni cambios en producción.
+Validación de esta entrega: 88 pruebas unitarias del backend, 43 del frontend y 133 de integración aprobadas, además de tipos, lint y compilación de ambos proyectos. Los seeds iniciales se aplicaron al desarrollo local y se verificaron la clave inicial, los tres permisos y sus cinco asignaciones canónicas; ampliar el resumen operativo no requiere repetirlos. No se aplicaron migraciones ni cambios en producción.
 
 `backend/tests/helpers/statistics-browser.ts` prepara un servidor desechable solo con `NODE_ENV=test` y una DB `_test`. Usa cuentas ficticias, documentos privados temporales y filas identificadas por ejecución. Para la aceptación visual, publicarlo en `localhost:3100`, iniciar Edge/Chromium con un perfil temporal y depuración remota en `9342`, mantener Vite en `5173` y ejecutar:
 
