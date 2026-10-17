@@ -180,6 +180,8 @@
 
 .settings-card .form-group input[type="text"],
 .settings-card .form-group input[type="email"],
+.settings-card .form-group input[type="tel"],
+.settings-card .form-group input[type="url"],
 .settings-card .form-group textarea {
     width: 100%;
 
@@ -658,6 +660,8 @@
 
     .settings-card .form-group input[type="text"],
     .settings-card .form-group input[type="email"],
+    .settings-card .form-group input[type="tel"],
+    .settings-card .form-group input[type="url"],
     .settings-card .form-group textarea {
         padding: 12px;
     }
@@ -694,3 +698,10 @@
     background: #F5F7F3;
     border-color: #C8D0C4;
 }
+.configuration-error, .configuration-confirm { padding: 14px; margin-bottom: 16px; border-radius: 10px; background: #fff0f0; color: #942e3b; }
+.configuration-notice { padding: 12px; margin-bottom: 16px; border-radius: 8px; background: #edf5e7; color: #31572a; }
+.configuration-field-error { color: #942e3b; font-size: 12px; margin-top: 5px; }
+.configuration-error button, .configuration-confirm button { margin: 8px 8px 0 0; padding: 8px 12px; border: 1px solid #d7e5d0; border-radius: 8px; background: white; cursor: pointer; font: inherit; }
+.configuracion-screen input:read-only, .configuracion-screen textarea:read-only { background: #f6f8f4; }
+.configuracion-screen .form-actions { flex-wrap: wrap; }
+.configuracion-screen button:disabled { opacity: .55; cursor: default; }

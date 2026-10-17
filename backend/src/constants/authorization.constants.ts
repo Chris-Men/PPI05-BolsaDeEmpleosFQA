@@ -10,6 +10,9 @@ export type RoleCode = keyof typeof ROLE_NAMES;
 
 /** Granular operations; own-resource permissions also require an ownership check. */
 export const PERMISSIONS = {
+  STATISTICS_READ: 'statistics.read',
+  SITE_SETTINGS_READ: 'site-settings.read',
+  SITE_SETTINGS_UPDATE: 'site-settings.update',
   ACCOUNT_DELETE_OWN: 'accounts.delete.own',
   CANDIDATE_STATUS_UPDATE: 'candidates.status.update',
   CANDIDATE_DELETE: 'candidates.delete',
@@ -59,6 +62,8 @@ export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 /** Administrative operations shared explicitly with Super Admin. */
 const administratorPermissions: readonly PermissionCode[] = [
+  PERMISSIONS.STATISTICS_READ,
+  PERMISSIONS.SITE_SETTINGS_READ,
   PERMISSIONS.ACCOUNT_DELETE_OWN,
   PERMISSIONS.CANDIDATE_STATUS_UPDATE,
   PERMISSIONS.CANDIDATE_DELETE,
@@ -85,6 +90,7 @@ const administratorPermissions: readonly PermissionCode[] = [
 
 /** Operations reserved to Super Admin, even if another role is misconfigured. */
 export const SUPER_ADMIN_PERMISSIONS: readonly PermissionCode[] = [
+  PERMISSIONS.SITE_SETTINGS_UPDATE,
   PERMISSIONS.USERS_STATUS_UPDATE,
   PERMISSIONS.USERS_RESTORE,
   PERMISSIONS.ADMINISTRATOR_CREATE,

@@ -3972,3 +3972,7 @@ body {
     transition: none;
   }
 }
+.site-social-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.site-social-links:empty { display: none; }
+.site-social-links a { color: inherit; font-size: 12px; }
+.site-home-description { white-space: pre-line; }

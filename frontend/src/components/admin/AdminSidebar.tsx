@@ -3,6 +3,7 @@ import { canManageUsers } from '../../utils/userManagement';
 import { canManageOrganizations } from '../../utils/organizationManagement';
 import { canManageVacancies } from '../../utils/vacancyManagement';
 import { useAuth } from '../../hooks/useAuth';
+import { canReadSiteSettings, canReadStatistics } from '../../utils/siteManagement';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
 import type { AdminMenuName } from '../../types/admin';
@@ -48,7 +49,8 @@ export default function AdminSidebar({
         </picture>
       </button>
       <nav className="menu">
-        {menuItems.filter((item) => (item.name !== 'Postulaciones' || canManageApplications(session)) && (item.name !== 'Usuarios' || canManageUsers(session)) &&
+        {menuItems.filter((item) => (!['Dashboard', 'Estadísticas'].includes(item.name) || canReadStatistics(session)) && (item.name !== 'Configuración' || canReadSiteSettings(session)) &&
+          (item.name !== 'Postulaciones' || canManageApplications(session)) && (item.name !== 'Usuarios' || canManageUsers(session)) &&
           (item.name !== 'Organizaciones' || canManageOrganizations(session)) &&
           (item.name !== 'Nueva Vacante' || canManageVacancies(session, 'opportunities.create')) &&
           (item.name !== 'Administrar Vacantes' || canManageVacancies(session)) &&

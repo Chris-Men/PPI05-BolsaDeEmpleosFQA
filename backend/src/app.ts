@@ -7,6 +7,8 @@ import { organizationRouter } from './routes/organization.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { statisticsRouter } from './routes/statistics.routes.js';
+import { adminSiteSettingsRouter, publicSiteSettingsRouter } from './routes/site-settings.routes.js';
 import { profileRouter } from './routes/profile.routes.js';
 import { savedOpportunityRouter } from './routes/saved-opportunity.routes.js';
 import { applicationRouter, applicationDraftRouter, adminApplicationRouter, notificationRouter } from './routes/application.routes.js';
@@ -25,6 +27,9 @@ export const createApp = (): express.Express => {
   app.use('/api/applications', applicationRouter);
   app.use('/api/application-drafts', applicationDraftRouter);
   app.use('/api/admin/applications', adminApplicationRouter);
+  app.use('/api/admin/statistics', statisticsRouter);
+  app.use('/api/site-settings', publicSiteSettingsRouter);
+  app.use('/api/admin/site-settings', adminSiteSettingsRouter);
   app.use('/api/notifications', notificationRouter);
   app.use('/api/admin/users', adminUserRouter);
   app.use('/api/admin/organizations', organizationRouter);

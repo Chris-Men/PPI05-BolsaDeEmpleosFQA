@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
+import { useSiteSettings } from '../hooks/useSiteSettings';
+import { initialSiteConfiguration } from '../config/siteConfiguration';
+import { SiteSocialLinks } from '../components/users/SiteSocialLinks';
+import { telephoneHref, whatsappHref } from '../utils/siteLinks';
 import type { Job, NavigateTo, StateSetter } from '../types/models';
 import type { PublicOpportunityStatistics } from '../types/opportunity';
 interface HomeProps {
@@ -24,6 +28,8 @@ export default function Home({
   statistics, statisticsError, onRetryStatistics, listingLoading, listingError, onRetryListing, onSearch,
 }: HomeProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const { configuration } = useSiteSettings();
+  const { inicio, contacto } = configuration;
   const [searchLocation, setSearchLocation] = useState('Todo el país');
   /** Pending or unavailable statistics remain unknown rather than showing invented counts. */
   const metric = (value: number | undefined): string => value === undefined ? '—' : value.toLocaleString('es-SV');
@@ -36,8 +42,9 @@ export default function Home({
         <div className="hero-eyebrow">
           <span className="hero-dot"></span> Bolsa de Trabajo Social · El Salvador
         </div>
-        <h1>Trabaja donde tu<br />historia <em>importa.</em></h1>
-        <p className="hero-sub">Conectamos profesionales comprometidos con organizaciones que generan impacto real en comunidades de El Salvador y Centroamérica.</p>
+        <h1>{inicio.titulo === initialSiteConfiguration.inicio.titulo ? <>Trabaja donde tu<br />historia <em>importa.</em></> : inicio.titulo}</h1>
+        {inicio.subtitulo && <p className="hero-sub">{inicio.subtitulo}</p>}
+        {inicio.descripcion && <p className="hero-sub site-home-description">{inicio.descripcion}</p>}
         
         <form className="hero-search" onSubmit={(event) => { event.preventDefault(); onSearch(searchQuery, searchLocation); }}>
           <input 
@@ -194,9 +201,11 @@ export default function Home({
           </div>
           <div className="footer-col">
             <h5>Contacto</h5>
-            <span>proyectos@fundaqa.org</span>
-            <span>7623 4832</span>
-            <span>San Salvador, El Salvador</span>
+            {contacto.correo && <a href={'mailto:' + contacto.correo}>{contacto.correo}</a>}
+            {contacto.telefono && <a href={telephoneHref(contacto.telefono)}>{contacto.telefono}</a>}
+            {contacto.direccion && <span>{contacto.direccion}</span>}
+            {contacto.whatsapp && <a href={whatsappHref(contacto.whatsapp)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
+            <SiteSocialLinks />
           </div>
         </div>
 

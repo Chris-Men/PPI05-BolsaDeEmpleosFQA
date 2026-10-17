@@ -1,10 +1,7 @@
 
 import { useState } from 'react';
 
-import type {
-    Job,
-    StateSetter,
-} from '../../types/models';
+import type { DashboardStatistics } from '../../types/statistics';
 
 import type {
     AdminIdentity,
@@ -12,7 +9,7 @@ import type {
 } from '../../types/admin';
 
 
-import type { SiteConfiguration } from '../../config/siteConfiguration';
+
 
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminTopbar from '../../components/admin/AdminTopbar';
@@ -25,9 +22,10 @@ import '../../styles/admin/dashboard.css';
 import OpportunityManagement from './OpportunityManagement';
 
 import ApplicationManagement from './ApplicationManagement';
-import { useApplicationStatistics } from '../../hooks/useApplications';
+
 import { useAuth } from '../../hooks/useAuth';
-import { canManageApplications } from '../../utils/applicationManagement';
+import { canReadStatistics } from '../../utils/siteManagement';
+import { STATUS_LABELS } from '../../types/opportunity';
 import Organizaciones from './Organizaciones';
 import Categorias from './Categorias';
 import Estadisticas from './Estadisticas';
@@ -39,27 +37,18 @@ import Configuracion from './Configuracion';
 // TIPOS
 // =========================================================
 
-interface DashboardJob extends Job {
-    status?: string;
-    draft?: boolean;
-    deadline?: string;
-}
+
 
 interface AdminDashboardProps {
     currentUser: AdminIdentity | null;
 
     handleLogout: () => void;
 
-    jobs?: DashboardJob[];
-    vacancyTotal?: number;
-    onVacanciesChanged?: () => void;
-
-
-    configuration: SiteConfiguration;
-
-    setConfiguration: StateSetter<SiteConfiguration>;
-
-    resetConfiguration?: () => void;
+    statistics: DashboardStatistics | null;
+    statisticsLoading: boolean;
+    statisticsError: string;
+    onReloadStatistics: () => void;
+    onVacanciesChanged: () => void;
 }
 
 
@@ -71,14 +60,7 @@ function AdminDashboard({
     currentUser,
     handleLogout,
 
-    jobs = [],
-    vacancyTotal,
-    onVacanciesChanged,
-
-
-    configuration,
-    setConfiguration,
-    resetConfiguration,
+    statistics, statisticsLoading, statisticsError, onReloadStatistics, onVacanciesChanged,
 }: AdminDashboardProps) {
 
     // =========================================================
@@ -111,12 +93,12 @@ function AdminDashboard({
     // =========================================================
 
     const { session } = useAuth();
-    const indicators = useApplicationStatistics(canManageApplications(session));
+    const indicators = { error: statisticsError, statistics: statistics ? { total: statistics.applications, withResume: statistics.withResume } : null, reload: onReloadStatistics };
     const stats = {
-        vacantes: vacancyTotal ?? '—',
-        cvs: indicators.error ? '—' : indicators.statistics?.withResume ?? '—',
-        empresas: 18,
-        usuarios: indicators.error ? '—' : indicators.statistics?.candidates ?? '—',
+        vacantes: statistics?.opportunities ?? '—',
+        cvs: statistics?.withResume ?? '—',
+        empresas: statistics?.organizations ?? '—',
+        usuarios: statistics?.applicants ?? '—',
     };
 
 
@@ -184,26 +166,10 @@ function AdminDashboard({
 
     const renderDashboard = () => {
 
-        const vacantesActividad =
-            jobs
-                .slice(0, 10)
-                .map((job) => ({
-                    id: job.opportunityKey ?? String(job.id),
-
-                    puesto:
-                        job.title ||
-                        'Sin título',
-
-                    empresa:
-                        job.org ||
-                        'Sin organización',
-
-                    estado:
-                        job.status ||
-                        'Activa',
-
-                    candidatos: '—',
-                }));
+        if (!canReadStatistics(session)) return <p role="alert">No tienes permiso para consultar estadísticas.</p>;
+        const vacantesActividad = (statistics?.recentOpportunities ?? []).map(item => ({
+            id: item.key, puesto: item.title, empresa: item.organization, estado: STATUS_LABELS[item.status], candidatos: item.candidates,
+        }));
 
 
         const filteredVacantes =
@@ -219,6 +185,8 @@ function AdminDashboard({
 
         return (
             <>
+                {statisticsLoading && <p role="status">Cargando indicadores…</p>}
+                {statisticsError && <p role="alert" className="statistics-error">{statisticsError} <button type="button" onClick={onReloadStatistics}>Reintentar indicadores</button></p>}
                 {/* =================================================
                     TARJETAS
                 ================================================= */}
@@ -257,7 +225,7 @@ function AdminDashboard({
                         </h2>
 
                         <span className="card-detail">
-                            Postulaciones recibidas
+                            Postulaciones con CV
                         </span>
 
                     </div>
@@ -354,8 +322,7 @@ function AdminDashboard({
                                 0 ? (
 
                                 <div className="empty">
-                                    No hay vacantes
-                                    registradas.
+                                    {statisticsLoading ? 'Cargando vacantes…' : statisticsError ? 'No se pudieron consultar las vacantes.' : search ? 'No hay coincidencias en las vacantes recientes.' : 'No hay vacantes registradas.'}
                                 </div>
 
                             ) : (
@@ -643,9 +610,7 @@ function AdminDashboard({
             case 'Estadísticas':
 
                 return (
-                    <Estadisticas
-                        jobs={jobs}
-                    />
+                    <Estadisticas />
                 );
 
 
@@ -659,13 +624,7 @@ function AdminDashboard({
             case 'Configuración':
 
                 return (
-                    <Configuracion
-                        configuration={configuration}
-                        setConfiguration={setConfiguration}
-                        resetConfiguration={
-                            resetConfiguration
-                        }
-                    />
+                    <Configuracion />
                 );
 
 
