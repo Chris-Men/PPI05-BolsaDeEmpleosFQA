@@ -52,6 +52,22 @@ La interfaz abre los últimos treinta días, incluyendo hoy en El Salvador. Los 
 
 El resumen operativo diferencia mediante sus etiquetas los datos acumulados, los del período y los actuales. **Usuarios registrados** y **Usuarios con alguna selección** utilizan únicamente candidatos activos y no eliminados; el segundo representa personas únicas seleccionadas sobre esa misma población. **Candidatos registrados** conserva el total de candidatos activos y deshabilitados, sin eliminados. **Tasa de selección del período** representa postulaciones seleccionadas sobre intentos recibidos en las fechas consultadas. Una misma persona puede tener varias postulaciones seleccionadas y solo cuenta una vez en el indicador de usuarios.
 
+## Reporte operativo en PDF
+
+**Exportar PDF**, en Estadísticas, descarga un reporte A4 de tres páginas para el período aplicado, incluido **Desde el inicio**:
+
+1. Resumen ejecutivo con las tarjetas principales, candidatos activos registrados, personas seleccionadas, su porcentaje y oportunidades disponibles actualmente.
+2. Gráficas de barras de oportunidades publicadas por tipo y de estados de postulaciones, con cantidades, porcentajes y leyendas en español. Los períodos sin registros se identifican expresamente.
+3. Tabla completa de indicadores, alcance de cada uno y criterios de interpretación. Todas las páginas incluyen fecha de generación en El Salvador y numeración.
+
+La descarga consulta nuevamente `GET /api/admin/statistics` con los filtros aplicados; utiliza su snapshot completo para todas las páginas. El permiso `statistics.read` y el rol administrativo se vuelven a comprobar mediante esa solicitud. Los valores editados en los calendarios deben aplicarse antes de exportar. Mientras se genera el documento se bloquean los clics duplicados y los filtros; los errores conservan los indicadores visibles y permiten reintentar. Cambiar de cuenta, cerrar sesión, salir de la sección o cambiar el rango cancela una exportación pendiente.
+
+Se reutiliza **jsPDF**, ya incluido en el frontend. La generación se carga únicamente al exportar y utiliza texto seleccionable y gráficas vectoriales, sin capturas de pantalla, dependencias adicionales ni servicios externos. Las etiquetas de las tarjetas se comparten con la vista para conservar sus criterios. El logo utiliza el recurso local de la app y tiene un respaldo de texto si no puede cargarse.
+
+El archivo se llama `reporte-operativo_FQA_YYYY-MM-DD_YYYY-MM-DD.pdf`. Solo contiene agregados: no incluye nombres, correos, CV ni información de autenticación. Se genera en memoria y se descarga en el dispositivo; la aplicación no lo almacena en PostgreSQL ni en el backend. El mensaje de éxito indica que se inició la descarga, porque guardar el archivo en el dispositivo depende del navegador.
+
+Las pruebas de `frontend/tests/statistics-report.test.mjs` comprueban el PDF binario, sus tres páginas, texto, criterios, porcentajes y resultados vacíos. La aceptación de navegador comprueba descargas reales, errores recuperables, bloqueo de duplicados y cancelación de respuestas de una cuenta anterior.
+
 ## Contratos de configuración
 
 Se utiliza exclusivamente `SystemSettings.settingKey = site.configuration`. Su `settingValue` contiene JSON validado:
@@ -101,7 +117,7 @@ Ejecutar `npm run typecheck`, `npm run lint`, `npm test` y `npm run build` en am
 
 Las pruebas nuevas cubren más de cien vacantes, cuatro tipos, fechas límite salvadoreñas, intentos repetidos, candidatos únicos, usuarios seleccionados alguna vez sin duplicados, cuentas deshabilitadas/eliminadas, CV activos frente a históricos, documentos/estados históricos, resultados vacíos, permisos revocados, auditoría atómica, fallos de DB, seeds idempotentes y conflictos entre editores.
 
-Validación de esta entrega: 88 pruebas unitarias del backend, 43 del frontend y 133 de integración aprobadas, además de tipos, lint y compilación de ambos proyectos. Los seeds iniciales se aplicaron al desarrollo local y se verificaron la clave inicial, los tres permisos y sus cinco asignaciones canónicas; ampliar el resumen operativo no requiere repetirlos. No se aplicaron migraciones ni cambios en producción.
+Validación de esta entrega: 88 pruebas unitarias del backend, 46 del frontend y 133 de integración aprobadas, además de tipos, lint y compilación de ambos proyectos. La exportación PDF tiene pruebas adicionales de descarga real y revisión visual de sus tres páginas. Los seeds iniciales se aplicaron al desarrollo local y se verificaron la clave inicial, los tres permisos y sus cinco asignaciones canónicas; ampliar el resumen operativo o exportar reportes no requiere repetirlos. No se aplicaron migraciones ni cambios en producción.
 
 `backend/tests/helpers/statistics-browser.ts` prepara un servidor desechable solo con `NODE_ENV=test` y una DB `_test`. Usa cuentas ficticias, documentos privados temporales y filas identificadas por ejecución. Para la aceptación visual, publicarlo en `localhost:3100`, iniciar Edge/Chromium con un perfil temporal y depuración remota en `9342`, mantener Vite en `5173` y ejecutar:
 

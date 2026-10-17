@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -11,6 +11,7 @@ const fixture = await (await fetch(api + '/__test/fixture')).json();
 assert.equal(fixture.opportunities, 112);
 const output = join(tmpdir(), 'fqa-statistics-settings-browser');
 await mkdir(output, { recursive: true });
+const reportOutput = join(output, 'reports-' + Date.now()); await mkdir(reportOutput);
 const target = await (await fetch(debugging + '/json/new?about:blank', { method: 'PUT' })).json();
 const socket = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((resolve, reject) => { socket.addEventListener('open', resolve, { once: true }); socket.addEventListener('error', reject, { once: true }); });
@@ -40,6 +41,20 @@ const navigate = async url => { await send('Page.navigate', { url }); await wait
 const click = label => evaluate(`(()=>{const button=Array.from(document.querySelectorAll('button')).find(item=>(item.textContent.trim()===${JSON.stringify(label)}||item.getAttribute('aria-label')===${JSON.stringify(label)})&&!item.disabled);if(!button)throw new Error('Botón no disponible: '+${JSON.stringify(label)});button.click();})()`);
 const fill = (selector, value) => evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});if(!input)throw new Error('Campo no disponible: '+${JSON.stringify(selector)});const prototype=input instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:input instanceof HTMLSelectElement?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event(input instanceof HTMLSelectElement?'change':'input',{bubbles:true}));})()`);
 const screenshot = async name => { const result = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }); await writeFile(join(output, name + '.png'), Buffer.from(result.data, 'base64')); };
+/** A real browser download must finish with a valid, non-truncated PDF. */
+const downloadedReport = async (count, expectedName) => {
+  const deadline = Date.now() + 20000;
+  while (Date.now() < deadline) {
+    const files = (await readdir(reportOutput)).filter(name => name.endsWith('.pdf'));
+    if (files.length === count && (!expectedName || files.includes(expectedName))) {
+      const bytes = await readFile(join(reportOutput, expectedName ?? files.at(-1)));
+      assert.ok(bytes.subarray(0, 5).toString() === '%PDF-');
+      assert.equal([...bytes.toString('latin1').matchAll(/\/Type \/Page\b/g)].length, 3); return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('El reporte PDF no se descargó correctamente.');
+};
 const width = async () => { const size = await evaluate(`({viewport:document.documentElement.clientWidth,content:document.documentElement.scrollWidth})`); assert.ok(size.content <= size.viewport + 1, JSON.stringify(size)); };
 const login = async role => { await click('Ingresar'); await wait(`Boolean(document.querySelector('#login-email'))`, 'login'); await fill('#login-email', fixture.accounts[role]); await fill('#login-password', 'Estadisticas de navegador 2026'); await evaluate(`document.querySelector('.login-form').requestSubmit()`); await wait(`Boolean(document.querySelector(${JSON.stringify(role === 'CANDIDATE' ? '.nav-avatar' : '.topbar')}))`, 'sesión ' + role); };
 const logout = async admin => { await evaluate(`document.querySelector(${JSON.stringify(admin ? '.topbar .profile' : '.nav-avatar')}).click()`); await click('Cerrar sesión'); await wait(`Boolean(document.querySelector('.nav .btn-ghost'))`, 'cierre de sesión'); };
@@ -49,6 +64,7 @@ const privateHeaders = token => ({ 'Content-Type': 'application/json', 'Authoriz
 /** A separate HTTP session exercises concurrent editors without exposing tokens in output. */
 const tokenFor = async role => { const response = await fetch(api + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-FQA-Request': '1', Origin: web }, body: JSON.stringify({ email: fixture.accounts[role], password: 'Estadisticas de navegador 2026' }) }); assert.equal(response.status, 200); return (await response.json()).accessToken; };
 await send('Page.enable'); await send('Runtime.enable'); await send('Network.clearBrowserCookies');
+await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: reportOutput });
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `const originalFetch=window.fetch.bind(window);window.fetch=(input,options)=>{const url=new URL(typeof input==='string'?input:input.url,location.href);if(url.pathname.startsWith('/api'))return originalFetch(${JSON.stringify(api)}+url.pathname+url.search,options);return originalFetch(input,options);};` });
 try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1050, deviceScaleFactor: 1, mobile: false });
@@ -61,9 +77,12 @@ try {
   const summaryValue = label => evaluate(`Array.from(document.querySelectorAll('.summary-item')).find(item=>item.querySelector('span')?.textContent===${JSON.stringify(label)})?.querySelector('strong')?.textContent`);
   assert.equal(await summaryValue('Usuarios registrados'), '1');
   assert.equal(await summaryValue('Candidatos registrados'), '1');
-  assert.equal(await summaryValue('Usuarios seleccionados alguna vez'), '0');
-  assert.equal(await summaryValue('Usuarios con alguna selección'), '0.0%');
+  assert.equal(await summaryValue('Usuarios seleccionados alguna vez'), '1');
+  assert.equal(await summaryValue('Usuarios con alguna selección'), '100.0%');
   assert.equal(await summaryValue('Candidatos con CV activo'), '0');
+  const initialPeriod = await evaluate(`Array.from(document.querySelectorAll('.statistics-calendar input')).map(item=>item.value)`);
+  await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-notice')?.textContent.includes('iniciada')`, 'reporte vacío');
+  await downloadedReport(1, 'reporte-operativo_FQA_' + initialPeriod.join('_') + '.pdf');
   for (const preset of ['90', 'year', 'lifetime', '30']) {
     await fill('.period-select', preset);
     await wait(`document.querySelector('.period-select').value===${JSON.stringify(preset)} && !document.querySelector('.estadisticas-screen').getAttribute('aria-busy').includes('true')`, 'período ' + preset);
@@ -75,11 +94,23 @@ try {
   await fill('.statistics-calendar input:first-of-type', '2030-01-01');
   await fill('.statistics-calendar label:nth-of-type(3) input', '2030-01-31'); await click('Aplicar');
   await wait(`document.querySelector('.stat-card strong')?.textContent==='112'`, '112 publicaciones');
+  await evaluate(`(()=>{const previous=window.fetch;let fail=true;window.fetch=(input,options)=>{if(fail&&new URL(input,location.href).pathname==='/api/admin/statistics'){fail=false;return Promise.resolve(Response.json({message:'Fallo recuperable al exportar.'},{status:503}));}return previous(input,options);};})()`);
+  await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-error')?.textContent.includes('Fallo recuperable')`, 'reporte con error de red');
+  assert.equal((await readdir(reportOutput)).filter(name=>name.endsWith('.pdf')).length, 1);
+  assert.equal(await evaluate(`document.querySelector('.stat-card strong').textContent`), '112');
+  await evaluate(`(()=>{const previous=window.fetch;let hold=true;window.__reportRequests=0;window.fetch=async(input,options)=>{if(hold&&new URL(input,location.href).pathname==='/api/admin/statistics'){hold=false;window.__reportRequests++;const response=await previous(input,options);await new Promise(resolve=>{window.__releaseReport=resolve;});return response;}return previous(input,options);};})()`);
+  await click('Reintentar descarga'); await wait(`typeof window.__releaseReport==='function'`, 'exportación pendiente');
+  assert.equal(await evaluate(`document.querySelector('.statistics-export-button').disabled`), true);
+  await evaluate(`document.querySelector('.statistics-export-button').click()`); assert.equal(await evaluate(`window.__reportRequests`), 1);
+  await evaluate(`window.__releaseReport();delete window.__releaseReport;`);
+  await wait(`document.querySelector('.statistics-report-notice')?.textContent.includes('iniciada')`, 'reporte confirmado');
+  await downloadedReport(2, 'reporte-operativo_FQA_2030-01-01_2030-01-31.pdf');
   assert.equal(await evaluate(`document.querySelectorAll('.progress-item small').length`), 4);
   assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.progress-item small')).map(item=>Number(item.textContent.split(' ')[0]))`), [36, 4, 36, 36]);
   await screenshot('estadisticas-desktop');
   await evaluate(`document.querySelector('.statistics-summary').scrollIntoView({block:'start'})`); await screenshot('resumen-operativo-desktop');
   await fill('.statistics-calendar label:nth-of-type(2) input', '2030-02-01'); await click('Aplicar');
+  assert.equal(await evaluate(`document.querySelector('.statistics-export-button').disabled`), true);
   await wait(`document.querySelector('.statistics-error')?.textContent.includes('posterior')`, 'rango inválido');
   assert.equal(await evaluate(`document.querySelector('.stat-card strong').textContent`), '112');
   await fill('.statistics-calendar label:nth-of-type(2) input', '2030-01-01'); await click('Aplicar');
@@ -166,9 +197,20 @@ try {
   assert.equal(await evaluate(`document.querySelector('#site-contacto-correo').value`), 'proyectos@fundaqa.org');
   await logout(true); await wait(`document.querySelector('.hero h1')?.textContent.includes('Trabaja donde')`, 'contenido inicial restaurado');
   assert.equal(await evaluate(`Boolean(document.querySelector('a[href^="https://wa.me/"]'))`), false);
+  await login('SUPER_ADMIN'); await click('Estadísticas'); await wait(`document.querySelector('.stat-card strong')?.textContent==='0'`, 'exportación antes de cambiar de cuenta');
+  await evaluate(`(()=>{const previous=window.fetch;let hold=true;window.fetch=async(input,options)=>{if(hold&&new URL(input,location.href).pathname==='/api/admin/statistics'){hold=false;const response=await previous(input,options);await new Promise(resolve=>{window.__releaseOldReport=resolve;});return response;}return previous(input,options);};})()`);
+  await click('Exportar PDF'); await wait(`typeof window.__releaseOldReport==='function'`, 'reporte de cuenta anterior pendiente');
+  await logout(true); await login('ADMINISTRATOR'); await click('Estadísticas'); await wait(`document.querySelector('.stat-card strong')?.textContent==='0'`, 'nueva cuenta');
+  await evaluate(`(async()=>{window.__releaseOldReport();delete window.__releaseOldReport;await new Promise(resolve=>setTimeout(resolve,400));})()`);
+  assert.equal((await readdir(reportOutput)).filter(name=>name.endsWith('.pdf')).length, 2);
+  assert.equal(await evaluate(`Boolean(document.querySelector('.statistics-report-notice'))`), false);
+  await fill('.period-select', '90'); await wait(`document.querySelector('.estadisticas-screen')?.getAttribute('aria-busy')==='false'`, 'período del reporte de Administrador');
+  await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-notice')?.textContent.includes('iniciada')`, 'reporte de Administrador');
+  await downloadedReport(3); await logout(true);
   assert.deepEqual(errors, []);
   console.info('Navegador: dashboard, estadísticas, configuración, persistencia, permisos, conflictos, fallos, móvil y teclado correctos.');
   console.info('Capturas: ' + output);
+  console.info('Reportes PDF: ' + reportOutput);
 } catch (error) {
   await screenshot('fallo');
   console.error(await evaluate(`({title:document.title,text:document.body.innerText.slice(-3500)})`));

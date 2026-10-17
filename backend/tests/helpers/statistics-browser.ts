@@ -30,10 +30,19 @@ async function main(): Promise<void> {
   const jobState = await prisma.jobStatuses.findUniqueOrThrow({ where: { name: 'Publicada' } });
   const volunteerState = await prisma.volunteerStatuses.findUniqueOrThrow({ where: { name: 'Publicada' } });
   const kinds = ['EMPLOYMENT', 'SOCIAL_HOURS', 'INTERNSHIP'] as const;
-  await prisma.jobs.createMany({ data: Array.from({ length: 108 }, (_, index) => ({ title: 'Vacante de estadísticas ' + index, slug: runId + index,
-    description: 'Oportunidad de prueba.', kind: kinds[index % 3], organizationId: organization.id, categoryId: category.id, statusId: jobState.id, publishedAt: new Date('2030-01-02T12:00:00Z') })) });
+  const jobs = await prisma.jobs.createManyAndReturn({ data: Array.from({ length: 108 }, (_, index) => ({ title: 'Vacante de estadísticas ' + index, slug: runId + index,
+    description: 'Oportunidad de prueba.', kind: kinds[index % 3], organizationId: organization.id, categoryId: category.id, statusId: jobState.id, publishedAt: new Date('2030-01-02T12:00:00Z') })), select: { id: true, kind: true } });
   await prisma.volunteerOpportunities.createMany({ data: Array.from({ length: 4 }, (_, index) => ({ title: 'Voluntariado de estadísticas ' + index, slug: runId + '-vol-' + index,
     description: 'Oportunidad de prueba.', organizationId: organization.id, categoryId: category.id, statusId: volunteerState.id, publishedAt: new Date('2030-01-02T12:00:00Z') })) });
+  const candidate = await prisma.user.findFirstOrThrow({ where: { email: accounts.CANDIDATE } });
+  const volunteer = await prisma.volunteerOpportunities.findFirstOrThrow({ where: { organizationId: organization.id } });
+  const registration = await prisma.volunteerRegistrations.create({ data: { userId: candidate.id, volunteerOpportunityId: volunteer.id } });
+  const states = await prisma.applicationStatuses.findMany();
+  const at = new Date('2030-01-02T12:00:00Z');
+  for (const [index, name] of ['Seleccionada', 'En revisión', 'Rechazada', 'Retirada', 'Pendiente'].entries()) {
+    await prisma.applications.create({ data: { userId: candidate.id, statusId: states.find(state => state.name === name)!.id,
+      referenceNumber: randomUUID(), createdAt: at, ...(index === 4 ? { volunteerRegistrationId: registration.id } : { jobId: jobs[index]!.id }) } });
+  }
   const app = createApp();
   app.get('/__test/fixture', (_request, response) => response.json({ accounts, opportunities: 112, organizations: 2 }));
   /** Cleanup preserves all unrelated rows and restores the original configuration document exactly. */

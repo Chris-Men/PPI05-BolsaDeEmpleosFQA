@@ -1,5 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAdministrativeStatistics } from '../../hooks/useAdministrativeStatistics';
+import { useOperationalReport } from '../../hooks/useOperationalReport';
+import { Download } from 'lucide-react';
+import { operationalStatisticsCards, primaryStatisticsCards } from '../../utils/statisticsPresentation';
 import { statisticsPresetRange, statisticsRangeError, type StatisticsPreset } from '../../utils/statisticsDates';
 import { APPLICATION_LABELS } from '../../types/application';
 import { KIND_LABELS } from '../../types/opportunity';
@@ -12,7 +15,10 @@ export default function Estadisticas() {
   const [preset, setPreset] = useState<StatisticsPreset>('30');
   const [error, setError] = useState('');
   const result = useAdministrativeStatistics(range);
+  const report = useOperationalReport(range);
   const data = result.data;
+  const unapplied = draft.from !== range.from || draft.to !== range.to;
+  const canExport = Boolean(data && !result.loading && !report.busy && !unapplied);
   const firstActivityDate = data?.range.firstActivityDate;
   /** A refresh may discover older imported activity; lifetime keeps the calendars and applied range aligned. */
   useEffect(() => {
@@ -20,7 +26,6 @@ export default function Estadisticas() {
     const next = statisticsPresetRange('lifetime', new Date(), firstActivityDate);
     if (next.from !== range.from || next.to !== range.to) { setDraft(next); setRange(next); }
   }, [preset, firstActivityDate, range.from, range.to]);
-  const metric = (value: number | undefined): string => value === undefined ? '—' : value.toLocaleString('es-SV');
   /** Incomplete inputs preserve the last valid applied range. */
   const apply = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault(); const message = statisticsRangeError(draft); setError(message);
@@ -28,23 +33,24 @@ export default function Estadisticas() {
   };
   return <section className="admin-screen estadisticas-screen" aria-busy={result.loading}>
     <div className="screen-header"><form className="statistics-header-actions statistics-calendar" onSubmit={apply}>
-      <label>Período rápido<select className="period-select" value={preset} onChange={event => {
+      <label>Período rápido<select className="period-select" value={preset} disabled={report.busy} onChange={event => {
         const next = event.target.value as StatisticsPreset; setPreset(next);
         if (next !== 'custom') { const value = statisticsPresetRange(next, new Date(), firstActivityDate); setDraft(value); setRange(value); setError(''); }
       }}><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="year">Este año</option><option value="lifetime" disabled={!firstActivityDate}>Desde el inicio</option><option value="custom">Personalizado</option></select></label>
-      <label>Desde<input type="date" value={draft.from} required onChange={event => { setDraft(value => ({ ...value, from: event.target.value })); setPreset('custom'); }} /></label>
-      <label>Hasta<input type="date" value={draft.to} required onChange={event => { setDraft(value => ({ ...value, to: event.target.value })); setPreset('custom'); }} /></label>
-      <button type="submit" className="statistics-refresh-button">Aplicar</button>
-      <button type="button" className="statistics-refresh-button" disabled={result.loading} onClick={result.reload}>{result.loading ? 'Actualizando…' : 'Actualizar'}</button>
+      <label>Desde<input type="date" value={draft.from} required disabled={report.busy} onChange={event => { setDraft(value => ({ ...value, from: event.target.value })); setPreset('custom'); }} /></label>
+      <label>Hasta<input type="date" value={draft.to} required disabled={report.busy} onChange={event => { setDraft(value => ({ ...value, to: event.target.value })); setPreset('custom'); }} /></label>
+      <button type="submit" className="statistics-refresh-button" disabled={report.busy}>Aplicar</button>
+      <button type="button" className="statistics-refresh-button" disabled={result.loading || report.busy} onClick={result.reload}>{result.loading ? 'Actualizando…' : 'Actualizar'}</button>
+      <button type="button" className="statistics-refresh-button statistics-export-button" aria-busy={report.busy} aria-describedby="statistics-export-hint" disabled={!canExport} onClick={() => void report.download()}><Download size={16} aria-hidden="true" />{report.busy ? 'Generando PDF…' : 'Exportar PDF'}</button>
     </form></div>
+    <p className="statistics-export-hint" id="statistics-export-hint">{unapplied ? 'Aplica el período elegido antes de exportar.' : 'El PDF incluirá los indicadores y gráficas actualizados del período aplicado.'}</p>
+    {report.error && <div role="alert" className="statistics-error statistics-report-error">{report.error} <button type="button" className="statistics-refresh-button" disabled={!canExport} onClick={() => void report.download()}>Reintentar descarga</button></div>}
+    {report.notice && <p role="status" className="statistics-report-notice">{report.notice}</p>}
     {error && <p role="alert" className="statistics-error">{error}</p>}
     {result.error && <p role="alert" className="statistics-error">{result.error} <button type="button" onClick={result.reload}>Reintentar indicadores</button></p>}
     {result.loading && <p role="status">Cargando indicadores…</p>}
     <div className="statistics-grid">
-      <div className="stat-card"><span>Oportunidades publicadas</span><strong>{metric(data?.publishedOpportunities)}</strong><small>Primera publicación en el período</small></div>
-      <div className="stat-card"><span>Postulaciones</span><strong>{metric(data?.applications)}</strong><small>Intentos recibidos en el período</small></div>
-      <div className="stat-card"><span>Organizaciones</span><strong>{metric(data?.organizations)}</strong><small>Total acumulado · activas e inactivas</small></div>
-      <div className="stat-card"><span>Postulantes</span><strong>{metric(data?.applicants)}</strong><small>Candidatos únicos del período</small></div>
+      {primaryStatisticsCards(data).map(card => <div className="stat-card" key={card.key}><span>{card.label}</span><strong>{card.value}</strong><small>{card.description}</small></div>)}
     </div>
     <div className="statistics-columns">
       <div className="statistics-box"><div className="statistics-box-header"><div><h3>Oportunidades por tipo</h3><span>Publicadas durante el período seleccionado.</span></div></div>
@@ -58,17 +64,7 @@ export default function Estadisticas() {
       </div>
     </div>
     <div className="statistics-box statistics-summary"><div className="statistics-box-header"><div><h3>Resumen operativo</h3><span>Totales acumulados, actividad del período y disponibilidad actual.</span></div></div><div className="summary-grid">
-      <div className="summary-item"><span>Usuarios registrados</span><strong>{metric(data?.users.total)}</strong><small>Acumulado · candidatos activos y no eliminados</small></div>
-      <div className="summary-item"><span>Candidatos registrados</span><strong>{metric(data?.users.candidates)}</strong><small>Acumulado · activos y deshabilitados</small></div>
-      <div className="summary-item"><span>Usuarios seleccionados alguna vez</span><strong>{metric(data?.users.selected)}</strong><small>Candidatos activos · cada persona cuenta una vez</small></div>
-      <div className="summary-item"><span>Usuarios con alguna selección</span><strong>{data ? data.users.selectionRate.toFixed(1) + '%' : '—'}</strong><small>Porcentaje de los candidatos activos registrados</small></div>
-      <div className="summary-item"><span>Candidatos nuevos</span><strong>{metric(data?.users.newCandidates)}</strong><small>Registrados en el período seleccionado</small></div>
-      <div className="summary-item"><span>Candidatos con CV activo</span><strong>{metric(data?.users.withResume)}</strong><small>Actual · CV disponible en su perfil</small></div>
-      <div className="summary-item"><span>Vacantes con postulaciones</span><strong>{metric(data?.opportunitiesWithApplications)}</strong><small>Recibieron al menos una en el período</small></div>
-      <div className="summary-item"><span>Postulaciones por revisar</span><strong>{metric(data?.pendingApplications)}</strong><small>Del período · pendientes o en revisión</small></div>
-      <div className="summary-item"><span>Postulaciones por vacante con postulaciones</span><strong>{data?.applicationsPerOpportunity.toFixed(1) ?? '—'}</strong><small>Promedio del período seleccionado</small></div>
-      <div className="summary-item"><span>Tasa de selección del período</span><strong>{data ? data.selectionRate.toFixed(1) + '%' : '—'}</strong><small>Postulaciones seleccionadas del período</small></div>
-      <div className="summary-item"><span>Oportunidades activas actualmente</span><strong>{metric(data?.activeOpportunities)}</strong><small>Actual · disponibles para postular</small></div>
+      {operationalStatisticsCards(data).map(card => <div className="summary-item" key={card.key}><span>{card.label}</span><strong>{card.value}</strong><small>{card.description}</small></div>)}
       <div className="summary-item"><span>Período consultado · El Salvador</span><strong>{range.from} — {range.to}</strong></div>
     </div></div>
   </section>;
