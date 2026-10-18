@@ -31,6 +31,7 @@ const main = async (): Promise<void> => {
     process.env.DATABASE_URL,
   );
   const resumeDirectory = await mkdtemp(join(tmpdir(), 'fqa-resume-test-'));
+  const backupDirectory = await mkdtemp(join(tmpdir(), 'fqa-backup-test-'));
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
     DATABASE_URL: databaseUrl,
@@ -40,6 +41,9 @@ const main = async (): Promise<void> => {
     MAIL_OUTBOX_KEY: randomBytes(32).toString('hex'),
     RESUME_STORAGE_DRIVER: 'filesystem',
     RESUME_STORAGE_DIRECTORY: resumeDirectory,
+    BACKUPS_ENABLED: 'true',
+    BACKUP_DIRECTORY: backupDirectory,
+    BACKUP_ENCRYPTION_KEY: randomBytes(32).toString('hex'),
   };
   try {
     await run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'], environment);
@@ -53,6 +57,7 @@ const main = async (): Promise<void> => {
   } finally {
     // Delete only this exact mkdtemp root, never a configured development directory.
     await rm(resumeDirectory, { recursive: true, force: true });
+    await rm(backupDirectory, { recursive: true, force: true });
   }
 };
 

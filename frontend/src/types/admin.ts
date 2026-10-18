@@ -8,6 +8,7 @@ export type AdminMenuName =
   | 'Categorías'
   | 'Estadísticas'
   | 'Usuarios'
+  | 'Respaldos'
   | 'Configuración';
 
 /** Minimal administrator identity consumed by the preserved dashboard UI. */

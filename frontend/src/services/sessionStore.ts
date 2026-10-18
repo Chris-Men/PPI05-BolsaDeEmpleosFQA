@@ -3,6 +3,7 @@ import { changeAccountPassword, deleteOwnAccount, getCurrentAccess, loginAccount
 import type { ChangePasswordRequest } from './authService';
 import type { AuthenticationResponse, LoginRequest, RegisterCandidateRequest } from '../types/auth';
 import { clearSavedIntent } from '../utils/savedIntent';
+import { backupOperationStore } from './backupOperationStore';
 
 /** In-memory access credential and public identity. Refresh tokens stay in HttpOnly cookies. */
 export interface SessionSnapshot {
@@ -23,6 +24,7 @@ const publish = (next: SessionSnapshot, broadcast = true): void => {
   if ((snapshot.session && snapshot.session.userId !== next.session?.userId) ||
     (next.session && !next.session.roles.every(role => role === 'CANDIDATE'))) clearSavedIntent();
   snapshot = next;
+  if (next.status === 'authenticated' || next.status === 'anonymous') backupOperationStore.identityChanged(next.session?.userId);
   listeners.forEach((listener) => listener());
   if (broadcast) channel?.postMessage(next);
 };
@@ -83,6 +85,8 @@ configureAuthentication({
 
 /** Framework-independent session lifecycle used by the auth provider. */
 export const sessionStore = {
+  /** Successful database restore already revoked all server sessions atomically. */
+  finishDatabaseRestore(): void { invalidate(); },
   /** Updates server-confirmed candidate identity without replacing credentials or expiry. */
   updateCandidateName(firstName: string, lastName: string): void {
     if (!snapshot.session?.roles.includes('CANDIDATE')) return;

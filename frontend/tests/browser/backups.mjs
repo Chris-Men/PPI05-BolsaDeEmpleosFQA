@@ -1,0 +1,63 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const api = 'http://localhost:3100'; const web = 'http://localhost:5173'; const debug = 'http://127.0.0.1:9342';
+const fixture = await (await fetch(api + '/__test/fixture')).json();
+const output = join(tmpdir(), 'fqa-backup-browser'); await mkdir(output, { recursive: true });
+const target = await (await fetch(debug + '/json/new?about:blank', { method: 'PUT' })).json();
+const socket = new WebSocket(target.webSocketDebuggerUrl); await new Promise(resolve => socket.addEventListener('open', resolve, { once: true }));
+const pending = new Map(); let sequence = 0;
+socket.addEventListener('message', event => { const message = JSON.parse(event.data); if (message.id && pending.has(message.id)) { const item = pending.get(message.id); pending.delete(message.id); if (message.error) item.reject(Error(message.error.message)); else item.resolve(message.result); } });
+const send = (method, params = {}) => new Promise((resolve, reject) => { const id = ++sequence; pending.set(id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params })); });
+const evaluate = async expression => { const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); if (result.exceptionDetails) throw Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text); return result.result.value; };
+const wait = async (expression, label) => { const end = Date.now() + 30_000; while (Date.now() < end) { if (await evaluate(expression)) return; await new Promise(resolve => setTimeout(resolve, 100)); } throw Error('No apareció: ' + label); };
+const click = text => evaluate(`(()=>{const item=Array.from(document.querySelectorAll('button')).find(button=>button.textContent.trim()===${JSON.stringify(text)}||button.getAttribute('aria-label')===${JSON.stringify(text)});if(!item)throw Error('Botón ausente');item.click();})()`);
+const fill = (selector, value) => evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+const screenshot = async name => { const result = await send('Page.captureScreenshot', { format: 'png' }); await writeFile(join(output, name + '.png'), Buffer.from(result.data, 'base64')); };
+const login = async role => {
+  await evaluate(`(async()=>{const response=await fetch(${JSON.stringify(api + '/api/auth/login')},{method:'POST',headers:{'Content-Type':'application/json','X-FQA-Request':'1'},credentials:'include',body:JSON.stringify({email:${JSON.stringify(fixture.accounts[role])},password:'Respaldo de navegador 2026'})});if(!response.ok)throw Error('Login fallido');})()`);
+  await send('Page.navigate', { url: web }); await wait(`Boolean(document.querySelector('.admin-container'))`, 'panel administrativo');
+};
+await send('Page.enable'); await send('Page.bringToFront'); await send('Runtime.enable'); await send('Network.clearBrowserCookies');
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `const originalFetch=window.fetch.bind(window);window.fetch=(input,options)=>{const url=new URL(typeof input==='string'?input:input.url,location.href);if(url.pathname.startsWith('/api'))return originalFetch(${JSON.stringify(api)}+url.pathname+url.search,options);return originalFetch(input,options);};` });
+try {
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+  await send('Page.navigate', { url: web }); await wait(`document.readyState==='complete'`, 'Home'); await login('SUPER_ADMIN');
+  await click('Respaldos'); await wait(`document.querySelector('.backup-cards strong')&&!document.querySelector('.backup-cards strong').textContent.includes('Sin respaldo')`, 'respaldo inicial');
+  await wait(`!Array.from(document.querySelectorAll('button')).find(button=>button.textContent==='Crear respaldo ahora')?.disabled`, 'acciones disponibles');
+  assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`), true); await screenshot('desktop');
+  await fetch(api + '/__test/hold', { method: 'POST' }); await click('Crear respaldo ahora');
+  await wait(`Boolean(document.querySelector('dialog[open]'))`, 'confirmación de respaldo');
+  await click('Crear respaldo'); await wait(`document.querySelector('.backup-monitor')?.textContent.includes('Esperando')`, 'seguimiento en espera');
+  await send('Page.reload'); await wait(`document.querySelector('.backup-monitor')?.textContent.includes('Esperando')`, 'seguimiento tras recarga');
+  await fetch(api + '/__test/release', { method: 'POST' }); await wait(`document.querySelector('.backup-monitor')?.textContent.includes('completado')`, 'respaldo manual terminado');
+  await wait(`Boolean(document.querySelector('.admin-container'))`, 'panel después del respaldo'); await click('Respaldos');
+  await fetch(api + '/__test/mutate', { method: 'POST' });
+  await wait(`Array.from(document.querySelectorAll('button')).some(button=>button.textContent.trim()==='Restaurar último respaldo'&&!button.disabled)`, 'restauración disponible');
+  await click('Restaurar último respaldo'); await wait(`Boolean(document.querySelector('#backup-password'))`, 'confirmación de restauración');
+  assert.equal(await evaluate(`Array.from(document.querySelectorAll('dialog button')).find(button=>button.textContent==='Confirmar restauración').disabled`), true);
+  await fill('#backup-password', 'incorrecta'); await fill('#backup-confirmation', 'RESTAURAR'); await click('Confirmar restauración');
+  await wait(`document.querySelector('dialog [role=alert]')?.textContent.includes('contraseña')`, 'contraseña inválida'); await screenshot('restore-desktop');
+  await fill('#backup-password', 'Respaldo de navegador 2026'); await click('Confirmar restauración');
+  await wait(`document.querySelector('.backup-monitor')?.textContent.includes('Restauración completada')`, 'restauración completa');
+  await wait(`!document.querySelector('.admin-container')`, 'sesión cerrada');
+  assert.equal((await (await fetch(api + '/__test/restored')).json()).restored, true);
+  await login('SUPER_ADMIN'); await click('Respaldos'); await wait(`Boolean(document.querySelector('.backup-cards'))`, 'panel recuperado');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`), true); await screenshot('mobile');
+  await click('Restaurar último respaldo'); await wait(`Boolean(document.querySelector('dialog[open]'))`, 'modal móvil');
+  assert.equal(await evaluate(`(()=>{const r=document.querySelector('dialog').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;})()`), true);
+  await screenshot('restore-mobile'); await send('Page.bringToFront');
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+  assert.equal(await evaluate(`document.querySelector('dialog').contains(document.activeElement)`), true);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+  await wait(`!document.querySelector('dialog[open]')`, 'cerrar con Escape');
+  await evaluate(`fetch(${JSON.stringify(api + '/api/auth/logout')},{method:'POST',headers:{'X-FQA-Request':'1'},credentials:'include'})`);
+  await login('ADMINISTRATOR'); assert.equal(await evaluate(`Array.from(document.querySelectorAll('.menu button')).some(button=>button.textContent.includes('Respaldos'))`), false);
+  console.info('Navegador: permisos, respaldo manual, seguimiento tras recarga, restauración, cierre de sesión, móvil y teclado correctos.'); console.info('Capturas: ' + output);
+} catch (error) { await screenshot('failure'); console.error(await evaluate(`document.body.innerText.slice(-1400)`)); throw error; }
+finally { await fetch(api + '/__test/release', { method: 'POST' }); socket.close(); await fetch(debug + '/json/close/' + target.id); }

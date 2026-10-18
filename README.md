@@ -169,3 +169,7 @@ El backend permite solicitar y completar la recuperación de contraseña por cor
 ## Gestión de usuarios
 
 Consulta [gestión y ciclo de vida de usuarios](docs/USER_MANAGEMENT.md) para endpoints, permisos, restricciones y preparación del entorno.
+
+## Respaldos y restauración
+
+En desarrollo, Super Admin dispone de respaldos diarios de PostgreSQL y CV a las 02:00 de El Salvador, creación manual y restauración del último respaldo. Se conserva una generación cifrada en un volumen persistente. Consulta [configuración, contratos y recuperación](docs/BACKUPS.md). La implementación de producción está pendiente.

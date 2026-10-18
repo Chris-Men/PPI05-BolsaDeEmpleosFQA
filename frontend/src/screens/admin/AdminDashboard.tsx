@@ -31,6 +31,7 @@ import Categorias from './Categorias';
 import Estadisticas from './Estadisticas';
 import Users from './Users';
 import Configuracion from './Configuracion';
+import Backups from './Backups';
 
 
 // =========================================================
@@ -626,6 +627,9 @@ function AdminDashboard({
                 return (
                     <Configuracion />
                 );
+
+            case 'Respaldos':
+                return <Backups />;
 
 
             default:

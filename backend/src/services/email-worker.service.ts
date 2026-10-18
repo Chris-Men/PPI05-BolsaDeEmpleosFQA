@@ -4,6 +4,7 @@ import { prisma } from '../config/prisma.js';
 import { env } from '../config/env.js';
 import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import { decryptEmailPayload, renderEmail } from './email.service.js';
+import { backupRuntime } from './backup-runtime.service.js';
 
 /** Narrow sender contract allows deterministic tests without an SMTP server. */
 export interface MailSender {
@@ -125,6 +126,7 @@ export const startEmailWorker = (sender: MailSender = createSmtpSender()): NodeJ
   let lastCleanup = 0;
   const poll = async (): Promise<void> => {
     if (running) return;
+    const release = backupRuntime.enterWorker(); if (!release) return;
     running = true;
     try {
       await processEmailOutboxBatch(sender);
@@ -136,6 +138,7 @@ export const startEmailWorker = (sender: MailSender = createSmtpSender()): NodeJ
       console.error('No se pudo procesar la cola de correo.');
     } finally {
       running = false;
+      release();
     }
   };
   void poll();
