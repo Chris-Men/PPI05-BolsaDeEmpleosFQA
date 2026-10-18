@@ -17,6 +17,9 @@ const envSchema = z.object({
   MAIL_OUTBOX_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/).optional(),
   RESUME_STORAGE_DRIVER: z.enum(['filesystem']).optional(),
   RESUME_STORAGE_DIRECTORY: z.string().min(1).optional(),
+  BACKUPS_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
+  BACKUP_DIRECTORY: z.string().optional(),
+  BACKUP_ENCRYPTION_KEY: z.string().optional(),
 }).superRefine((values, context) => {
   if (Boolean(values.RESUME_STORAGE_DRIVER) !== Boolean(values.RESUME_STORAGE_DIRECTORY)) {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'Configura juntos el proveedor y directorio de CV.' });

@@ -3,4 +3,5 @@ dist
 .env
 coverage
 private
+backups
 npm-debug.log

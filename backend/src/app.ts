@@ -7,6 +7,8 @@ import { organizationRouter } from './routes/organization.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { debugRouter } from './routes/debug.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { backupRouter } from './routes/backup.routes.js';
+import { backupMaintenance } from './middleware/backup-maintenance.middleware.js';
 import { statisticsRouter } from './routes/statistics.routes.js';
 import { adminSiteSettingsRouter, publicSiteSettingsRouter } from './routes/site-settings.routes.js';
 import { profileRouter } from './routes/profile.routes.js';
@@ -19,8 +21,10 @@ export const createApp = (): express.Express => {
   const app = express();
 
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  app.use(backupMaintenance);
   app.use(express.json());
   app.use('/api', healthRouter);
+  app.use('/api/admin/backups', backupRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/profile', profileRouter);
   app.use('/api/saved-opportunities', savedOpportunityRouter);

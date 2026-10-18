@@ -372,6 +372,8 @@ En PowerShell, establece la etiqueta con `$env:IMAGE_TAG = 'SHA_PUBLICADO'` en l
 
 ## Diagnóstico
 
+Los respaldos de desarrollo requieren la clave independiente `BACKUP_ENCRYPTION_KEY`; `scripts/setup-dev.ps1` la genera cuando falta y conserva las existentes. El volumen `backup_data` pertenece exclusivamente al backend. Consulta [respaldos y restauración](BACKUPS.md) antes de operar sobre el último respaldo. Producción permanece deshabilitada.
+
 ```bash
 docker compose -f docker-compose.dev.yml ps
 docker compose -f docker-compose.dev.yml logs --tail 200 frontend backend postgres

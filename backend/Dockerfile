@@ -1,5 +1,7 @@
 FROM node:22-alpine AS dependencies
 WORKDIR /app
+# PostgreSQL-native backup/restore clients, matching the development server major version.
+RUN apk add --no-cache postgresql17-client
 COPY package*.json ./
 RUN npm ci
 

@@ -38,10 +38,12 @@ try {
         $databasePassword = New-RandomHex
         $jwtSecret = New-RandomHex
         $mailOutboxKey = New-RandomHex
+        $backupEncryptionKey = New-RandomHex
         $template = [IO.File]::ReadAllText($examplePath)
         $configuration = $template.Replace('REPLACE_WITH_THE_DATABASE_PASSWORD', $databasePassword).
             Replace('REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS', $jwtSecret).
-            Replace('REPLACE_WITH_64_HEXADECIMAL_CHARACTERS', $mailOutboxKey)
+            Replace('REPLACE_WITH_64_HEXADECIMAL_CHARACTERS', $mailOutboxKey).
+            Replace('REPLACE_WITH_A_SEPARATE_64_HEXADECIMAL_BACKUP_KEY', $backupEncryptionKey)
         [IO.File]::WriteAllText($envPath, $configuration, [Text.UTF8Encoding]::new($false))
         Write-Host 'Se creo .env con credenciales locales aleatorias.'
     }
@@ -50,8 +52,13 @@ try {
     }
 
     $configuration = [IO.File]::ReadAllText($envPath)
+    # Add only the missing dedicated secret; never rotate a key that protects existing backups.
+    if ($configuration -notmatch '(?m)^BACKUP_ENCRYPTION_KEY=') {
+        $configuration += "`nBACKUP_ENCRYPTION_KEY=$(New-RandomHex)`n"
+        [IO.File]::WriteAllText($envPath, $configuration, [Text.UTF8Encoding]::new($false))
+    }
     $values = @{}
-    foreach ($key in @('DATABASE_URL', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'JWT_SECRET', 'MAIL_OUTBOX_KEY')) {
+    foreach ($key in @('DATABASE_URL', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'JWT_SECRET', 'MAIL_OUTBOX_KEY', 'BACKUP_ENCRYPTION_KEY')) {
         if ($configuration -notmatch "(?m)^$key=(.+)\r?$") {
             throw "Falta $key en .env."
         }
@@ -62,8 +69,8 @@ try {
         if ($key -eq 'JWT_SECRET' -and $value.Length -lt 32) {
             throw 'JWT_SECRET debe tener al menos 32 caracteres.'
         }
-        if ($key -eq 'MAIL_OUTBOX_KEY' -and $value -notmatch '^[0-9a-fA-F]{64}$') {
-            throw 'MAIL_OUTBOX_KEY debe tener 64 caracteres hexadecimales.'
+        if ($key -in @('MAIL_OUTBOX_KEY', 'BACKUP_ENCRYPTION_KEY') -and $value -notmatch '^[0-9a-fA-F]{64}$') {
+            throw "$key debe tener 64 caracteres hexadecimales."
         }
         $values[$key] = $value
     }

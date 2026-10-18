@@ -8,6 +8,7 @@ import type { ResumeMetadata } from '../types/profile.types.js';
 import { AppError } from '../utils/app-error.js';
 import { assertCandidateAccess } from './profile.service.js';
 import { getResumeStorage, type ResumeStorage } from './resume-storage.service.js';
+import { backupRuntime } from './backup-runtime.service.js';
 
 /** Same byte limit advertised by the candidate interface. */
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
@@ -127,10 +128,11 @@ export const startResumeCleanup = (): (() => void) => {
   let running = false;
   const run = async (): Promise<void> => {
     if (running) return;
+    const release = backupRuntime.enterWorker(); if (!release) return;
     running = true;
     try { await cleanupResumes(); }
     catch { /* A later pass retries; credentials and private paths are never logged. */ }
-    finally { running = false; }
+    finally { running = false; release(); }
   };
   const timer = setInterval(() => { void run(); }, 15 * 60_000); timer.unref();
   void run();

@@ -4,6 +4,7 @@ import { canManageOrganizations } from '../../utils/organizationManagement';
 import { canManageVacancies } from '../../utils/vacancyManagement';
 import { useAuth } from '../../hooks/useAuth';
 import { canReadSiteSettings, canReadStatistics } from '../../utils/siteManagement';
+import { canManageBackups } from '../../utils/backupManagement';
 import logoCompleto from '../../components/imagenes/logo/logo 2.png';
 import logoIcono from '../../components/imagenes/logo/logo 3.png';
 import type { AdminMenuName } from '../../types/admin';
@@ -23,6 +24,7 @@ const menuItems: Array<{ icon: string; name: AdminMenuName }> = [
   { icon: '📊', name: 'Estadísticas' },
   { icon: '👥', name: 'Usuarios' },
   { icon: '⚙️', name: 'Configuración' },
+  { icon: '🗄️', name: 'Respaldos' },
 ];
 
 /** Sidebar for the preserved administrative interface. */
@@ -50,6 +52,7 @@ export default function AdminSidebar({
       </button>
       <nav className="menu">
         {menuItems.filter((item) => (!['Dashboard', 'Estadísticas'].includes(item.name) || canReadStatistics(session)) && (item.name !== 'Configuración' || canReadSiteSettings(session)) &&
+          (item.name !== 'Respaldos' || canManageBackups(session)) &&
           (item.name !== 'Postulaciones' || canManageApplications(session)) && (item.name !== 'Usuarios' || canManageUsers(session)) &&
           (item.name !== 'Organizaciones' || canManageOrganizations(session)) &&
           (item.name !== 'Nueva Vacante' || canManageVacancies(session, 'opportunities.create')) &&

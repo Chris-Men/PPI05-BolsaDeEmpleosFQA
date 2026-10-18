@@ -4,9 +4,10 @@ import App from './App'
 import { AuthProvider } from './state/AuthProvider'
 import { SiteSettingsProvider } from './state/SiteSettingsProvider'
 import './index.css'
+import { BackupOperationMonitor } from './components/admin/BackupOperationMonitor'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider><SiteSettingsProvider><App /></SiteSettingsProvider></AuthProvider>
+    <AuthProvider><SiteSettingsProvider><App /><BackupOperationMonitor /></SiteSettingsProvider></AuthProvider>
   </React.StrictMode>,
 )
