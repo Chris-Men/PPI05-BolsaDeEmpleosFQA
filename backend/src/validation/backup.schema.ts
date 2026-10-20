@@ -10,10 +10,18 @@ export const restoreBackupSchema = createBackupSchema.extend({
 }).strict();
 export type RestoreBackupDTO = z.infer<typeof restoreBackupSchema>;
 
+/** Import replaces the catalog only, with explicit consent and stale-screen protection. */
+export const importBackupSchema = createBackupSchema.extend({
+  backupId: z.preprocess(value => value === '' ? null : value, z.string().uuid().nullable()),
+  confirmation: z.literal('IMPORTAR', { errorMap: () => ({ message: 'Escribe IMPORTAR para confirmar.' }) }),
+}).strict();
+export type ImportBackupDTO = z.infer<typeof importBackupSchema>;
+export const exportBackupSchema = z.object({ backupId: z.string().uuid() }).strict();
+
 /** Every persisted manifest field is validated before it influences a filesystem path. */
 export const encryptionSchema = z.object({ iv: z.string().regex(/^[a-f0-9]{24}$/), tag: z.string().regex(/^[a-f0-9]{32}$/) }).strict();
 const artifactSchema = z.object({
-  sizeBytes: z.number().int().nonnegative(), sha256: z.string().regex(/^[a-f0-9]{64}$/), encryption: encryptionSchema,
+  sizeBytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER), sha256: z.string().regex(/^[a-f0-9]{64}$/), encryption: encryptionSchema,
 }).strict();
 export const backupManifestSchema = z.object({
   format: z.literal(1), id: z.string().uuid(), createdAt: z.string().datetime(),
@@ -25,7 +33,7 @@ export type BackupManifest = z.infer<typeof backupManifestSchema>;
 export type BackupArtifact = z.infer<typeof artifactSchema>;
 
 export const operationRecordSchema = z.object({
-  id: z.string().uuid(), kind: z.enum(['BACKUP', 'RESTORE']),
+  id: z.string().uuid(), kind: z.enum(['BACKUP', 'RESTORE', 'IMPORT']),
   phase: z.enum(['QUEUED', 'DRAINING', 'BACKING_UP', 'VERIFYING', 'PREPARING', 'RESTORING', 'RECOVERING', 'SUCCEEDED', 'FAILED']),
   startedAt: z.string().datetime(), finishedAt: z.string().datetime().nullable(), message: z.string(),
   requestId: z.string().uuid(), actorId: z.number().int().nullable(), actorEmail: z.string(),

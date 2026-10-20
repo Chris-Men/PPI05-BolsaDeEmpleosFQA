@@ -34,6 +34,8 @@ Durante el respaldo se bloquean las escrituras HTTP, se espera el trabajo inicia
 | `GET /api/admin/backups` | Super Admin y `database.backup`; disponibilidad, última generación, próxima ejecución y operación reciente |
 | `POST /api/admin/backups` | Super Admin y `database.backup`; `{ requestId: UUID }` |
 | `POST /api/admin/backups/restore` | Super Admin y `database.restore`; `{ requestId, backupId, currentPassword, confirmation: "RESTAURAR" }` |
+| `GET /api/admin/backups/export?backupId=UUID` | Super Admin y `database.backup`; descarga privada `.fqabackup`, sin caché |
+| `POST /api/admin/backups/import` | Super Admin, `database.backup` y `database.restore`; multipart con `file`, `requestId`, `backupId` (vacío si no existe) y `confirmation: "IMPORTAR"` |
 | `GET /api/admin/backups/operations/:id` | Credencial de seguimiento en `X-FQA-Operation-Token` |
 
 Las mutaciones requieren además el control de origen existente. Los permisos se consultan desde la DB en cada solicitud; asignar accidentalmente los permisos a Administrador no permite ejecutar estas acciones. No se requieren permisos nuevos, seeds adicionales ni migraciones.
@@ -41,6 +43,20 @@ Las mutaciones requieren además el control de origen existente. Los permisos se
 Las operaciones aceptadas responden `202` con `{ operation, monitorToken }`. El `requestId` permite repetir una solicitud aceptada sin ejecutar otra operación. Se conservan como máximo cien registros de operación en el diario; los reintentos requieren que dicho registro siga disponible. La admisión es exclusiva: otra operación simultánea recibe `409` o `503` durante mantenimiento.
 
 La credencial de seguimiento solo permite consultar una operación, durante un máximo de 24 horas desde su inicio y treinta minutos después de terminar. No autoriza descargas, lecturas de datos ni nuevas operaciones. Se envía en un header, nunca en la URL. El frontend la conserva en `sessionStorage` para continuar tras recargar y la elimina al terminar, cerrar sesión o cambiar de identidad.
+
+## Exportar e importar
+
+El apartado **Exportar e importar**, dentro de Respaldos, permite descargar el respaldo disponible y cargar uno exportado anteriormente. Exportar prepara una copia independiente: no crea otro respaldo ni altera el horario automático. El archivo incluye el dump PostgreSQL y los CV cifrados, junto con el manifiesto autenticado. No incluye el catálogo, diario de operaciones, contraseñas de infraestructura ni la clave de cifrado.
+
+**Conservar por separado `BACKUP_ENCRYPTION_KEY` del servidor de origen es indispensable.** El servidor de destino debe tener esa misma clave configurada; no se permite enviar claves en el formulario. Si difiere, el archivo no podrá importarse. Cambiar la clave de una instalación que ya tiene respaldos requiere un procedimiento operativo; no debe hacerse para probar una importación. Producción conserva la condición de módulo deshabilitado.
+
+El formato versionado `.fqabackup` es propio y no es un ZIP ni un SQL: cabecera `FQA-BACKUP` y byte de versión 1, longitud de manifiesto de cuatro bytes big-endian, manifiesto JSON autenticado y artefactos cifrados concatenados (DB primero y después los CV en el orden del manifiesto). Las longitudes proceden del manifiesto firmado. La importación limita el archivo a **1 GiB**, el manifiesto a 16 MiB, exige un único campo de archivo y no descomprime ni extrae rutas del usuario. El contenido se procesa mediante streams y archivos privados temporales, sin cargar el respaldo completo en memoria del backend. El navegador prepara la descarga como Blob.
+
+Importar exige escribir `IMPORTAR`. Primero se valida la firma del formato, HMAC, longitudes exactas, clave, etiquetas AES-GCM, hashes, documentos, PostgreSQL 17, presencia de Super Admin y coincidencia de migraciones. `pg_restore` solo convierte el dump a una salida descartada durante la validación; **no lo aplica a la DB**. Una nueva generación con identificador aleatorio se publica después de todas las comprobaciones y sustituye la anterior. Si algo falla, se conserva el respaldo anterior. La fecha mostrada sigue siendo la fecha de creación original del respaldo.
+
+La importación responde `202` con operación de tipo `IMPORT` y utiliza el seguimiento existente. Durante la validación se bloquean escrituras y se pausan trabajadores; las consultas permanecen disponibles. Reintentar el mismo `requestId` devuelve la operación original. Una pantalla cuyo `backupId` ya no coincide recibe `409`; se debe actualizar y confirmar de nuevo. Archivos y staging se eliminan al finalizar, cancelar o recuperar un proceso interrumpido.
+
+**Importar y restaurar son acciones separadas.** Tras importar, Super Admin debe utilizar «Restaurar último respaldo» y confirmar su contraseña y `RESTAURAR` para modificar los datos. La importación por sí sola no invalida sesiones. Se registran auditorías de exportación y validación de importación. Los permisos se comprueban antes de procesar la subida y nuevamente antes de validar el contenido; el transporte mantiene la identidad de la cuenta durante renovaciones de sesión.
 
 ## Restauración
 

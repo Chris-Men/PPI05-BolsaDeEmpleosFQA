@@ -9,13 +9,14 @@ import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
 import type { BackupOperation, BackupOperationTicket, BackupStatus, BackupSummary } from '../types/backup.types.js';
-import { backupJournalSchema, type BackupJournal, type BackupManifest, type BackupOperationRecord, type RestoreBackupDTO } from '../validation/backup.schema.js';
+import { backupJournalSchema, type BackupJournal, type BackupManifest, type BackupOperationRecord, type ImportBackupDTO, type RestoreBackupDTO } from '../validation/backup.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { assertPermission, authorizationService } from './authorization.service.js';
 import { BackupPostgres } from './backup-postgres.service.js';
 import { backupRuntime, type BackupRuntime } from './backup-runtime.service.js';
 import { backupScheduledSlot, nextBackupAt } from './backup-schedule.service.js';
 import { BackupStorage, isMissing, writePrivateJson } from './backup-storage.service.js';
+import { readBackupPackage, writeBackupPackage } from './backup-package.service.js';
 
 /** A single backend coordinator is supported by the development Compose deployment. */
 export interface BackupConfiguration {
@@ -41,6 +42,7 @@ export class BackupCoordinator {
   private admitting: Promise<void> | null = null;
   private stopping = false;
   private tickRunning = false;
+  private exporting = false;
   private readonly instanceId = randomUUID();
   private timer: NodeJS.Timeout | null = null;
   constructor(private readonly configuration: BackupConfiguration, private readonly postgres: BackupPostgres, private readonly runtime: BackupRuntime = backupRuntime) {}
@@ -77,6 +79,9 @@ export class BackupCoordinator {
       this.ready = true;
       await this.recover();
       await storage.prune();
+      // Uploads from a terminated process never become valid catalog entries.
+      await rm(join(storage.root, 'uploads'), { recursive: true, force: true });
+      await mkdir(join(storage.root, 'uploads'), { mode: 0o700 });
     } catch {
       this.reason = 'No se pudo abrir el almacenamiento de respaldos o recuperar su estado. Revisa su disponibilidad y la clave configurada.';
       this.ready = false;
@@ -152,6 +157,44 @@ export class BackupCoordinator {
     return this.ticket(await this.enqueue('BACKUP', actor.userId, requestId));
   }
 
+  /** Allocates a private upload outside generations, so retention cannot remove in-flight input. */
+  async prepareImport(actor: AccessContext): Promise<string> {
+    this.authorize(actor, PERMISSIONS.DATABASE_BACKUP); this.authorize(actor, PERMISSIONS.DATABASE_RESTORE);
+    await this.initialize(); this.assertReady();
+    if (this.runtime.mode === 'MAINTENANCE') throw new AppError(409, 'Espera a que termine la restauración actual.');
+    const directory = join(this.requireStorage().root, 'uploads', randomUUID());
+    await mkdir(directory, { mode: 0o700 }); return directory;
+  }
+
+  /** Accepts a validated multipart upload; import never executes its SQL against the database. */
+  async importBackup(actor: AccessContext, payload: ImportBackupDTO, uploadDirectory: string): Promise<BackupOperationTicket> {
+    this.authorize(actor, PERMISSIONS.DATABASE_BACKUP); this.authorize(actor, PERMISSIONS.DATABASE_RESTORE);
+    await this.initialize(); this.assertReady();
+    const previous = this.replay(payload.requestId, actor.userId, 'IMPORT');
+    if (previous) { await this.admitting; await rm(uploadDirectory, { recursive: true, force: true }); return this.ticket(previous); }
+    if (payload.confirmation !== 'IMPORTAR') throw new AppError(400, 'Escribe IMPORTAR para confirmar.');
+    if (await this.requireStorage().latestId() !== payload.backupId) throw new AppError(409, 'El respaldo disponible cambió. Actualiza la pantalla antes de importar.');
+    return this.ticket(await this.enqueue('IMPORT', actor.userId, payload.requestId, null, '', uploadDirectory));
+  }
+
+  /** Holds a catalog lease while copying a package; its private snapshot survives later replacement. */
+  async exportBackup(actor: AccessContext, backupId: string): Promise<{ path: string; filename: string; dispose: () => Promise<void> }> {
+    this.authorize(actor, PERMISSIONS.DATABASE_BACKUP); await this.initialize(); this.assertReady();
+    if (this.running || this.exporting || this.runtime.mode !== 'OPEN') throw new AppError(409, 'Espera a que termine la operación de respaldo actual.');
+    this.exporting = true; let directory: string | undefined;
+    const dispose = async (): Promise<void> => { if (directory) await rm(directory, { recursive: true, force: true }).catch(() => undefined); };
+    try {
+      const storage = this.requireStorage();
+      if (await storage.latestId() !== backupId) throw new AppError(409, 'El respaldo disponible cambió. Actualiza la pantalla antes de exportar.');
+      const manifest = await storage.manifest(backupId);
+      directory = await mkdtemp(join(storage.root, 'uploads', 'export-')); await chmod(directory, 0o700);
+      const path = join(directory, 'backup.fqabackup'); await writeBackupPackage(storage, manifest, path);
+      await this.postgres.database.auditLogs.create({ data: { userId: actor.userId, entityType: 'DatabaseBackup', entityId: 0, action: 'EXPORT', changes: { backupId } } });
+      return { path, filename: 'fqa-respaldo-' + manifest.createdAt.slice(0, 10) + '-' + backupId + '.fqabackup', dispose };
+    } catch (error: unknown) { await dispose(); throw error; }
+    finally { this.exporting = false; }
+  }
+
   /** Verifies the current password, consent and exact generation before admitting a restore. */
   async restore(actor: AccessContext, payload: RestoreBackupDTO): Promise<BackupOperationTicket> {
     this.authorize(actor, PERMISSIONS.DATABASE_RESTORE); await this.initialize(); this.assertReady();
@@ -168,8 +211,8 @@ export class BackupCoordinator {
   }
 
   /** Serialized admission closes the gate before awaiting journal I/O. */
-  private async enqueue(kind: BackupOperationRecord['kind'], actorId: number | null, requestId: string, backupId: string | null = null, actorEmail = ''): Promise<BackupOperationRecord> {
-    if (this.running || this.runtime.mode !== 'OPEN') throw new AppError(409, 'Ya hay un respaldo o una restauración en curso.');
+  private async enqueue(kind: BackupOperationRecord['kind'], actorId: number | null, requestId: string, backupId: string | null = null, actorEmail = '', uploadDirectory?: string): Promise<BackupOperationRecord> {
+    if (this.running || this.exporting || this.runtime.mode !== 'OPEN') throw new AppError(409, 'Ya hay una operación de respaldo en curso.');
     this.runtime.mode = kind === 'RESTORE' ? 'MAINTENANCE' : 'READ_ONLY';
     const operation: BackupOperationRecord = { id: randomUUID(), kind, phase: 'QUEUED', startedAt: new Date().toISOString(), finishedAt: null,
       message: 'Operación en espera.', requestId, actorId, actorEmail, backupId, commitAttempted: false };
@@ -184,7 +227,7 @@ export class BackupCoordinator {
       if (kind === 'RESTORE') await unlink(join(this.requireStorage().root, 'restore-pending.json')).catch(() => undefined);
       throw new AppError(503, 'No se pudo registrar la operación. No se modificaron datos.');
     } finally { this.admitting = null; }
-    this.running = new Promise<void>(resolve => { setImmediate(() => { void this.execute(operation).finally(resolve); }); });
+    this.running = new Promise<void>(resolve => { setImmediate(() => { void this.execute(operation, uploadDirectory).finally(resolve); }); });
     return operation;
   }
 
@@ -192,7 +235,7 @@ export class BackupCoordinator {
     operation.phase = phase; operation.message = message; await this.persist();
   }
 
-  private async execute(operation: BackupOperationRecord): Promise<void> {
+  private async execute(operation: BackupOperationRecord, uploadDirectory?: string): Promise<void> {
     let directory: string | undefined;
     try {
       await this.phase(operation, 'DRAINING', 'Esperando a que finalicen las operaciones iniciadas.');
@@ -200,17 +243,19 @@ export class BackupCoordinator {
       if (operation.actorId !== null) {
         const current = await authorizationService.getAccessContext(operation.actorId, this.postgres.database);
         this.authorize(current, operation.kind === 'BACKUP' ? PERMISSIONS.DATABASE_BACKUP : PERMISSIONS.DATABASE_RESTORE);
+        if (operation.kind === 'IMPORT') this.authorize(current, PERMISSIONS.DATABASE_BACKUP);
       }
       directory = await mkdtemp(join(tmpdir(), 'fqa-backup-')); await chmod(directory, 0o700);
       await this.postgres.assertVersion(directory);
       if (operation.kind === 'BACKUP') await this.writeBackup(operation, directory);
+      else if (operation.kind === 'IMPORT' && uploadDirectory) await this.installImport(operation, directory, uploadDirectory);
       else await this.applyRestore(operation, directory);
-      operation.phase = 'SUCCEEDED'; operation.message = operation.kind === 'BACKUP' ? 'Respaldo completado correctamente.' : 'Restauración completada. Inicia sesión nuevamente.';
+      operation.phase = 'SUCCEEDED'; operation.message = operation.kind === 'BACKUP' ? 'Respaldo completado correctamente.' : operation.kind === 'IMPORT' ? 'Respaldo importado correctamente. Puedes restaurarlo desde esta pantalla.' : 'Restauración completada. Inicia sesión nuevamente.';
       operation.finishedAt = new Date().toISOString(); await this.persist();
     } catch (error: unknown) {
       let completed: boolean | null = false;
       if (operation.kind === 'RESTORE' && operation.commitAttempted) completed = await this.postgres.restoredOperation(operation.id).catch(() => null);
-      if (operation.kind === 'BACKUP' && operation.backupId) completed = await this.requireStorage().latestId().then(id => id === operation.backupId).catch(() => null);
+      if ((operation.kind === 'BACKUP' || operation.kind === 'IMPORT') && operation.backupId) completed = await this.requireStorage().latestId().then(id => id === operation.backupId).catch(() => null);
       operation.phase = completed === true ? 'SUCCEEDED' : completed === null ? 'RECOVERING' : 'FAILED';
       operation.message = completed === true ? 'Operación completada correctamente.' : completed === null ? 'Comprobando el resultado de la operación. El mantenimiento continúa.'
         : error instanceof AppError ? error.message : 'No se pudo completar la operación. Se conserva el estado anterior.';
@@ -218,12 +263,34 @@ export class BackupCoordinator {
       await this.persist().catch(() => { this.ready = false; this.reason = 'No se pudo persistir el estado de la operación.'; });
     } finally {
       if (directory) await rm(directory, { recursive: true, force: true }).catch(() => undefined);
+      if (uploadDirectory) await rm(uploadDirectory, { recursive: true, force: true }).catch(() => undefined);
       // Retention finishes under the gate: otherwise a previous prune could delete a new generation.
       if (terminal(operation)) await this.requireStorage().prune().catch(() => undefined);
       if (terminal(operation) && operation.kind === 'RESTORE' && this.ready) await unlink(join(this.requireStorage().root, 'restore-pending.json')).catch(() => undefined);
       if (terminal(operation)) this.runtime.mode = 'OPEN';
       this.running = null;
     }
+  }
+
+  /** Installs a fresh generation only after authentication, schema checks and every native artifact check. */
+  private async installImport(operation: BackupOperationRecord, directory: string, uploadDirectory: string): Promise<void> {
+    const storage = this.requireStorage(); const id = randomUUID();
+    // The input directory is generated by prepareImport, never taken from multipart metadata.
+    if (resolve(uploadDirectory, '..') !== join(storage.root, 'uploads')) throw new AppError(400, 'La carga de respaldo no es válida.');
+    operation.backupId = id;
+    await this.phase(operation, 'VERIFYING', 'Verificando el archivo importado, su clave y compatibilidad.');
+    const manifest = await readBackupPackage(storage, join(uploadDirectory, 'backup.fqabackup'), id);
+    if (!manifest.activeSuperAdmins || manifest.schemaHash !== await this.postgres.schemaHash()) throw new AppError(409, 'El respaldo no es compatible con el esquema o no contiene un Super Admin con permiso de restauración.');
+    const dump = join(directory, 'database.dump');
+    await storage.decrypt(join(storage.generation(id), 'database.enc'), manifest.database, dump);
+    await this.postgres.run('pg_restore', ['--file', '/dev/null', dump], directory);
+    for (const resume of manifest.resumes) {
+      const path = join(directory, resume.key); await storage.decrypt(join(storage.generation(id), resume.key + '.enc'), resume, path); await unlink(path);
+    }
+    await this.phase(operation, 'PREPARING', 'Publicando el respaldo verificado. La DB actual se conserva.');
+    await this.postgres.database.auditLogs.create({ data: { userId: operation.actorId, entityType: 'DatabaseBackup', entityId: 0,
+      action: 'IMPORT', changes: { backupId: id, operationId: operation.id } } });
+    await storage.publish(manifest);
   }
 
   private async writeBackup(operation: BackupOperationRecord, directory: string): Promise<void> {
@@ -314,7 +381,7 @@ export class BackupCoordinator {
         operation.phase = result ? 'SUCCEEDED' : 'FAILED';
         operation.message = result ? 'Restauración completada. Inicia sesión nuevamente.' : 'La restauración se interrumpió y la transacción fue revertida.';
       } else {
-        const published = operation.kind === 'BACKUP' && operation.backupId === await this.requireStorage().latestId();
+        const published = (operation.kind === 'BACKUP' || operation.kind === 'IMPORT') && operation.backupId === await this.requireStorage().latestId();
         operation.phase = published ? 'SUCCEEDED' : 'FAILED';
         operation.message = published ? 'Respaldo completado correctamente.' : 'La operación se interrumpió. Se conserva el estado anterior.';
       }
@@ -332,7 +399,7 @@ export class BackupCoordinator {
     if (this.tickRunning || this.stopping) return;
     this.tickRunning = true;
     try {
-      await this.initialize(); if (!this.ready || this.running) return;
+      await this.initialize(); if (!this.ready || this.running || this.exporting) return;
       if (this.runtime.mode !== 'OPEN') { await this.recover(); return; }
       const slot = backupScheduledSlot(now);
       if (this.journal.scheduledSlot !== slot) { this.journal.scheduledSlot = slot; this.journal.failures = 0; this.journal.nextAttemptAt = now.toISOString(); await this.persist(); }
