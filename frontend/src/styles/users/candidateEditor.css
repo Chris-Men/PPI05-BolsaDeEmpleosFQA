@@ -1,15 +1,702 @@
-.candidate-editor { margin-bottom: 24px; padding: 24px; }
-.candidate-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.candidate-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.candidate-editor-field { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; min-width: 0; }
-.candidate-editor-field input, .candidate-editor-field textarea { font: inherit; width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #ccc; border-radius: 8px; }
-.candidate-editor-field textarea { min-height: 110px; resize: vertical; }
-.candidate-editor input:read-only, .candidate-editor textarea:read-only { background: #f7faf5; }
-.candidate-editor-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
-.candidate-editor button, .resume-manager button { font: inherit; padding: 9px 14px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
-.candidate-editor [role=alert], .resume-manager [role=alert] { color: #a32121; }
-.candidate-editor [role=status], .resume-manager [role=status] { color: #276315; }
-.candidate-editor button:disabled, .resume-manager button:disabled { opacity: .55; cursor: wait; }
-.candidate-history { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin: 12px 0; min-width: 0; }
-.resume-manager { min-width: 0; padding: 16px; overflow-wrap: anywhere; }
-@media (max-width: 640px) { .candidate-editor { padding: 16px; } .candidate-editor-grid { grid-template-columns: 1fr; } }
+/* =========================================================
+   FQA EMPLEOS — DOCUMENTOS DE POSTULACIÓN
+   Tarjeta moderna, información legible y botones organizados
+========================================================= */
+
+.resume-manager,
+.resume-manager * {
+  box-sizing: border-box;
+}
+
+.resume-manager {
+  --resume-green: #82ba2e;
+  --resume-green-hover: #5ba222;
+  --resume-dark: #203b13;
+  --resume-text: #34432d;
+  --resume-muted: #74816c;
+
+  display: block;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding: 28px;
+  margin: 0;
+  overflow: visible;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbf4 100%);
+  border: 1px solid #e2ebd9;
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgb(35 61 21 / 6%);
+  color: var(--resume-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Encabezado */
+.resume-manager .resume-manager-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 24px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid #e8eee2;
+}
+
+.resume-manager .resume-manager-heading-icon {
+  display: flex;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  color: #548b22;
+  background: #edf6e4;
+  border: 1px solid #deedcf;
+  border-radius: 15px;
+}
+
+.resume-manager .resume-manager-heading-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.resume-manager .resume-manager-heading-copy h3 {
+  margin: 0 0 5px;
+  color: var(--resume-dark);
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: -0.35px;
+}
+
+.resume-manager .resume-manager-heading-copy p {
+  margin: 0;
+  color: var(--resume-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-private {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 11px;
+  color: #497a27;
+  background: #f0f7e9;
+  border: 1px solid #dcebcf;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* Información del formato */
+.resume-manager .resume-manager-format {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 20px;
+  padding: 15px 17px;
+  background: #f7faf3;
+  border: 1px solid #e7eddf;
+  border-radius: 12px;
+}
+
+.resume-manager .resume-manager-pdf-badge {
+  display: inline-flex;
+  flex: 0 0 43px;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 45px;
+  color: #a23c32;
+  background: #fff0ed;
+  border: 1px solid #f4d9d4;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.resume-manager .resume-manager-format>div {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.resume-manager .resume-manager-format strong {
+  color: var(--resume-dark);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resume-manager .resume-manager-format span:not(.resume-manager-pdf-badge) {
+  color: var(--resume-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Tarjeta del documento seleccionado */
+.resume-manager .resume-document-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(120deg, #f4f9ee, #fbfdf8);
+  border: 1px solid #dce9d0;
+  border-radius: 14px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.resume-manager .resume-document-card:hover {
+  border-color: #c4dda9;
+  box-shadow: 0 5px 16px rgb(52 87 28 / 6%);
+}
+
+.resume-manager .resume-document-icon {
+  display: flex;
+  flex: 0 0 58px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 58px;
+  min-height: 68px;
+  padding: 8px;
+  color: #548525;
+  background: #e7f2dc;
+  border: 1px solid #d7e8c7;
+  border-radius: 12px;
+}
+
+.resume-manager .resume-document-icon span {
+  color: #a04438;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.resume-manager .resume-document-info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.resume-manager .resume-document-status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 100%;
+  color: #527541;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.resume-manager .resume-status-dot {
+  display: inline-block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #78b83b;
+  box-shadow: 0 0 0 3px #e2f0d6;
+}
+
+.resume-manager .resume-document-name {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  color: #273d1d;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.65;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
+}
+
+.resume-manager .resume-document-size {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: #77836f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.resume-manager .resume-document-check {
+  display: flex;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #619a30;
+  background: #e7f3dc;
+  border-radius: 50%;
+}
+
+/* Estado sin archivo */
+.resume-manager .resume-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  margin: 20px 0;
+  padding: 32px 22px;
+  text-align: center;
+  background: #fafcf8;
+  border: 1px dashed #cddfc0;
+  border-radius: 15px;
+}
+
+.resume-manager .resume-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 14px;
+  color: #639c32;
+  background: #edf6e5;
+  border-radius: 17px;
+}
+
+.resume-manager .resume-empty-state h4 {
+  margin: 0 0 7px;
+  color: var(--resume-dark);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.resume-manager .resume-empty-state p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--resume-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* Aviso sobre el documento de la postulación */
+.resume-manager .resume-application-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin: 18px 0;
+  padding: 13px 15px;
+  color: #4f6e3b;
+  background: #f1f7eb;
+  border: 1px solid #deebd2;
+  border-radius: 11px;
+}
+
+.resume-manager .resume-application-note>svg {
+  flex: 0 0 17px;
+  margin-top: 2px;
+}
+
+.resume-manager .resume-application-note p {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+/* Acciones */
+.resume-manager .resume-manager-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin: 22px 0 0;
+  padding-top: 19px;
+  border-top: 1px solid #e8eee2;
+}
+
+.resume-manager .resume-manager-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #dbe5d2;
+  border-radius: 10px;
+  background: #fff;
+  color: #405a30;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease,
+    border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.resume-manager .resume-manager-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f5f9f0;
+  border-color: #a9cb89;
+  box-shadow: 0 4px 12px rgb(40 70 22 / 7%);
+}
+
+.resume-manager .resume-manager-actions .resume-action-primary {
+  color: #fff;
+  background: #6da925;
+  border-color: #6da925;
+}
+
+.resume-manager .resume-manager-actions .resume-action-primary:hover:not(:disabled) {
+  color: #fff;
+  background: #568c1c;
+  border-color: #568c1c;
+}
+
+.resume-manager .resume-manager-actions .resume-action-danger {
+  color: #b33a35;
+  background: #fff;
+  border-color: #edcfcc;
+}
+
+.resume-manager .resume-manager-actions .resume-action-danger:hover:not(:disabled) {
+  color: #fff;
+  background: #bd3933;
+  border-color: #bd3933;
+}
+
+.resume-manager .resume-manager-actions .resume-action-text {
+  color: #597d3f;
+  background: transparent;
+  border-color: transparent;
+}
+
+.resume-manager .resume-manager-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mensajes y errores */
+.resume-manager .resume-manager-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin: 14px 0;
+  padding: 13px 15px;
+  border-radius: 11px;
+}
+
+.resume-manager .resume-manager-message>svg {
+  flex: 0 0 18px;
+  margin-top: 2px;
+}
+
+.resume-manager .resume-manager-message p {
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-message.is-error {
+  color: #a52f2a;
+  background: #fff3f1;
+  border: 1px solid #f0d3cf;
+}
+
+.resume-manager .resume-manager-message.is-success {
+  color: #376923;
+  background: #f0f8e9;
+  border: 1px solid #d8e9cb;
+}
+
+.resume-manager .resume-manager-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px 0;
+  color: #607a4d;
+  font-size: 13px;
+}
+
+.resume-manager .resume-manager-field-error {
+  margin: 12px 0;
+  color: #ae322e;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-retry {
+  margin: 8px 0 0;
+  padding: 7px 12px;
+  color: #7e2b26;
+  background: #fff;
+  border: 1px solid #e7c4c0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Modal personalizado de eliminación */
+.resume-manager .resume-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(17 32 11 / 60%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.resume-manager .resume-delete-modal {
+  position: relative;
+  width: min(100%, 460px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #e5eadd;
+  border-radius: 20px;
+  box-shadow: 0 25px 80px rgb(0 0 0 / 24%);
+  animation: resume-modal-appear 200ms ease-out;
+}
+
+.resume-manager .resume-delete-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: #6d7865;
+  background: #f5f7f2;
+  border: 1px solid #e5e9df;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.resume-manager .resume-delete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  color: #b63731;
+  background: #fff0ee;
+  border: 1px solid #f3d7d3;
+  border-radius: 16px;
+}
+
+.resume-manager .resume-delete-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #799164;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.resume-manager .resume-delete-modal h2 {
+  margin: 0 0 12px;
+  padding-right: 20px;
+  color: #253b1b;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.resume-manager .resume-delete-modal>p {
+  margin: 0 0 20px;
+  color: #687361;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-delete-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 12px;
+  color: #4d6e39;
+  background: #f2f8ed;
+  border: 1px solid #dfebd5;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.resume-manager .resume-delete-warning svg {
+  flex: 0 0 19px;
+}
+
+.resume-manager .resume-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.resume-manager .resume-delete-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 43px;
+  padding: 10px 15px;
+  border: 1px solid #dce4d5;
+  border-radius: 10px;
+  background: #fff;
+  color: #42533a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resume-manager .resume-delete-actions .resume-delete-confirm {
+  color: #fff;
+  background: #bd3933;
+  border-color: #bd3933;
+}
+
+.resume-manager .resume-delete-actions .resume-delete-confirm:hover:not(:disabled) {
+  background: #a72c28;
+  border-color: #a72c28;
+}
+
+.resume-manager .resume-delete-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes resume-modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .resume-manager {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .resume-manager .resume-manager-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+  }
+
+  .resume-manager .resume-manager-heading-icon {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .resume-manager .resume-manager-heading-copy {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .resume-manager .resume-manager-heading-copy h3 {
+    font-size: 18px;
+  }
+
+  .resume-manager .resume-manager-private {
+    margin-left: 56px;
+  }
+
+  .resume-manager .resume-document-card {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .resume-manager .resume-document-icon {
+    flex-basis: 46px;
+    width: 46px;
+    min-height: 58px;
+  }
+
+  .resume-manager .resume-document-check {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .resume-manager .resume-document-name {
+    font-size: 13px;
+  }
+
+  .resume-manager .resume-manager-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .resume-manager .resume-manager-actions button {
+    width: 100%;
+  }
+
+  .resume-manager .resume-delete-modal {
+    padding: 24px 20px;
+  }
+
+  .resume-manager .resume-delete-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resume-manager .resume-delete-actions button {
+    width: 100%;
+  }
+}

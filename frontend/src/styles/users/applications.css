@@ -1,35 +1,697 @@
-.application-section{color:var(--gd);background:#fff;border-radius:16px;padding:24px;box-shadow:0 3px 18px #162e3810;min-width:0}.application-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.application-heading h1,.application-heading h2,.application-heading h3{margin:0 0 6px}.application-heading p{margin:0;color:var(--c500)}.application-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}.application-button{border:1px solid var(--g2);background:var(--g2);color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font:inherit}.application-button.secondary{background:#fff;color:var(--gd);border-color:#cbdde0}.application-button.danger{background:#ad3644;border-color:#ad3644}.application-button:disabled{opacity:.55;cursor:default}.application-filters{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.application-filters label,.application-confirm label{display:flex;flex-direction:column;gap:6px;font-size:14px;flex:1;min-width:150px}.application-filters input,.application-filters select,.application-confirm textarea{font:inherit;min-height:42px;border:1px solid #d5e1e5;border-radius:8px;padding:8px;background:#fff;color:var(--gd);max-width:100%}.application-filters input[type=search]{width:100%}.application-confirm textarea{min-height:100px}.application-table-wrap{overflow:auto}.application-table{width:100%;border-collapse:collapse;font-size:14px}.application-table th{background:var(--off);text-align:left;white-space:nowrap}.application-table th,.application-table td{padding:14px 10px;border-bottom:1px solid #e5edef}.application-table small{display:block;color:#6b7d84;margin-top:5px}.application-status{display:inline-block;white-space:nowrap;border-radius:20px;padding:5px 10px;background:#edf2f6;font-size:13px}.status-pending{background:#fff4d7;color:#775414}.status-in_review{background:#e1f1ff;color:#235d91}.status-selected{background:#dff4e7;color:#247544}.status-rejected{background:#fde9eb;color:#963849}.status-withdrawn{background:#edf0f2;color:#56646d}.application-pagination{display:flex;justify-content:center;gap:18px;align-items:center;margin-top:24px;flex-wrap:wrap}.application-pagination button{padding:8px 14px;border:1px solid #d2e0e3;background:white;border-radius:6px;cursor:pointer}.application-pagination button:disabled{opacity:.45;cursor:default}.application-empty{padding:32px 16px;text-align:center;color:var(--c500)}.application-error{background:#fff0f0;color:#942e3b;border-radius:8px;padding:14px}.application-notice,.application-confirm{background:var(--gl);border:1px solid var(--c100);padding:16px;border-radius:10px}.application-drafts{border-bottom:1px solid #e3eaec;padding-bottom:18px}.application-drafts h2{font-size:19px}.application-draft{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}.application-draft p{margin:6px 0;color:var(--c500)}.application-detail-section{padding:12px 0;border-bottom:1px solid #e2eaed}.application-detail-section h3{font-size:17px}.application-data{display:grid;grid-template-columns:1fr 1fr;gap:16px}.application-data dt{font-size:13px;color:var(--c500)}.application-data dd{margin:4px 0;overflow-wrap:anywhere}.application-text{white-space:pre-wrap;overflow-wrap:anywhere}.application-history{padding-left:20px}.application-history li{padding:10px 0}.application-history p{margin:6px 0}.application-notifications article{border:1px solid #e0e9ec;border-radius:10px;padding:18px;margin:12px 0}.application-notifications h2{font-size:18px}.notification-unread{background:var(--gl)}.notification-read{background:white}.application-save-status{font-size:13px;color:var(--c500);margin:10px 0}.application-confirmation{max-width:800px;margin:48px auto;padding:32px}.application-confirmation h1{color:var(--gd)}.application-confirmation .application-data{margin:26px 0}.application-form-message{max-width:800px;margin:40px auto;padding:24px}.application-inline-error{color:#a22f40;font-size:13px}.application-form-document{margin-bottom:18px;padding:16px;border:1px solid #d4e2e6;border-radius:10px}
-@media(max-width:700px){.application-section{padding:16px}.application-heading{align-items:flex-start;flex-wrap:wrap}.application-filters{gap:10px}.application-filters label{min-width:calc(50% - 10px)}.application-filters label:first-child{flex-basis:100%}.application-data{grid-template-columns:1fr}.application-draft{align-items:flex-start;flex-direction:column}.application-confirmation{margin:20px 12px;padding:20px}.application-table{min-width:660px}}
-.application-form .form-pages{border:0;min-width:0}.application-field-error{color:#a22f40;font-size:13px}.application-prewrap{white-space:pre-wrap;overflow-wrap:anywhere}.application-table td:first-child{overflow-wrap:anywhere;min-width:135px}
+/* =========================================================
+   FQA EMPLEOS — FORMULARIO DE POSTULACIÓN
+   REVISIÓN FINAL + AJUSTE DE NAVBAR / ANCHO COMPLETO
+   Paleta: verde institucional
+========================================================= */
 
-.application-reference { display: block; margin-top: 10px; font-size: 12px; color: var(--c500); overflow-wrap: anywhere; }
+/* ---------------------------------------------------------
+   1. PANTALLA: ANCHO COMPLETO + ESPACIO PARA EL NAVBAR
+--------------------------------------------------------- */
 
-.application-detail-motivation { margin-top: 18px; padding: 14px 16px; border-radius: var(--rad); background: var(--off); }
+body:has(.screen.application-form) {
+  overflow-x: clip;
+}
 
-.application-detail-motivation h4 { margin-bottom: 6px; font-size: 12px; color: var(--c500); }
+.screen.application-form {
+  --nav-h: 72px;
+  /* ← altura real de tu navbar fijo */
+  --nav-gap: 10px;
+  /* aire pequeño entre navbar y contenido */
 
-.application-detail-motivation p { font-size: 14px; line-height: 1.7; }
+  --review-green: #82ba2e;
+  --review-green-dark: #5ba222;
+  --review-green-deep: #193007;
+  --review-green-soft: #f3f9eb;
+  --review-border: #e3ebdc;
+  --review-text: #263522;
+  --review-muted: #74816e;
 
-.application-document-name { margin-bottom: 14px; }
+  /* Ancho completo, sin bordes blancos laterales */
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
 
-.application-dialog .application-history { padding-left: 18px; font-size: 14px; line-height: 1.6; }
+  /* Columna flex: el contenido se reparte sin generar scroll extra */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
 
-.application-dialog .application-history li::marker { color: var(--g2); font-weight: 600; }
+  /* La barra de progreso y los pasos empiezan debajo del navbar */
+  padding:
+    calc(var(--nav-h) + var(--nav-gap)) clamp(12px, 2.5vw, 36px) 16px !important;
 
-.application-dialog .application-confirm { margin-top: 20px; }
+  box-sizing: border-box;
+  overflow-x: clip;
+  background: #f6f8f4;
+  color: var(--review-text);
+}
 
-.application-dialog .application-confirm h3 { font-size: 17px; margin-bottom: 8px; }
+.screen.application-form *,
+.screen.application-form *::before,
+.screen.application-form *::after {
+  box-sizing: border-box;
+}
 
-.application-dialog .application-confirm label { margin-top: 14px; }
+/* Contenedor general: ocupa todo el ancho y el alto restante */
 
-.application-dialog .application-actions { justify-content: flex-end; gap: 10px; }
+.application-form .form-shell {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  gap: 24px;
+  align-items: stretch;
+  /* el aside ocupa todo el alto */
+}
 
-.application-dialog .application-button { font-size: 14px; border-radius: var(--rad); }
+/* Aside de pasos: alto completo, como antes */
 
-.application-dialog .application-button.secondary { border-color: var(--c200); background: var(--w); }
+.application-form .form-aside {
+  position: static;
+  align-self: stretch;
+  max-height: none;
+  overflow: visible;
+}
 
-.application-dialog .application-button.secondary:hover { background: var(--gl); }
+/* El contenido usa todo el espacio restante; el pie queda abajo */
+
+.application-form .form-content-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  width: 100%;
+  max-width: none !important;
+  min-width: 0;
+  min-height: 0;
+}
+
+.application-form .form-pages {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.application-form .form-page {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Campos: aprovechan el ancho disponible */
+
+.application-form .fg2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;
+  width: 100%;
+}
+
+.application-form .fg2 .ff.full {
+  grid-column: 1 / -1;
+}
+
+.application-form .fg2 .ff input,
+.application-form .fg2 .ff textarea,
+.application-form .fg2 .ff select {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Barra de progreso */
+
+.application-form .form-prog-bar {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: none;
+  height: 6px;
+  margin: 0 0 14px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #e4ebdf;
+}
+
+.application-form .form-prog-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #82ba2e, #5ba222);
+  transition: width 0.3s ease;
+}
+
+/* ---------------------------------------------------------
+   2. ENCABEZADO DE CADA PASO
+--------------------------------------------------------- */
+
+.application-form .fp-hd {
+  margin: 0 0 18px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid #e7ede2;
+}
+
+.application-form .fp-hd h3 {
+  margin: 0 0 7px;
+  color: #193007;
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.6px;
+}
+
+.application-form .fp-hd p {
+  margin: 0;
+  color: #71806b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------
+   3. CONTENEDOR DEL PASO REVISAR POSTULACIÓN
+--------------------------------------------------------- */
+
+.application-form .form-page:has(.review-block) {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Tarjetas de revisión */
+
+.application-form .review-block {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 20px 24px;
+
+  border: 1px solid #e3eadc;
+  border-radius: 16px;
+  background: #fff;
+
+  box-shadow:
+    0 3px 12px rgba(25, 48, 7, 0.035),
+    0 1px 3px rgba(25, 48, 7, 0.025);
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.application-form .review-block:hover {
+  border-color: #c8dfae;
+  box-shadow: 0 7px 20px rgba(53, 91, 24, 0.07);
+}
+
+/* Cabecera de cada tarjeta */
+
+.application-form .review-block .rb-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 15px;
+  padding: 0 0 12px;
+
+  border-bottom: 1px solid #edf1e9;
+}
+
+/* Título de sección */
+
+.application-form .review-block .rb-hd>span {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-width: 0;
+  color: #28441b;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Indicador verde junto al título */
+
+.application-form .review-block .rb-hd>span::before {
+  content: "";
+  display: block;
+  flex: 0 0 4px;
+  width: 4px;
+  height: 25px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #82ba2e, #5ba222);
+}
+
+/* Botón editar */
+
+.application-form .review-block .rb-hd button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+
+  min-height: 35px;
+  padding: 7px 14px;
+
+  border: 1px solid #cfe2b9;
+  border-radius: 9px;
+  background: #f5faef;
+  color: #477c1e;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.application-form .review-block .rb-hd button::before {
+  content: "";
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  background: currentColor;
+  opacity: 0.85;
+
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.application-form .review-block .rb-hd button:hover {
+  color: #fff;
+  background: #5ba222;
+  border-color: #5ba222;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(91, 162, 34, 0.18);
+}
+
+.application-form .review-block .rb-hd button:focus-visible {
+  outline: 3px solid rgba(130, 186, 46, 0.35);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------
+   4. DATOS REVISADOS
+--------------------------------------------------------- */
+
+.application-form .review-block>p {
+  margin: 0 0 9px;
+  color: #56634f;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.application-form .review-block>p:last-child {
+  margin-bottom: 0;
+}
+
+/* Primer dato: nombre completo */
+
+.application-form .review-block:first-of-type>p:first-of-type {
+  color: #263c1d;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+/* Legibilidad de la motivación */
+
+.application-form .review-block .application-prewrap {
+  margin-top: 12px;
+  padding: 14px 16px;
+
+  border: 1px solid #e8efdf;
+  border-radius: 11px;
+  background: #f8faf5;
+
+  color: #475640;
+  font-size: 14px;
+  line-height: 1.8;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Mensaje cuando falta un documento */
+
+.application-form .review-block [role="alert"] {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid #f2d3d3;
+  border-radius: 9px;
+  background: #fff4f4;
+  color: #a22f40;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------
+   5. PIE DE NAVEGACIÓN DEL FORMULARIO
+--------------------------------------------------------- */
+
+.application-form .form-footer {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  margin-top: auto;
+  /* queda al fondo sin forzar scroll */
+  padding: 12px 0 0;
+
+  border-top: 1px solid #e4ebdf;
+  background: transparent;
+}
+
+.application-form .prog-txt {
+  color: #788570;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Botón principal */
+
+.application-form .btn-next-f {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 44px;
+  max-width: 100%;
+  padding: 11px 22px;
+
+  border: 1px solid #5ba222;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #82ba2e, #5ba222);
+  color: #fff;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.application-form .btn-next-f:hover:not(:disabled) {
+  filter: brightness(0.96);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(91, 162, 34, 0.22);
+}
+
+.application-form .btn-next-f:focus-visible {
+  outline: 3px solid rgba(130, 186, 46, 0.35);
+  outline-offset: 3px;
+}
+
+.application-form .btn-next-f:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------
+   5.1 BOTONES SECUNDARIOS: "GUARDAR Y SALIR" Y "← ANTERIOR"
+--------------------------------------------------------- */
+
+.screen.application-form .form-aside .btn-back-f,
+.screen.application-form .form-footer .btn-back-f {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 18px;
+
+  border: 1.5px solid #82ba2e;
+  border-radius: 10px;
+  background: #f3f9eb;
+  color: #3f7a17;
+  -webkit-text-fill-color: #3f7a17;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.screen.application-form .form-footer .btn-back-f {
+  width: auto;
+  min-width: 120px;
+}
+
+.screen.application-form .form-aside .btn-back-f:hover:not(:disabled),
+.screen.application-form .form-footer .btn-back-f:hover:not(:disabled) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  background: linear-gradient(135deg, #82ba2e, #5ba222);
+  border-color: #5ba222;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(91, 162, 34, 0.22);
+}
+
+.screen.application-form .form-aside .btn-back-f:focus-visible,
+.screen.application-form .form-footer .btn-back-f:focus-visible {
+  outline: 3px solid rgba(130, 186, 46, 0.35);
+  outline-offset: 3px;
+}
+
+.screen.application-form .form-aside .btn-back-f:disabled,
+.screen.application-form .form-footer .btn-back-f:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------
+   6. ESTADO DEL AUTOGUARDADO
+--------------------------------------------------------- */
+
+.application-form .autosave-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 14px;
+  padding: 7px 12px;
+
+  border: 1px solid #e0eacf;
+  border-radius: 9px;
+  background: #f3f8eb;
+  color: #527a30;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------
+   7. TABLET
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .screen.application-form {
+    --nav-h: 68px;
+    --nav-gap: 12px;
+    padding:
+      calc(var(--nav-h) + var(--nav-gap)) clamp(12px, 3vw, 24px) 20px !important;
+  }
+
+  .application-form .form-shell {
+    gap: 18px;
+  }
+
+  .application-form .review-block {
+    padding: 19px;
+  }
+}
+
+/* ---------------------------------------------------------
+   8. MÓVILES
+--------------------------------------------------------- */
+
 @media (max-width: 600px) {
+  .screen.application-form {
+    --nav-h: 64px;
+    --nav-gap: 10px;
+    padding:
+      calc(var(--nav-h) + var(--nav-gap)) 12px 18px !important;
+  }
 
-  .application-dialog .application-actions > button { flex: 1; }
+  .application-form .form-prog-bar {
+    margin-bottom: 12px;
+  }
+
+  .application-form .form-shell {
+    gap: 14px;
+  }
+
+  .application-form .fp-hd {
+    margin-bottom: 16px;
+    padding-bottom: 13px;
+  }
+
+  .application-form .fp-hd h3 {
+    font-size: 22px;
+  }
+
+  .application-form .fp-hd p {
+    font-size: 13px;
+  }
+
+  .application-form .form-page:has(.review-block) {
+    gap: 12px;
+  }
+
+  .application-form .review-block {
+    padding: 16px 15px;
+    border-radius: 13px;
+  }
+
+  .application-form .review-block .rb-hd {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 13px;
+    padding-bottom: 11px;
+  }
+
+  .application-form .review-block .rb-hd>span {
+    flex: 1 1 150px;
+    font-size: 14px;
+  }
+
+  .application-form .review-block .rb-hd button {
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
+  .application-form .review-block>p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .application-form .review-block:first-of-type>p:first-of-type {
+    font-size: 16px;
+  }
+
+  .application-form .review-block .application-prewrap {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .application-form .form-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .application-form .form-footer .prog-txt {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .screen.application-form .form-footer .btn-back-f {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .application-form .form-footer .btn-next-f {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .application-form .autosave-row {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
+
+/* Pantallas muy estrechas */
+
+@media (max-width: 360px) {
+  .screen.application-form {
+    padding-right: 9px !important;
+    padding-left: 9px !important;
+  }
+
+  .application-form .review-block {
+    padding: 14px 12px;
+  }
+
+  .application-form .review-block .rb-hd>span {
+    flex-basis: 120px;
+  }
+
+  .application-form .review-block .rb-hd button {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .application-form .form-footer {
+    gap: 8px;
+  }
 }

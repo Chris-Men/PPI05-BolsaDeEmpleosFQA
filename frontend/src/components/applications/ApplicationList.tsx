@@ -7,7 +7,7 @@ import type { ApplicationDraft, ApplicationFilters, ApplicationStatus } from '..
 import { APPLICATION_LABELS } from '../../types/application';
 import { KIND_LABELS, type OpportunityKind } from '../../types/opportunity';
 import { ApplicationDetails } from './ApplicationDetails';
-import '../../styles/users/applications.css';
+import '../../styles/users/applicationsList.css';
 
 interface ApplicationListProps { admin?:boolean; onResume?:(key:string)=>void; onChanged?:()=>void; initialId?:number }
 /** One server-filtered list covers all four types and their separate attempts. */

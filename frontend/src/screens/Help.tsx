@@ -236,14 +236,30 @@ export default function Help({ navigateTo }: HelpProps) {
               seguimiento a tus postulaciones. Encuentra aquí respuestas y
               recomendaciones para avanzar con confianza.
             </p>
+    
 
-            <a className="help-hero-link" href="#guia">
-              Explorar la guía
-              <ArrowRight size={17} aria-hidden="true" />
-            </a>
-            {navigateTo && <button type="button" className="help-hero-link" onClick={() => navigateTo('jobs')}>Explorar vacantes <ArrowRight size={17} aria-hidden="true" /></button>}
+
+<a className="help-hero-button" href="#guia">
+  Explorar la guía
+  <ArrowRight size={18} aria-hidden="true" />
+</a>
+
+{navigateTo && (
+  <button
+    type="button"
+    className="help-hero-button help-hero-button-secondary"
+    onClick={() => navigateTo('jobs')}
+  >
+    Explorar vacantes
+    <ArrowRight size={18} aria-hidden="true" />
+  </button>
+)}
+           
           </div>
         </section>
+
+
+
 
         <section
           className="help-overview"

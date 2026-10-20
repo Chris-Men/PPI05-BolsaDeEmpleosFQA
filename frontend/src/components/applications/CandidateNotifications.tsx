@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNotifications } from '../../hooks/useApplications';
 import { markAllNotificationsRead, markNotificationRead } from '../../services/applicationService';
 import { ApplicationDetails } from './ApplicationDetails';
-import '../../styles/users/applications.css';
+import '../../styles/users/applicationsNotification.css';
 
 interface CandidateNotificationsProps { onChanged:()=>void }
 /** Persistent notifications refresh on focus and every thirty seconds while visible. */
