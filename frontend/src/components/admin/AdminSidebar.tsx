@@ -25,6 +25,7 @@ const menuItems: Array<{ icon: string; name: AdminMenuName }> = [
   { icon: '👥', name: 'Usuarios' },
   { icon: '⚙️', name: 'Configuración' },
   { icon: '🗄️', name: 'Respaldos' },
+  { icon: '❓', name: 'Ayuda' },
 ];
 
 /** Sidebar for the preserved administrative interface. */

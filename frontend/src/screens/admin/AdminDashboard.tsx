@@ -32,6 +32,7 @@ import Estadisticas from './Estadisticas';
 import Users from './Users';
 import Configuracion from './Configuracion';
 import Backups from './Backups';
+import Ayuda from './Ayuda';
 
 
 // =========================================================
@@ -630,6 +631,9 @@ function AdminDashboard({
 
             case 'Respaldos':
                 return <Backups />;
+
+            case 'Ayuda':
+                return <Ayuda />;
 
 
             default:

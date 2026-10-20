@@ -68,16 +68,17 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
       </div>
       {!loading && !error && page.items.length === 0 && <p>No hay vacantes para estos filtros.</p>}
       <div className="vacancy-table-wrap"><table className="vacancy-table"><thead><tr><th>Título</th><th>Tipo</th><th>Organización</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
-        {page.items.map((value) => <tr key={value.key}><td>{value.title}</td><td>{KIND_LABELS[value.kind]}</td><td>{value.organization?.name ?? 'Sin asignar'}</td><td>{value.category?.name ?? 'Sin asignar'}</td><td>{STATUS_LABELS[value.status]}{value.status === 'OPEN' && value.expiresAt && Date.parse(value.expiresAt) <= Date.now() ? ' (vencida)' : ''}</td><td><div className="vacancy-actions">
-          <button type="button" disabled={loading} onClick={() => void open(value, false)}>Ver</button>
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.update') && <button type="button" disabled={loading} onClick={() => void open(value, true)}>Editar</button>}
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.status.update') && <button type="button" onClick={() => setAction({ opportunity: value, type: value.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}>{value.status === 'OPEN' ? 'Cerrar' : 'Publicar'}</button>}
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.archive') && <button type="button" onClick={() => setAction({ opportunity: value, type: 'ARCHIVED' })}>Archivar</button>}
-        </div></td></tr>)}
+        {page.items.map((value) => <tr key={value.key}><td>{value.title}</td><td>{KIND_LABELS[value.kind]}</td><td>{value.organization?.name ?? 'Sin asignar'}</td><td>{value.category?.name ?? 'Sin asignar'}</td><td>{STATUS_LABELS[value.status]}{value.status === 'OPEN' && value.expiresAt && Date.parse(value.expiresAt) <= Date.now() ? ' (vencida)' : ''}</td><td>
+          <div className="vacancy-actions">
+            <button type="button" data-action="view" disabled={loading} onClick={() => void open(value, false)}>Ver</button>
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.update') && <button type="button" data-action="edit" disabled={loading} onClick={() => void open(value, true)}>Editar</button>}
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.status.update') && <button type="button" data-action={value.status === 'OPEN' ? 'close' : 'publish'} onClick={() => setAction({ opportunity: value, type: value.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}>{value.status === 'OPEN' ? 'Cerrar' : 'Publicar'}</button>}
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.archive') && <button type="button" data-action="archive" onClick={() => setAction({ opportunity: value, type: 'ARCHIVED' })}>Archivar</button>}
+          </div></td></tr>)}
       </tbody></table></div>
       <div className="vacancy-pagination"><span>{page.total} vacantes · Página {filters.page}</span><button type="button" disabled={loading || (filters.page ?? 1) <= 1} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}>Anterior</button><button type="button" disabled={loading || (filters.page ?? 1) * 20 >= page.total} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}>Siguiente</button></div>
     </>}
-    {action && <VacancyActionDialog title={action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
+    {action && <VacancyActionDialog danger={action.type !== 'OPEN'} title={action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
       if (action.type === 'ARCHIVED') await archiveOpportunity(action.opportunity.key); else await setOpportunityStatus(action.opportunity.key, action.type);
       setAction(null); setMessage('Estado de la vacante actualizado.'); setRevision(revision + 1); onChanged?.();
     }} />}

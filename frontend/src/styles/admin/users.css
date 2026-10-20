@@ -1307,20 +1307,358 @@
     }
 
 }
+
 /* Server-backed management keeps lifecycle read-only and reuses the existing layout. */
-.usuarios-screen .users-dialog { border: 0; padding: 0; margin: auto; width: min(570px, calc(100vw - 32px)); background: #fff; }
-.usuarios-screen .users-dialog::backdrop { background: rgba(25,48,7,.48); backdrop-filter: blur(3px); }
-.usuarios-screen .users-notice { background: #edf8df; color: #315c10; border-radius: 10px; padding: 14px; margin-bottom: 18px; }
-.usuarios-screen .users-error { background: #fff0ee; color: #9b2525; border-radius: 10px; padding: 14px; margin-bottom: 18px; }
-.usuarios-screen .users-protected, .usuarios-screen .users-form-note { color: #667085; font-size: 13px; }
-.usuarios-screen .users-empty { text-align: center; padding: 30px; }
-.usuarios-screen .users-pagination { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; font-size: 13px; }
-.usuarios-screen .users-pagination > div { display: flex; gap: 8px; }
-.usuarios-screen button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-.usuarios-screen .user-table-info strong { overflow-wrap: anywhere; }
-.usuarios-screen .usuarios-form-field small { color: #667085; }
+.usuarios-screen .users-dialog {
+    border: 0;
+    padding: 0;
+    margin: auto;
+    width: min(570px, calc(100vw - 32px));
+    background: #fff;
+}
+
+.usuarios-screen .users-dialog::backdrop {
+    background: rgba(25, 48, 7, .48);
+    backdrop-filter: blur(3px);
+}
+
+.usuarios-screen .users-notice {
+    background: #edf8df;
+    color: #315c10;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+}
+
+.usuarios-screen .users-error {
+    background: #fff0ee;
+    color: #9b2525;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+}
+
+.usuarios-screen .users-protected,
+.usuarios-screen .users-form-note {
+    color: #667085;
+    font-size: 13px;
+}
+
+.usuarios-screen .users-empty {
+    text-align: center;
+    padding: 30px;
+}
+
+.usuarios-screen .users-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.usuarios-screen .users-pagination>div {
+    display: flex;
+    gap: 8px;
+}
+
+.usuarios-screen button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.usuarios-screen .user-table-info strong {
+    overflow-wrap: anywhere;
+}
+
+.usuarios-screen .usuarios-form-field small {
+    color: #667085;
+}
+
 @media (max-width: 600px) {
-  .usuarios-screen .screen-header { align-items: flex-start; flex-direction: column; gap: 14px; }
-  .usuarios-screen .screen-header h2 { font-size: 24px; }
-  .usuarios-screen .usuarios-form { padding: 20px; }
+    .usuarios-screen .screen-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .usuarios-screen .screen-header h2 {
+        font-size: 24px;
+    }
+
+    .usuarios-screen .usuarios-form {
+        padding: 20px;
+    }
+}
+
+/* Alertas de usuarios: icono arriba, texto centrado y dos botones */
+.usuarios-screen .users-dialog {
+    box-sizing: border-box;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 28px 24px 24px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.usuarios-screen .users-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.usuarios-screen .users-dialog h1,
+.usuarios-screen .users-dialog h2,
+.usuarios-screen .users-dialog h3 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+.usuarios-screen .users-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.usuarios-screen .users-dialog strong {
+    display: block;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+}
+
+/* Botones de acción (todos menos la X de cerrar) */
+.usuarios-screen .users-dialog button:not(.usuarios-modal-close) {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    margin: 16px 6px 0;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.usuarios-screen .users-dialog button:not(.usuarios-modal-close):hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.usuarios-screen .users-dialog button:not(.usuarios-modal-close):first-of-type {
+    background: #b3261e;
+}
+
+.usuarios-screen .users-dialog button:not(.usuarios-modal-close):last-of-type {
+    background: #82ba2e;
+}
+
+/* La X de cerrar vuelve a ser un botón pequeño */
+.usuarios-screen .users-dialog .usuarios-modal-close {
+    width: 34px;
+    height: 34px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 450px) {
+    .usuarios-screen .users-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .usuarios-screen .users-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .usuarios-screen .users-dialog button:not(.usuarios-modal-close) {
+        width: 100%;
+        margin: 10px 0 0;
+    }
+}
+
+/* Alerta de confirmación: mismo aspecto que el diálogo de Editar usuario */
+dialog.account-action-dialog {
+    box-sizing: border-box;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: auto;
+    padding: 28px 24px 24px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+dialog.account-action-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+dialog.account-action-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+dialog.account-action-dialog h2 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+dialog.account-action-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+dialog.account-action-dialog strong {
+    color: #193007;
+    overflow-wrap: anywhere;
+}
+
+dialog.account-action-dialog .account-action-error {
+    color: #9e2525;
+}
+
+dialog.account-action-dialog .account-action-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+dialog.account-action-dialog .account-action-buttons button {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+dialog.account-action-dialog .account-action-buttons button:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+dialog.account-action-dialog .account-action-buttons button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Cancelar en salmón; confirmar en verde (igual que Editar usuario) */
+dialog.account-action-dialog .account-action-buttons button:first-child {
+    background: #b3261e;
+}
+
+dialog.account-action-dialog .account-action-buttons button:last-child,
+dialog.account-action-dialog .account-action-confirm,
+dialog.account-action-dialog .account-action-danger {
+    background: #82ba2e;
+}
+
+@media (max-width: 450px) {
+    dialog.account-action-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    dialog.account-action-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    dialog.account-action-dialog .account-action-buttons {
+        flex-direction: column;
+    }
+
+    dialog.account-action-dialog .account-action-buttons button {
+        width: 100%;
+    }
+}
+
+/* Editar / Nuevo usuario: más ancho en PC y botones sin salto de línea */
+.usuarios-screen .users-dialog.usuarios-modal {
+    width: min(500px, calc(100vw - 32px));
+}
+
+.usuarios-screen .users-dialog .usuarios-form {
+    padding: 20px 0 0;
+}
+
+.usuarios-screen .users-dialog .usuarios-modal-footer {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.usuarios-screen .users-dialog .usuarios-modal-footer button {
+    flex: 1 1 150px;
+    margin: 16px 0 0;
+    white-space: nowrap;
+}
+
+/* Móvil: botones apilados, de altura normal */
+@media (max-width: 700px) {
+    .usuarios-screen .users-dialog .usuarios-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .usuarios-screen .users-dialog .usuarios-modal-footer button {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 42px;
+        margin: 10px 0 0;
+    }
 }

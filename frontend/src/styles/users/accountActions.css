@@ -1,18 +1,223 @@
 /* Shared native confirmation modal for profile and administrative lifecycle actions. */
-.account-action-dialog { border: 0; border-radius: 16px; padding: 26px; margin: auto; width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; background: #fff; color: #283824; box-shadow: 0 20px 65px #0004; box-sizing: border-box; }
-.account-action-dialog::backdrop { background: #19300799; backdrop-filter: blur(3px); }
-.account-action-dialog h2 { font-size: 22px; margin: 0 0 18px; }
-.account-action-dialog p { margin: 12px 0; line-height: 1.55; overflow-wrap: anywhere; }
-.account-action-note { font-size: 13px; color: #52604e; }
-.account-action-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap; }
-.account-action-buttons button, .account-danger-zone button { border: 1px solid #ccc; border-radius: 8px; padding: 11px 16px; cursor: pointer; font: inherit; }
-.account-action-danger { background: #a82924; color: white; border-color: #a82924 !important; }
-.account-action-confirm { background: #487b18; color: white; }
-.account-action-dialog button:disabled { opacity: .6; cursor: wait; }
-.account-action-error { background: #fff0ee; padding: 12px; color: #91251f; border-radius: 8px; }
-.account-danger-zone { margin: 24px 0; padding: 22px; border: 1px solid #e6c6c2; border-radius: 12px; background: white; }
-.account-danger-zone p { margin: 12px 0 18px; }
-.users-lifecycle-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.users-lifecycle-actions button { border: 1px solid #ccd3c6; padding: 7px 10px; border-radius: 7px; cursor: pointer; background: white; }
-.users-lifecycle-actions button[data-action="DELETE"] { color: #a82924; border-color: #dfb8b5; }
-@media (max-width: 500px) { .account-action-buttons { flex-direction: column; } .account-action-buttons button { width: 100%; } }
+.account-action-dialog {
+    box-sizing: border-box;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: auto;
+    padding: 28px 24px 24px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    color: #283824;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.account-action-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+/* Icono de advertencia */
+.account-action-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.account-action-dialog h2 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+.account-action-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.account-action-dialog strong {
+    color: #193007;
+    overflow-wrap: anywhere;
+}
+
+.account-action-note {
+    font-size: 13px;
+    color: #52604e;
+}
+
+.account-action-error {
+    background: #fff0ee;
+    padding: 12px;
+    color: #91251f;
+    border-radius: 8px;
+}
+
+/* Botones */
+.account-action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+.account-action-dialog .account-action-buttons button {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.account-action-dialog .account-action-buttons button:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.account-action-dialog button:disabled {
+    opacity: .6;
+    cursor: wait;
+    transform: none;
+}
+
+/* Por defecto (rehabilitar / restaurar): Cancelar salmón, confirmar verde */
+.account-action-dialog .account-action-buttons button:first-child {
+    background: #e0705f;
+}
+
+.account-action-dialog .account-action-confirm {
+    background: #82ba2e;
+}
+
+/* Acciones destructivas (deshabilitar / eliminar): Cancelar verde, confirmar rojo */
+.account-action-dialog:has(.account-action-danger) .account-action-buttons button:first-child {
+    background: #82ba2e;
+}
+
+.account-action-dialog .account-action-danger {
+    background: #b3261e;
+}
+
+/* Zona de peligro del perfil (no es parte del diálogo) */
+.account-danger-zone button {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.account-danger-zone {
+    margin: 24px 0;
+    padding: 22px;
+    border: 1px solid #e6c6c2;
+    border-radius: 12px;
+    background: white;
+}
+
+.account-danger-zone p {
+    margin: 12px 0 18px;
+}
+
+/* Acciones por fila en la tabla de usuarios */
+.users-lifecycle-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.users-lifecycle-actions button {
+    border: 1px solid #ccd3c6;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    background: white;
+    font-family: inherit;
+    transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.25s ease;
+}
+
+.users-lifecycle-actions button:hover:not(:disabled) {
+    background: #F5F9EF;
+    border-color: #C7DBAF;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.users-lifecycle-actions button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.users-lifecycle-actions button:focus-visible {
+    outline: 2px solid #82BA2E;
+    outline-offset: 2px;
+}
+
+/* Eliminar: mantiene el tono rojo, también en hover */
+.users-lifecycle-actions button[data-action="DELETE"] {
+    color: #a82924;
+    border-color: #dfb8b5;
+}
+
+.users-lifecycle-actions button[data-action="DELETE"]:hover:not(:disabled) {
+    background: #FCEAEA;
+    border-color: #D99B9B;
+}
+
+@media (max-width: 450px) {
+    .account-action-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .account-action-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .account-action-buttons {
+        flex-direction: column;
+    }
+
+    .account-action-dialog .account-action-buttons button {
+        width: 100%;
+    }
+}
+
+/* Acciones destructivas: confirmar en rojo (prevalece sobre cualquier regla anterior) */
+.account-action-dialog .account-action-buttons button.account-action-danger {
+    background: #b3261e !important;
+}
+
+.account-action-dialog:has(.account-action-danger) .account-action-buttons button:first-child {
+    background: #82ba2e !important;
+}
