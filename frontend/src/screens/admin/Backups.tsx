@@ -7,6 +7,7 @@ import { createBackup, getBackupStatus, restoreBackup } from '../../services/bac
 import type { BackupStatus, BackupSummary } from '../../types/backup';
 import { BACKUP_PHASE_LABELS } from '../../types/backup';
 import { canManageBackups } from '../../utils/backupManagement';
+import { BackupTransfers } from '../../components/admin/BackupTransfers';
 import '../../styles/components/detailDialog.css';
 import '../../styles/admin/backups.css';
 
@@ -40,6 +41,7 @@ export default function Backups() {
   const [status, setStatus] = useState<BackupStatus | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState('');
   const [dialog, setDialog] = useState<'BACKUP' | 'RESTORE' | null>(null); const [busy, setBusy] = useState(false); const [dialogError, setDialogError] = useState('');
   const [revision, setRevision] = useState(0); const requestId = useRef(''); const submitting = useRef(false); const requests = useRef(new Set<AbortController>());
+  const [transferring, setTransferring] = useState(false);
   useEffect(() => { const controllers = requests.current; return () => { controllers.forEach(controller => controller.abort()); }; }, []);
   useEffect(() => {
     if (!allowed) return;
@@ -65,7 +67,7 @@ export default function Backups() {
   };
   if (!allowed) return <p role="alert">Solo Super Admin puede consultar los respaldos.</p>;
   const operation = tracked?.ticket.operation ?? status?.operation;
-  const pending = busy || Boolean(operation && !['SUCCEEDED', 'FAILED'].includes(operation.phase));
+  const pending = busy || transferring || Boolean(operation && !['SUCCEEDED', 'FAILED'].includes(operation.phase));
   const open = (kind: 'BACKUP' | 'RESTORE'): void => { requestId.current = crypto.randomUUID(); setDialogError(''); setDialog(kind); };
   return <section className="admin-screen backups-screen"><header className="backup-heading"><div><h2>Respaldos y restauración</h2><p>Base de datos completa y documentos privados</p></div><DatabaseBackup size={32} aria-hidden="true" /></header>
     {loading && <p role="status">Cargando respaldos…</p>}
@@ -78,6 +80,7 @@ export default function Backups() {
       <div className="backup-panel"><h3>Acciones</h3><p>Se conserva un único respaldo. El anterior se reemplaza únicamente después de verificar el nuevo.</p><div className="backup-actions">
         <button type="button" className="primary-button" disabled={!status.available || pending} onClick={() => open('BACKUP')}>Crear respaldo ahora</button>
         {restoreAllowed && <button type="button" className="backup-danger" disabled={!status.available || pending || !status.latest} onClick={() => open('RESTORE')}>Restaurar último respaldo</button>}</div></div>
+      <BackupTransfers key={userId} userId={userId} latest={status.latest} disabled={!status.available || pending} canImport={restoreAllowed} onBusyChange={setTransferring} onAccepted={() => setRevision(value => value + 1)} />
     </>}
     {dialog && <BackupConfirmation kind={dialog} latest={status?.latest ?? null} busy={busy} error={dialogError} onClose={() => { if (!busy) setDialog(null); }} onConfirm={(password, confirmation) => void start(password, confirmation)} />}
   </section>;
