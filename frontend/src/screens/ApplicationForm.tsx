@@ -8,7 +8,6 @@ import type { ResumeMetadata } from '../types/profile';
 import { KIND_LABELS } from '../types/opportunity';
 import { downloadDraftResume } from '../services/applicationService';
 import '../styles/users/candidateEditor.css';
-import '../styles/users/applications.css';
 interface ApplicationFormProps { opportunityKey:string;candidateState:CandidateProfileState;onSubmitted:(value:Application)=>void;onExit:()=>void; onBeforeLeave:(save:(()=>Promise<unknown>)|null)=>void }
 /** Four-step editor with real database autosave; the profile is never updated by editing form fields. */
 export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExit,onBeforeLeave}:ApplicationFormProps) {
