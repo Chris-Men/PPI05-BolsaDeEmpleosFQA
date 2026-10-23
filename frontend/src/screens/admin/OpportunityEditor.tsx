@@ -60,12 +60,38 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   </span>;
 
   /** El título basta para un borrador; para publicar (o editar una vacante abierta) se exigen todos los *. */
+
   const validate = (strict: boolean): Record<string, string> => {
     const found: Record<string, string> = {};
-    if (!values.title.trim()) found.title = REQUIRED_MESSAGE;
-    if (strict) for (const name of requiredNames) if (!values[name].trim()) found[name] = REQUIRED_MESSAGE;
-    const min = numberValue(values.salaryMin); const max = numberValue(values.salaryMax);
-    if (kind === 'EMPLOYMENT' && min !== null && max !== null && max < min) found.salaryMax = 'El salario máximo no puede ser menor que el mínimo.';
+
+    if (!values.title.trim()) {
+      found.title = REQUIRED_MESSAGE;
+    }
+
+    if (strict) {
+      for (const name of requiredNames) {
+        if (!values[name].trim()) {
+          found[name] = REQUIRED_MESSAGE;
+        }
+      }
+    }
+
+    // Los cupos deben ser un entero positivo.
+    if (values.slots.trim() !== '') {
+      const slots = Number(values.slots);
+
+      if (!/^[1-9]\d*$/.test(values.slots) || !Number.isSafeInteger(slots)) {
+        found.slots = 'La cantidad de cupos debe ser un número entero mayor que cero.';
+      }
+    }
+
+    const min = numberValue(values.salaryMin);
+    const max = numberValue(values.salaryMax);
+
+    if (kind === 'EMPLOYMENT' && min !== null && max !== null && max < min) {
+      found.salaryMax = 'El salario máximo no puede ser menor que el mínimo.';
+    }
+
     return found;
   };
 

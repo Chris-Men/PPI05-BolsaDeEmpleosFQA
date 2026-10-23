@@ -528,3 +528,181 @@
 .vacancy-confirm-dialog[data-tone="safe"] .vacancy-actions button:last-child {
     background: #82ba2e;
 }
+
+/* =====================================================
+   CATEGORÍAS: botón Eliminar y formulario Nueva/Editar
+===================================================== */
+
+/* ---------- Eliminar: rojo, igual que Cerrar ---------- */
+.vacancy-table .vacancy-actions button[data-action="delete"] {
+    color: #b3261e;
+    border-color: #e4b4b0;
+}
+
+.vacancy-table .vacancy-actions button[data-action="delete"]:hover:not(:disabled) {
+    background: #FCEAEA;
+    border-color: #d99b9b;
+}
+
+/* ---------- Formulario de categoría (mismo look que organizaciones/usuarios) ---------- */
+.vacancy-form-dialog {
+    box-sizing: border-box;
+    width: min(500px, calc(100vw - 32px));
+    padding: 28px 24px 24px;
+    border-radius: 18px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.vacancy-form-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+/* Icono de advertencia (para quitarlo del formulario, borra esta regla) */
+.vacancy-form-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.vacancy-form-dialog h2 {
+    margin: 0 0 14px;
+    color: #193007;
+    font-size: 20px;
+    text-align: center;
+}
+
+/* Una sola columna: el diálogo es angosto */
+.vacancy-form-dialog .vacancy-fields {
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.vacancy-form-dialog .vacancy-fields label {
+    color: #193007;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.vacancy-form-dialog .vacancy-fields input,
+.vacancy-form-dialog .vacancy-fields select,
+.vacancy-form-dialog .vacancy-fields textarea {
+    padding: 10px 12px;
+    border: 1px solid #bdcbb4;
+    border-radius: 8px;
+    color: #283824;
+    font-size: 14px;
+    font-weight: 400;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vacancy-form-dialog .vacancy-fields input:focus,
+.vacancy-form-dialog .vacancy-fields select:focus,
+.vacancy-form-dialog .vacancy-fields textarea:focus {
+    outline: none;
+    border-color: #82ba2e;
+    box-shadow: 0 0 0 3px rgba(130, 186, 46, 0.14);
+}
+
+.vacancy-form-dialog .vacancy-fields [aria-invalid="true"] {
+    border-color: #d98a8a;
+    background: #fff8f8;
+}
+
+.vacancy-form-dialog .vacancy-error {
+    color: #91251f;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.vacancy-form-dialog [role="alert"] {
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff0ee;
+    color: #91251f;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ---------- Botones (por data-role, no dependen del orden) ---------- */
+.vacancy-form-dialog .vacancy-actions {
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.vacancy-form-dialog .vacancy-actions button {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.vacancy-form-dialog .vacancy-actions button:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.vacancy-form-dialog .vacancy-actions button:focus-visible {
+    outline: 2px solid #82ba2e;
+    outline-offset: 2px;
+}
+
+/* Guardar (acción normal): Cancelar rojo, Guardar verde */
+.vacancy-form-dialog[data-tone="safe"] .vacancy-actions [data-role="cancel"] {
+    background: #b3261e;
+}
+
+.vacancy-form-dialog[data-tone="safe"] .vacancy-actions [data-role="confirm"] {
+    background: #82ba2e;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 700px) {
+    .vacancy-form-dialog .vacancy-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vacancy-form-dialog .vacancy-actions button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 450px) {
+    .vacancy-form-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .vacancy-form-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+}
+
+.vacancy-header .primary-button {
+    background: #82ba2e;
+    color: #ffffff;
+}

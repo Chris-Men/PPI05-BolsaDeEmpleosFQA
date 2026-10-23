@@ -55,7 +55,7 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
   };
   const updateFilters = (value: Partial<OpportunityFilters>): void => setFilters({ ...filters, ...value, page: 1 });
   return <section className="vacancy-section">
-    <div className="vacancy-header"><h1>Vacantes</h1>{!editor && canManageVacancies(session, 'opportunities.create') && <button type="button" onClick={() => { setMessage(''); setEditor({ opportunity: null }); }}>Nueva vacante</button>}</div>
+    <div className="vacancy-header"><h1>Vacantes</h1>{!editor && canManageVacancies(session, 'opportunities.create') && <button className="primary-button" type="button" onClick={() => { setMessage(''); setEditor({ opportunity: null }); }}>+ Nueva vacante</button>}</div>
     {message && <p role="status">{message}</p>}
     {error && <p role="alert">{error} <button type="button" onClick={() => setRevision(revision + 1)}>Reintentar</button></p>}
     {loading && <p role="status">Cargando vacantes…</p>}

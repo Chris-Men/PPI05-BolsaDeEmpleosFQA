@@ -2,6 +2,7 @@
 import { ApiError } from '../../services/api';
 import { createOrganization, updateOrganization } from '../../services/organizationService';
 import type { ManagedOrganization } from '../../types/organization';
+import { useBackdropClose } from '../../hooks/useBackdropClose';
 
 interface OrganizationDialogProps {
   mode: 'create' | 'view' | 'edit';
@@ -19,6 +20,10 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
   const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const viewing = mode === 'view';
+
+  // Click/tap outside behaves like "Cancelar"/"Cerrar"; blocked while saving.
+  useBackdropClose(dialogRef, onClose, busy);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     dialog?.showModal();
@@ -41,28 +46,34 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
       if (failure instanceof ApiError) setFields(Object.fromEntries(failure.validationErrors.map((field) => [field.field, field.message])));
     } finally { submitting.current = false; setBusy(false); }
   };
-  return <dialog ref={dialogRef} className="organizaciones-modal organizations-dialog" aria-labelledby="organization-title"
+
+  return <dialog ref={dialogRef} className="organization-dialog" data-tone="safe" aria-labelledby="organization-title"
     onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}>
-    <div className="organizaciones-modal-header"><h2 id="organization-title">{viewing ? 'Detalle de organización' : organization ? 'Editar organización' : 'Nueva organización'}</h2>
-      <button type="button" className="organizaciones-modal-close" disabled={busy} onClick={onClose} aria-label="Cerrar">×</button></div>
-    <form onSubmit={(event) => void save(event)} aria-busy={busy}>
-      <div className="organizaciones-modal-body">
-        {error && <p className="organizations-error" role="alert">{error}</p>}
-        {(['name', 'email', 'description'] as const).map((field) => <div className="organizaciones-form-field" key={field}>
-          <label htmlFor={'organization-' + field}>{field === 'name' ? 'Nombre' : field === 'email' ? 'Correo (opcional)' : 'Descripción (opcional)'}</label>
-          {field === 'description' ? <textarea id={'organization-' + field} value={form[field]} maxLength={5000} readOnly={viewing} disabled={busy}
-            onChange={(event) => setForm({ ...form, [field]: event.target.value })} />
-            : <input id={'organization-' + field} type={field === 'email' ? 'email' : 'text'} value={form[field]} required={field === 'name'}
-              maxLength={field === 'name' ? 150 : 255} readOnly={viewing} disabled={busy} aria-invalid={Boolean(fields[field])}
-              onChange={(event) => setForm({ ...form, [field]: event.target.value })} autoFocus={field === 'name'} />}
-          {fields[field] && <small role="alert">{fields[field]}</small>}
-        </div>)}
-        {organization && <p>Estado: {organization.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}{organization.createdAt && ' · Registrada: ' + new Date(organization.createdAt).toLocaleDateString('es-SV')}</p>}
-        {!organization && <p>La organización se creará activa.</p>}
-      </div>
-      <div className="organizaciones-modal-footer">
-        <button type="button" className="modal-secondary-button" disabled={busy} onClick={onClose}>{viewing ? 'Cerrar' : 'Cancelar'}</button>
-        {!viewing && <button type="submit" className="modal-primary-button" disabled={busy}>{busy ? 'Guardando…' : 'Guardar organización'}</button>}
+    <h2 id="organization-title" className="organization-dialog-title">
+      {viewing ? 'Detalle de organización' : organization ? 'Editar organización' : 'Nueva organización'}
+    </h2>
+    <form onSubmit={(event) => void save(event)} aria-busy={busy} noValidate>
+      {error && <p className="organization-dialog-error" role="alert">{error}</p>}
+      {(['name', 'email', 'description'] as const).map((field) => <div className="organization-dialog-field" key={field}>
+        <label htmlFor={'organization-' + field}>{field === 'name' ? 'Nombre' : field === 'email' ? 'Correo (opcional)' : 'Descripción (opcional)'}</label>
+        {field === 'description' ? <textarea id={'organization-' + field} value={form[field]} maxLength={5000} readOnly={viewing} disabled={busy}
+          onChange={(event) => setForm({ ...form, [field]: event.target.value })} />
+          : <input id={'organization-' + field} type={field === 'email' ? 'email' : 'text'} value={form[field]} required={field === 'name'}
+            maxLength={field === 'name' ? 150 : 255} readOnly={viewing} disabled={busy} aria-invalid={Boolean(fields[field])}
+            onChange={(event) => setForm({ ...form, [field]: event.target.value })} autoFocus={field === 'name' && !viewing} />}
+        {fields[field] && <small role="alert">{fields[field]}</small>}
+      </div>)}
+      {organization && <p className="organization-dialog-meta">
+        Estado: {organization.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
+        {organization.createdAt && ' · Registrada: ' + new Date(organization.createdAt).toLocaleDateString('es-SV')}
+      </p>}
+      {!organization && <p className="organization-dialog-meta">La organización se creará activa.</p>}
+      <div className="organization-dialog-actions">
+        <button type="button" className="organization-dialog-button" data-role={viewing ? 'confirm' : 'cancel'}
+          disabled={busy} onClick={onClose}>{viewing ? 'Cerrar' : 'Cancelar'}</button>
+        {!viewing && <button type="submit" className="organization-dialog-button" data-role="confirm" disabled={busy}>
+          {busy ? 'Guardando…' : 'Guardar'}
+        </button>}
       </div>
     </form>
   </dialog>;

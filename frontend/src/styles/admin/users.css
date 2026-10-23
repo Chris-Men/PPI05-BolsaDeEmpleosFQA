@@ -376,11 +376,11 @@
 
     background: transparent;
 
-    color: #5BA222;
+    color: #073a00;
 
     font-family: inherit;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 
     cursor: pointer;
@@ -1661,4 +1661,24 @@ dialog.account-action-dialog .account-action-danger {
         min-height: 42px;
         margin: 10px 0 0;
     }
+}
+
+/* Negrita en ambos botones */
+.usuarios-screen .users-lifecycle-actions button[data-action="DISABLE"],
+.usuarios-screen .users-lifecycle-actions button[data-action="DELETE"] {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Deshabilitar: mostaza (mismo tono que Archivar en vacantes) */
+.usuarios-screen .users-lifecycle-actions button[data-action="DISABLE"] {
+    color: #8a6100;
+    background: #FFFAEB;
+    border-color: #e6c76a;
+}
+
+.usuarios-screen .users-lifecycle-actions button[data-action="DISABLE"]:hover:not(:disabled) {
+    background: #FFF1C2;
+    border-color: #d9a800;
+    color: #8a6100;
 }

@@ -847,3 +847,204 @@
     grid-row: auto;
   }
 }
+
+/* =========================================================
+   DETALLE DE POSTULACIÓN (diálogo)
+   Anula estilos del listado que se filtran al diálogo
+========================================================= */
+
+/* Resumen: padding dentro de la tarjeta */
+dialog.application-dialog .application-heading.detail-dialog-summary {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 16px;
+  margin: 0;
+  padding: 18px 20px;
+}
+
+dialog.application-dialog .detail-dialog-summary h3 {
+  margin: 0 0 4px;
+  color: #193007;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+dialog.application-dialog .detail-dialog-summary p {
+  margin: 0;
+  color: var(--al-muted, #74816e);
+  font-size: 14px;
+}
+
+dialog.application-dialog .application-reference {
+  display: block;
+  margin-top: 6px;
+  color: var(--al-muted, #74816e);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* Motivación: igual que las demás etiquetas */
+dialog.application-dialog .application-detail-motivation {
+  margin-top: 16px;
+}
+
+dialog.application-dialog .application-detail-motivation h4 {
+  margin: 0 0 4px;
+  color: #4f7a2c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+dialog.application-dialog .application-detail-motivation p {
+  margin: 0;
+  color: #263522;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* Fila de acciones: separada del contenido */
+dialog.application-dialog .application-dialog-body>.application-actions {
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e7ede2;
+}
+
+/* Botones del diálogo: color definido por --btn-bg / --btn-fg */
+dialog.application-dialog .application-actions button.application-button,
+dialog.application-dialog .application-actions button.application-button:hover:not(:disabled) {
+  min-width: 130px;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--btn-bg, #82ba2e);
+  color: var(--btn-fg, #fff);
+  -webkit-text-fill-color: var(--btn-fg, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+dialog.application-dialog .application-actions button.application-button:hover:not(:disabled) {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+/* Pasar a revisión: ámbar. Seleccionar: verde. Rechazar: rojo */
+dialog.application-dialog .application-actions button.application-button.secondary {
+  --btn-bg: #fff1c2;
+  --btn-fg: #8a6100;
+}
+
+dialog.application-dialog .application-actions button.application-button.danger {
+  --btn-bg: #b3261e;
+  --btn-fg: #fff;
+}
+
+/* Panel de confirmación en columna */
+dialog.application-dialog .application-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 18px 20px;
+  border: 1px solid #e3ebdc;
+  border-radius: 14px;
+  background: #f8faf5;
+}
+
+dialog.application-dialog .application-confirm[data-tone="danger"] {
+  border-color: var(--al-danger-border, #f2d3d3);
+  background: var(--al-danger-soft, #fff4f4);
+}
+
+dialog.application-dialog .application-confirm h3 {
+  margin: 0;
+  color: #193007;
+  font-size: 17px;
+}
+
+dialog.application-dialog .application-confirm p {
+  flex: none;
+  margin: 0;
+  color: #5d6a57;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+dialog.application-dialog .application-confirm[data-tone="danger"] p {
+  color: var(--al-danger, #a22f40);
+}
+
+dialog.application-dialog .application-confirm label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #3d5233;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+dialog.application-dialog .application-confirm textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 12px;
+  border: 1.5px solid #dbe5d2;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+dialog.application-dialog .application-confirm textarea:focus {
+  outline: none;
+  border-color: #5ba222;
+  box-shadow: 0 0 0 3px rgba(130, 186, 46, 0.18);
+}
+
+dialog.application-dialog .application-confirm .application-actions {
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* Cancelar / Confirmar: acciones normales (Cancelar salmón, Confirmar verde) */
+dialog.application-dialog .application-confirm .application-actions button.application-button:first-child {
+  --btn-bg: #b3261e;
+  --btn-fg: #fff;
+}
+
+dialog.application-dialog .application-confirm .application-actions button.application-button:last-child {
+  --btn-bg: #82ba2e;
+  --btn-fg: #fff;
+}
+
+/* Rechazar / Retirar: Cancelar verde, Confirmar rojo */
+dialog.application-dialog .application-confirm[data-tone="danger"] .application-actions button.application-button:first-child {
+  --btn-bg: #82ba2e;
+}
+
+dialog.application-dialog .application-confirm[data-tone="danger"] .application-actions button.application-button:last-child {
+  --btn-bg: #b3261e;
+}
+
+@media (max-width: 600px) {
+  dialog.application-dialog .application-heading.detail-dialog-summary {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  dialog.application-dialog .application-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  dialog.application-dialog .application-actions button.application-button {
+    width: 100%;
+  }
+}
