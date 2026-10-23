@@ -6,6 +6,7 @@ import { ApiError } from '../../services/api';
 import { getAdminSiteSettings, resetSiteSettings, saveSiteSettings, type SiteSettingsDocument } from '../../services/siteSettingsService';
 import { canReadSiteSettings, canUpdateSiteSettings } from '../../utils/siteManagement';
 import { ConfigurationConfirmDialog } from '../../components/admin/ConfigurationConfirmDialog';
+import { ConfigurationSuccessAlert } from '../../components/admin/ConfigurationSuccessAlert';
 import '../../styles/admin/configuracion.css';
 
 interface SettingsField { key: string; label: string; type?: 'email' | 'tel' | 'url' | 'textarea'; limit: number }
@@ -45,7 +46,12 @@ export default function Configuracion() {
   const [draft, setDraft] = useState<SiteConfiguration | null>(null);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false);
   const [error, setError] = useState(''); const [fields, setFields] = useState<Record<string, string>>({});
-  const [notice, setNotice] = useState(''); const [conflict, setConflict] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [success, setSuccess] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false); const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [revision, setRevision] = useState(0);
   const requests = useRef(new Set<AbortController>());
@@ -62,26 +68,86 @@ export default function Configuracion() {
   /** Server success is the only event that changes the saved snapshot and public content. */
   const persist = async (reset = false): Promise<void> => {
     if (!document || !draft || !editable || busy) return;
-    const controller = new AbortController(); requests.current.add(controller); setBusy(true); setError(''); setFields({}); setNotice('');
+    const controller = new AbortController(); requests.current.add(controller); setBusy(true); setError(''); setFields({}); setNotice(''); setSuccess(null);
+
     try {
-      const value = reset ? await resetSiteSettings(document.version, userId, controller.signal) : await saveSiteSettings({ version: document.version, configuration: draft }, userId, controller.signal);
+      const value = reset
+        ? await resetSiteSettings(document.version, userId, controller.signal)
+        : await saveSiteSettings(
+          { version: document.version, configuration: draft },
+          userId,
+          controller.signal
+        );
+
       if (controller.signal.aborted) return;
-      setDocument(value); setDraft(value.configuration); setConflict(false); setConfirmReset(false);
-      setNotice(reset ? 'Configuración restaurada correctamente.' : 'Configuración guardada correctamente.');
-      publicSettings.accept(value.configuration); publicSettings.reload();
+
+      setDocument(value);
+      setDraft(value.configuration);
+      setConflict(false);
+      setConfirmReset(false);
+      setConfirmDiscard(false);
+      setError('');
+      setNotice('');
+
+      publicSettings.accept(value.configuration);
+      publicSettings.reload();
+
+      setSuccess(
+        reset
+          ? {
+            title: 'Configuración restaurada',
+            message: 'Los valores iniciales se restauraron correctamente.',
+          }
+          : {
+            title: 'Cambios guardados',
+            message: 'La configuración del sitio se guardó correctamente.',
+          }
+      );
+
     } catch (failure: unknown) {
       if (!controller.signal.aborted) {
-        setError(failure instanceof Error ? failure.message : 'No se pudo guardar la configuración.');
+        setError(
+          failure instanceof Error
+            ? failure.message
+            : 'No se pudo guardar la configuración.'
+        );
+
         if (failure instanceof ApiError) {
           setConflict(failure.status === 409);
-          // On a version conflict the page banner (reload option) must be reachable, so close the alert.
-          if (failure.status === 409) setConfirmReset(false);
-          setFields(Object.fromEntries(failure.validationErrors.map(item => [item.field.replace(/^configuration\./, ''), item.message])));
+
+          if (failure.status === 409) {
+            setConfirmReset(false);
+          }
+
+          setFields(
+            Object.fromEntries(
+              failure.validationErrors.map((item) => [
+                item.field.replace(/^configuration\./, ''),
+                item.message,
+              ])
+            )
+          );
         }
       }
-    } finally { requests.current.delete(controller); if (!controller.signal.aborted) setBusy(false); }
+    } finally {
+      requests.current.delete(controller);
+
+      if (!controller.signal.aborted) {
+        setBusy(false);
+      }
+    }
   };
-  const save = (event: FormEvent<HTMLFormElement>): void => { event.preventDefault(); void persist(); };
+
+  const save = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+
+    // Si no hay cambios, no guardar ni mostrar la alerta.
+    if (!dirty) {
+      return;
+    }
+
+    void persist();
+  };
   /** Drops local edits and returns to the last saved snapshot. */
   const discard = (): void => {
     if (!document) return;
@@ -119,5 +185,13 @@ export default function Configuracion() {
       description="¿Restaurar el contacto, los textos y las redes a sus valores iniciales? Esta acción reemplaza la configuración guardada."
       cancelLabel="Cancelar" confirmLabel="Restaurar" busy={busy} error={error}
       onCancel={() => setConfirmReset(false)} onConfirm={() => void persist(true)} />}
+    {success && (
+      <ConfigurationSuccessAlert
+        title={success.title}
+        message={success.message}
+        duration={2000}
+        onDone={() => setSuccess(null)}
+      />
+    )}
   </section>;
 }

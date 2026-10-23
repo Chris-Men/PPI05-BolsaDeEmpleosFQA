@@ -5,6 +5,7 @@ import { KIND_LABELS, type Opportunity, type OpportunityCatalogs, type Opportuni
 import { canManageVacancies } from '../../utils/vacancyManagement';
 import { ZONES, municipalitiesOf } from '../../utils/elSalvadorLocations';
 import { useAuth } from '../../hooks/useAuth';
+import { VacancySuccessAlert } from '../../components/admin/VacancySuccessAlert';
 
 /** Editor callbacks keep persistence separate from dashboard navigation. */
 interface OpportunityEditorProps { opportunity: Opportunity | null; catalogs: OpportunityCatalogs; onSaved: () => void; onCancel: () => void }
@@ -41,6 +42,8 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   const lock = useRef(false);
   const savedKey = useRef(opportunity?.key);
   const [created, setCreated] = useState(false);
+  /** Alerta de éxito: se muestra ~2 s y luego se vuelve al listado con onSaved. */
+  const [success, setSuccess] = useState<{ title: string; message: string } | null>(null);
   const canSave = canManageVacancies(session, opportunity || created ? 'opportunities.update' : 'opportunities.create');
 
   /** Campos obligatorios (marcados con *). Dependen del tipo de vacante. */
@@ -172,7 +175,12 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
       const saved = savedKey.current ? await updateOpportunity(savedKey.current, payload) : await createOpportunity(kind, payload);
       savedKey.current = saved.key; setCreated(true);
       if (publish) await setOpportunityStatus(saved.key, 'OPEN');
-      onSaved();
+      // En lugar de salir de inmediato, muestra la alerta; ella llama a onSaved al terminar.
+      setSuccess(publish
+        ? { title: 'Vacante publicada', message: 'La vacante se publicó correctamente y ya es visible para los candidatos.' }
+        : opportunity?.status === 'OPEN'
+          ? { title: 'Cambios guardados', message: 'Los cambios de la vacante se guardaron correctamente.' }
+          : { title: 'Borrador guardado', message: 'El borrador está guardado. Puedes completar los campos y volver a publicar.' });
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No se pudo guardar la vacante.');
       if (failure instanceof ApiError) setErrors(Object.fromEntries(failure.validationErrors.map((item) => [item.field.split('.')[0], item.message])));
@@ -181,7 +189,7 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
 
   return <form className="vacancy-editor" noValidate onSubmit={(event) => { event.preventDefault(); void save(false); }}>
     <h2>{opportunity || created ? 'Editar vacante' : 'Nueva vacante'}</h2>
-    {created && !opportunity && <p role="status">El borrador está guardado. Puedes completar los campos y volver a publicar.</p>}
+    {created && !opportunity && !success && <p role="status">El borrador está guardado. Puedes completar los campos y volver a publicar.</p>}
     {error && <p role="alert">{error}</p>}
     <div className="vacancy-fields">
       <label>Tipo de vacante<select aria-label="Tipo de vacante" value={kind} disabled={Boolean(opportunity || created || busy)} onChange={(event) => setKind(event.target.value as OpportunityKind)}>{Object.entries(KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
@@ -198,8 +206,9 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
     </div>
     <p className="required-note"><span className="required-mark" aria-hidden="true">*</span> Los campos con asterisco son obligatorios para publicar. Para guardar un borrador solo necesitas el título.</p>
     <footer className="vacancy-actions"><button type="button" disabled={busy} onClick={onCancel}>Cancelar</button>
-      {canSave && <button type="submit" disabled={busy}>{busy ? 'Guardando…' : opportunity?.status === 'OPEN' ? 'Guardar cambios' : 'Guardar borrador'}</button>}
-      {canSave && canManageVacancies(session, 'opportunities.status.update') && opportunity?.status !== 'OPEN' && <button type="button" disabled={busy} onClick={() => void save(true)}>Guardar y publicar</button>}
+      {canSave && <button type="submit" disabled={busy || Boolean(success)}>{busy ? 'Guardando…' : opportunity?.status === 'OPEN' ? 'Guardar cambios' : 'Guardar borrador'}</button>}
+      {canSave && canManageVacancies(session, 'opportunities.status.update') && opportunity?.status !== 'OPEN' && <button type="button" disabled={busy || Boolean(success)} onClick={() => void save(true)}>Guardar y publicar</button>}
     </footer>
+    {success && <VacancySuccessAlert title={success.title} message={success.message} duration={2000} onDone={onSaved} />}
   </form>;
 }

@@ -572,10 +572,17 @@ function AdminDashboard({
                 return renderDashboard();
 
 
+
             case 'Nueva Vacante':
 
                 return (
-                    <OpportunityManagement key="create" startCreating onBack={handleBack} onChanged={onVacanciesChanged} />
+                    <OpportunityManagement
+                        key="create"
+                        startCreating
+                        onBack={handleBack}
+                        onPublished={() => navegarA('Administrar Vacantes')}
+                        onChanged={onVacanciesChanged}
+                    />
                 );
 
 

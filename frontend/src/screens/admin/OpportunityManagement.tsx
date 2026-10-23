@@ -9,9 +9,15 @@ import { OpportunityDetailsDialog } from '../../components/OpportunityDetailsDia
 import '../../styles/admin/vacancies.css';
 
 /** Both administrative menu entries reuse the same persistence and lifecycle controls. */
-interface OpportunityManagementProps { startCreating?: boolean; onBack?: () => void; onChanged?: () => void }
+interface OpportunityManagementProps {
+  startCreating?: boolean;
+  onBack?: () => void;
+  onPublished?: () => void;
+  onChanged?: () => void;
+}
 /** Persistent management for all types, including server pagination and permission-aware actions. */
-export default function OpportunityManagement({ startCreating = false, onBack, onChanged }: OpportunityManagementProps) {
+
+export default function OpportunityManagement({ startCreating = false, onBack, onPublished, onChanged, }: OpportunityManagementProps) {
   const { session } = useAuth();
   const [filters, setFilters] = useState<OpportunityFilters>({ page: 1, pageSize: 20 });
   const [page, setPage] = useState<Page<Opportunity>>({ items: [], total: 0, page: 1, pageSize: 20 });
@@ -59,7 +65,7 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
     {message && <p role="status">{message}</p>}
     {error && <p role="alert">{error} <button type="button" onClick={() => setRevision(revision + 1)}>Reintentar</button></p>}
     {loading && <p role="status">Cargando vacantes…</p>}
-    {editor && catalogs ? <OpportunityEditor key={editor.opportunity?.key ?? session?.user.id} opportunity={editor.opportunity} catalogs={catalogs} onSaved={() => { onChanged?.(); if (!mounted.current) return; setEditor(null); setMessage('Vacante guardada correctamente.'); setRevision(revision + 1); if (startCreating) onBack?.(); }} onCancel={() => { setEditor(null); if (startCreating) onBack?.(); }} /> : !editor && <>
+    {editor && catalogs ? <OpportunityEditor key={editor.opportunity?.key ?? session?.user.id} opportunity={editor.opportunity} catalogs={catalogs} onSaved={() => { onChanged?.(); if (!mounted.current) return; setEditor(null); setMessage('Vacante guardada correctamente.'); setRevision((value) => value + 1); if (startCreating) { onPublished?.(); } }} onCancel={() => { setEditor(null); if (startCreating) onBack?.(); }} /> : !editor && <>
       <div className="vacancy-filters">
         <input aria-label="Buscar vacantes" placeholder="Buscar por título u organización" value={filters.search ?? ''} onChange={(event) => updateFilters({ search: event.target.value })} />
         <select aria-label="Tipo de vacante" value={filters.kind ?? ''} onChange={(event) => updateFilters({ kind: (event.target.value || undefined) as OpportunityFilters['kind'] })}><option value="">Todos los tipos</option>{Object.entries(KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>

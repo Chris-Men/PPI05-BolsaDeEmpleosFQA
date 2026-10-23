@@ -706,3 +706,117 @@
     background: #82ba2e;
     color: #ffffff;
 }
+
+/* =====================================================
+   VACANTES: alerta de éxito que se cierra sola
+===================================================== */
+
+.vacancy-success-dialog {
+    box-sizing: border-box;
+    width: min(400px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: hidden;
+    margin: auto;
+    padding: 28px 24px 20px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    color: #283824;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.vacancy-success-dialog[open] {
+    animation: vacancySuccessIn 0.2s ease;
+}
+
+.vacancy-success-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+/* Icono de éxito: check verde */
+.vacancy-success-dialog::before {
+    content: "✓";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #82ba2e;
+    border-radius: 50%;
+    color: #82ba2e;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.vacancy-success-dialog h2 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+.vacancy-success-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+/* Barra que indica cuánto falta para que se cierre */
+.vacancy-success-dialog::after {
+    content: "";
+    display: block;
+    height: 4px;
+    margin-top: 16px;
+    border-radius: 2px;
+    background: #82ba2e;
+    transform-origin: left center;
+    animation: vacancySuccessBar var(--alert-duration, 2000ms) linear forwards;
+}
+
+@keyframes vacancySuccessIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes vacancySuccessBar {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .vacancy-success-dialog[open],
+    .vacancy-success-dialog::after {
+        animation: none;
+    }
+}
+
+@media (max-width: 450px) {
+    .vacancy-success-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .vacancy-success-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+}
