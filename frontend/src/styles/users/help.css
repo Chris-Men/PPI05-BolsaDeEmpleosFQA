@@ -51,45 +51,42 @@
 
 /* =========================================================
    HERO — ESCRITORIO
-   Se conserva el diseño original.
+   La imagen define la altura y se ve completa.
+   El texto va superpuesto a la izquierda.
    ========================================================= */
 
 .help-hero {
   position: relative;
   isolation: isolate;
-  display: flex;
-  align-items: center;
+  display: block;
   width: 100vw;
   max-width: 100vw;
-  min-height: clamp(380px, 35vw, 500px);
   margin-left: calc(50% - 50vw);
+  margin-top: 30px;
   overflow: hidden;
   background: #142b08;
   border-radius: 0;
 }
 
 .help-hero-picture {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
+  position: relative;
+  z-index: 0;
   display: block;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
 }
 
 .help-hero-image {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 48%;
+  height: auto;
 }
 
+/* Degradado sobre la imagen */
 .help-hero::after {
   content: "";
   position: absolute;
-  z-index: -1;
+  z-index: 1;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(90deg,
@@ -99,12 +96,20 @@
       rgba(13, 32, 5, 0.12) 100%);
 }
 
+/* Texto superpuesto, centrado verticalmente a la izquierda */
 .help-hero-copy {
-  position: relative;
-  z-index: 1;
-  width: min(600px, calc(100% - 48px));
-  margin-left: max(5vw, calc((100vw - 1120px) / 2));
-  padding: 42px 0;
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: max(5vw, calc((100vw - 1120px) / 2));
+  width: min(600px, 50%);
+  margin: 0;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .help-kicker {
@@ -141,10 +146,9 @@
   line-height: 1.9;
 }
 
-/*btn*/
-
-
-/* BOTONES DEL HERO DE AYUDA */
+/* =========================================================
+   BOTONES DEL HERO DE AYUDA
+   ========================================================= */
 
 .help-hero-button {
   display: inline-flex;
@@ -210,8 +214,6 @@
     font-size: 11px;
   }
 }
-
-
 
 /* Accesibilidad */
 
@@ -882,12 +884,25 @@ a.help-contact-card:hover {
     width: min(calc(100% - 36px), 760px);
   }
 
+  /* Tablet y móvil: la imagen es fondo y el contenido define la altura */
   .help-hero {
+    display: flex;
+    align-items: center;
     min-height: 380px;
   }
 
+  .help-hero-picture {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    height: 100%;
+  }
+
   .help-hero-image {
-    object-position: 58% center;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
   }
 
   .help-hero::after {
@@ -898,9 +913,14 @@ a.help-contact-card:hover {
   }
 
   .help-hero-copy {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
     width: min(540px, calc(100% - 48px));
     margin-left: 28px;
     padding: 34px 0;
+    display: block;
   }
 
   .help-overview-grid {
@@ -917,9 +937,7 @@ a.help-contact-card:hover {
 }
 
 /* =========================================================
-   MÓVILES — IMAGEN SIN RECORTES
-   Se conserva el texto sobre la imagen.
-   La fotografía completa queda visible mediante contain.
+   MÓVILES
    ========================================================= */
 
 @media (max-width: 700px) {
@@ -929,46 +947,15 @@ a.help-contact-card:hover {
   }
 
   .help-hero {
-    display: flex;
-    position: relative;
-    align-items: center;
-    width: 100vw;
-    max-width: 100vw;
-    height: auto;
     min-height: 0;
     margin-left: calc(50% - 50vw);
-    overflow: hidden;
-    background: #102706;
-  }
-
-  /*
-   * La capa de imagen cubre el hero sin imponer
-   * una altura fija ni estirar la fotografía.
-   */
-  .help-hero-picture {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
   }
 
   .help-hero-image {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    max-height: none;
     object-fit: cover;
-    object-position: center center;
+    object-position: center top;
   }
 
-  /*
-   * El fondo verde rellena el espacio que pueda quedar
-   * alrededor de la imagen al conservar su proporción.
-   */
   .help-hero::after {
     background: linear-gradient(180deg,
         rgba(7, 22, 2, 0.78) 0%,
@@ -977,8 +964,6 @@ a.help-contact-card:hover {
   }
 
   .help-hero-copy {
-    position: relative;
-    z-index: 1;
     width: 100%;
     max-width: 560px;
     margin: 0;
@@ -1288,14 +1273,11 @@ a.help-contact-card:hover {
 
 /* =========================================================
    MÓVILES EN HORIZONTAL
-   Mantiene la misma estructura y evita cambios bruscos
-   cuando el teléfono cambia de orientación.
    ========================================================= */
 
 @media (max-width: 900px) and (orientation: landscape) {
   .help-hero {
     min-height: 0;
-    height: auto;
   }
 
   .help-hero-copy {
@@ -1323,7 +1305,6 @@ a.help-contact-card:hover {
 
 /* =========================================================
    MOVIMIENTO REDUCIDO
-   Esta regla va fuera de los demás media queries.
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1334,5 +1315,205 @@ a.help-contact-card:hover {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   HERO MÓVIL — IMAGEN COMPLETA, TEXTO ENCIMA
+   (pegar al final del archivo)
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .help-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 0;
+    height: auto;
+    margin-top: 20px;
+    margin-left: calc(50% - 50vw);
+    background: #102706;
+  }
+
+  /* La imagen define la altura y se ve completa */
+  .help-hero-picture {
+    position: relative;
+    inset: auto;
+    grid-area: 1 / 1;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #102706;
+  }
+
+  .help-hero-image {
+    display: block;
+    width: 100%;
+
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  /* Capa oscura para que el texto se lea */
+  .help-hero::after {
+    z-index: 1;
+    background: linear-gradient(180deg,
+        rgba(7, 22, 2, 0.80) 0%,
+        rgba(9, 27, 3, 0.68) 55%,
+        rgba(10, 28, 3, 0.50) 100%);
+  }
+
+  /* Texto encima de la imagen, en la misma celda */
+  .help-hero-copy {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    grid-area: 1 / 1;
+    align-self: center;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    margin: 0;
+    padding: 28px 22px;
+  }
+
+  .help-hero h1 {
+    font-size: clamp(28px, 8vw, 38px);
+
+    margin: 12px 0 10px;
+  }
+
+  .help-hero-copy>p {
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .help-hero-button {
+    margin-top: 14px;
+  }
+}
+
+/* Teléfonos estrechos: texto un poco más compacto */
+@media (max-width: 380px) {
+  .help-hero-copy {
+    padding: 22px 16px;
+  }
+
+  .help-hero-copy>p {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+}
+
+/* =========================================================
+   HERO MÓVIL — SUBIR EL TEXTO
+   (pegar al final del archivo)
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .help-hero-copy {
+    align-self: start;
+    /* pega el texto arriba en vez de centrarlo */
+    padding-top: 16px;
+    /* ajusta este valor: menos = más arriba */
+    padding-bottom: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .help-hero-copy {
+    padding-top: 12px;
+  }
+}
+
+
+/* =========================================================
+   TELÉFONO EN HORIZONTAL — SE VE COMO ESCRITORIO
+   (pegar al final del archivo)
+   ========================================================= */
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 1000px) {
+
+  /* La imagen vuelve a definir la altura y se ve completa */
+  .help-hero {
+    display: block;
+    min-height: 0;
+    margin-top: 20px;
+    margin-left: calc(50% - 50vw);
+  }
+
+  .help-hero-picture {
+    position: relative;
+    inset: auto;
+    grid-area: auto;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .help-hero-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: initial;
+  }
+
+  .help-hero::after {
+    z-index: 1;
+    background: linear-gradient(90deg,
+        rgba(9, 25, 3, 0.88) 0%,
+        rgba(12, 31, 4, 0.76) 38%,
+        rgba(13, 32, 5, 0.35) 70%,
+        rgba(13, 32, 5, 0.12) 100%);
+  }
+
+  /* Texto superpuesto a la izquierda, centrado verticalmente */
+  .help-hero-copy {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5vw;
+    grid-area: auto;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 52%;
+    max-width: none;
+    margin: 0;
+    padding: 10px 0;
+  }
+
+  /* Texto compacto para que quepa en poca altura */
+  .help-kicker {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+  }
+
+  .help-hero h1 {
+    max-width: none;
+    margin: 8px 0 8px;
+    font-size: clamp(22px, 4vw, 34px);
+    line-height: 1.08;
+    letter-spacing: -0.8px;
+  }
+
+  .help-hero-copy>p {
+    max-width: 100%;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .help-hero-button {
+    min-height: 32px;
+    margin-top: 10px;
+    padding: 7px 12px;
+    font-size: 10.5px;
   }
 }

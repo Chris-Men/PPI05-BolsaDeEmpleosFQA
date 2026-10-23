@@ -1542,3 +1542,369 @@
     font-size: 11px;
   }
 }
+
+/* =========================================================
+   HERO — TABLET Y MÓVIL: IMAGEN COMPLETA, TEXTO ENCIMA
+   (pegar al final del archivo)
+   ========================================================= */
+
+@media (max-width: 1050px) {
+  .fqa-page .fqa-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+    background: #0d1b04;
+  }
+
+  /* La imagen define la altura y se ve completa */
+  .fqa-page .hero-image {
+    position: relative;
+    inset: auto;
+    grid-area: 1 / 1;
+    z-index: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .fqa-page .hero-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+
+  }
+
+  .fqa-page .hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg,
+        rgba(13, 27, 4, 0.88) 0%,
+        rgba(13, 27, 4, 0.72) 55%,
+        rgba(13, 27, 4, 0.35) 100%);
+  }
+
+  /* Texto en la misma celda que la imagen */
+  .fqa-page .hero-text-container {
+    position: relative;
+    inset: auto;
+    grid-area: 1 / 1;
+    align-self: center;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 28px 28px;
+  }
+
+  .fqa-page .hero-content {
+    width: 72%;
+    max-width: 600px;
+    min-width: 0;
+  }
+
+
+  .fqa-page .hero-axis {
+    margin: 12px 0 8px;
+    font-size: 12px;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(26px, 4.2vw, 40px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  .fqa-page .hero-description {
+    max-width: 520px;
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .fqa-page .hero-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .fqa-page .hero-button {
+    width: auto;
+    min-height: 40px;
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+
+}
+
+/* Móvil vertical: texto arriba y compacto */
+@media (max-width: 560px) {
+  .fqa-page .hero-overlay {
+    background: linear-gradient(180deg,
+        rgba(13, 27, 4, 0.82) 0%,
+        rgba(13, 27, 4, 0.70) 55%,
+        rgba(13, 27, 4, 0.50) 100%);
+  }
+
+  .fqa-page .hero-text-container {
+    align-self: start;
+    /* sube el texto; ajusta con padding-top */
+    padding: 18px 18px 22px;
+  }
+
+  .fqa-page .hero-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .fqa-page .hero-badge {
+    padding: 6px 10px;
+    font-size: 8.5px;
+    letter-spacing: 0.7px;
+  }
+
+  .fqa-page .hero-axis {
+    margin: 10px 0 6px;
+    font-size: 11px;
+  }
+
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(24px, 7vw, 32px);
+    line-height: 1.1;
+    letter-spacing: -0.6px;
+  }
+
+  .fqa-page .hero-description {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .fqa-page .hero-actions {
+    margin-top: 14px;
+    gap: 8px;
+  }
+
+  .fqa-page .hero-button {
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .fqa-page .hero-text-container {
+    padding: 14px 14px 18px;
+  }
+
+  .fqa-page .hero-badge {
+    font-size: 8px;
+  }
+
+
+  .fqa-page .hero-content h1 {
+    font-size: 23px;
+  }
+
+  .fqa-page .hero-description {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .fqa-page .hero-button {
+    font-size: 10.5px;
+    padding: 7px 9px;
+  }
+}
+
+/* =========================================================
+   TELÉFONO EN HORIZONTAL — SE VE COMO ESCRITORIO
+   (debe ir al final de todo)
+   ========================================================= */
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 1000px) {
+  .fqa-page .fqa-hero {
+    display: block;
+  }
+
+  .fqa-page .hero-image {
+    position: relative;
+    inset: auto;
+    grid-area: auto;
+    width: 100%;
+    height: auto;
+
+  }
+
+  .fqa-page .hero-image img {
+    width: 100%;
+    height: auto;
+    object-fit: initial;
+  }
+
+  .fqa-page .hero-overlay {
+    background: linear-gradient(90deg,
+        rgba(13, 27, 4, 0.88) 0%,
+        rgba(13, 27, 4, 0.7) 43%,
+        rgba(13, 27, 4, 0.15) 100%);
+  }
+
+  /* Texto superpuesto, centrado verticalmente a la izquierda */
+  .fqa-page .hero-text-container {
+    position: absolute;
+    inset: 0;
+    grid-area: auto;
+    align-self: auto;
+    align-items: center;
+    height: 100%;
+    padding: 10px 5vw;
+  }
+
+  .fqa-page .hero-content {
+    width: 58%;
+    max-width: none;
+  }
+
+  .fqa-page .hero-badge {
+
+    padding: 5px 9px;
+    font-size: 8px;
+  }
+
+  .fqa-page .hero-axis {
+    margin: 6px 0 4px;
+    font-size: 10px;
+  }
+
+  .fqa-page .hero-content h1 {
+    font-size: clamp(20px, 3.6vw, 30px);
+    line-height: 1.08;
+    letter-spacing: -0.6px;
+  }
+
+  .fqa-page .hero-description {
+    max-width: 100%;
+    margin-top: 6px;
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  .fqa-page .hero-actions {
+    flex-direction: row;
+    gap: 7px;
+    margin-top: 9px;
+  }
+
+  .fqa-page .hero-button {
+    min-height: 30px;
+    padding: 6px 10px;
+    font-size: 10px;
+
+  }
+
+  .fqa-page .hero-button svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* =========================================================
+   QUIÉNES SOMOS — SIN ESPACIOS DE SOBRA
+   ========================================================= */
+
+.intro-section {
+  padding-top: 80px;
+  padding-bottom: 70px;
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 56px;
+  margin-top: 0;
+  align-items: center;
+}
+
+.intro-text .section-heading {
+  max-width: none;
+  margin-bottom: 26px;
+}
+
+.intro-founder {
+  width: 100%;
+  max-width: 380px;
+  margin: 0;
+  justify-self: end;
+}
+
+.intro-founder img {
+  margin-top: 10px;
+  display: block;
+
+  width: 80%;
+  aspect-ratio: 1 / 1;
+  /* altura controlada */
+  height: auto;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid var(--fqa-border);
+  border-radius: var(--fqa-radius);
+  box-shadow: var(--fqa-shadow);
+  background: #fff;
+}
+
+/* Tablet: una columna, la imagen baja y se centra */
+@media (max-width: 800px) {
+  .intro-section {
+    padding-top: 60px;
+    padding-bottom: 50px;
+  }
+
+  .intro-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .intro-founder {
+    max-width: 420px;
+    justify-self: center;
+  }
+}
+
+/* Móvil */
+@media (max-width: 560px) {
+  .intro-section {
+
+    padding-top: 48px;
+    padding-bottom: 44px;
+  }
+
+  .intro-founder {
+    max-width: 100%;
+  }
+
+  .intro-founder img {
+    border-radius: 18px;
+  }
+}
+
+/* Teléfono en horizontal: dos columnas compactas */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 1000px) {
+  .intro-grid {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 32px;
+  }
+
+  .intro-founder {
+    max-width: 260px;
+    justify-self: end;
+  }
+}
