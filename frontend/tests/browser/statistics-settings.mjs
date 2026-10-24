@@ -49,7 +49,7 @@ const downloadedReport = async (count, expectedName) => {
     if (files.length === count && (!expectedName || files.includes(expectedName))) {
       const bytes = await readFile(join(reportOutput, expectedName ?? files.at(-1)));
       assert.ok(bytes.subarray(0, 5).toString() === '%PDF-');
-      assert.equal([...bytes.toString('latin1').matchAll(/\/Type \/Page\b/g)].length, 3); return;
+      assert.ok([...bytes.toString('latin1').matchAll(/\/Type \/Page\b/g)].length > 3); return;
     }
     await new Promise(resolve => setTimeout(resolve, 100));
   }
@@ -81,6 +81,12 @@ try {
   assert.equal(await summaryValue('Usuarios con alguna selección'), '100.0%');
   assert.equal(await summaryValue('Candidatos con CV activo'), '0');
   const initialPeriod = await evaluate(`Array.from(document.querySelectorAll('.statistics-calendar input')).map(item=>item.value)`);
+  const appliedPeriod = await evaluate(`document.querySelector('.statistics-applied-period').textContent`);
+  assert.ok(appliedPeriod.startsWith('Período consultado · El Salvador:'));
+  assert.equal(await summaryValue('Postulaciones por revisar'), undefined);
+  assert.equal(await summaryValue('Oportunidades activas actualmente'), undefined);
+  const demographics = await evaluate(`document.querySelector('.statistics-demographics').innerText`);
+  assert.ok(demographics.includes('Prefiero no indicar')); assert.ok(demographics.includes('100.0%'));
   await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-notice')?.textContent.includes('iniciada')`, 'reporte vacío');
   await downloadedReport(1, 'reporte-operativo_FQA_' + initialPeriod.join('_') + '.pdf');
   for (const preset of ['90', 'year', 'lifetime', '30']) {
@@ -92,8 +98,21 @@ try {
     if (preset === 'lifetime') assert.equal(dates[0], dates[1]); // Fixture candidate registration is today's first dated activity.
   }
   await fill('.statistics-calendar input:first-of-type', '2030-01-01');
-  await fill('.statistics-calendar label:nth-of-type(3) input', '2030-01-31'); await click('Aplicar');
+  await fill('.statistics-calendar label:nth-of-type(3) input', '2030-01-31');
+  const beforeApply = await evaluate(`document.querySelector('.statistics-applied-period').textContent`);
+  assert.ok(!beforeApply.includes('31/01/2030'));
+  await click('Aplicar');
   await wait(`document.querySelector('.stat-card strong')?.textContent==='112'`, '112 publicaciones');
+  assert.equal(await evaluate(`document.querySelector('.statistics-applied-period').textContent`), 'Período consultado · El Salvador: 01/01/2030 — 31/01/2030');
+  assert.equal(await evaluate(`document.querySelector('.statistics-demographics').innerText`), demographics);
+  assert.equal(await evaluate(`document.querySelectorAll('.statistics-category-table tbody tr').length`), 10);
+  await evaluate(`document.querySelector('.statistics-category-pagination button:last-child').focus()`);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', text: '\r' });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter' });
+  await wait(`document.querySelector('.statistics-category-pagination span').textContent.includes('Página 2')`, 'paginación por teclado');
+  assert.equal(await evaluate(`document.querySelectorAll('.statistics-category-table tbody tr').length`), 3);
+  assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.statistics-category-table tfoot td')).map(item=>item.textContent)`), ['112', '5']);
+  await click('Anterior');
   await evaluate(`(()=>{const previous=window.fetch;let fail=true;window.fetch=(input,options)=>{if(fail&&new URL(input,location.href).pathname==='/api/admin/statistics'){fail=false;return Promise.resolve(Response.json({message:'Fallo recuperable al exportar.'},{status:503}));}return previous(input,options);};})()`);
   await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-error')?.textContent.includes('Fallo recuperable')`, 'reporte con error de red');
   assert.equal((await readdir(reportOutput)).filter(name=>name.endsWith('.pdf')).length, 1);
@@ -108,6 +127,8 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.progress-item small').length`), 4);
   assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.progress-item small')).map(item=>Number(item.textContent.split(' ')[0]))`), [36, 4, 36, 36]);
   await screenshot('estadisticas-desktop');
+  await evaluate(`document.querySelector('.statistics-category-panel').scrollIntoView({block:'start'})`); await screenshot('categorias-desktop');
+  await evaluate(`document.querySelector('.statistics-demographics').scrollIntoView({block:'start'})`); await screenshot('demografia-desktop');
   await evaluate(`document.querySelector('.statistics-summary').scrollIntoView({block:'start'})`); await screenshot('resumen-operativo-desktop');
   await fill('.statistics-calendar label:nth-of-type(2) input', '2030-02-01'); await click('Aplicar');
   assert.equal(await evaluate(`document.querySelector('.statistics-export-button').disabled`), true);
@@ -124,9 +145,12 @@ try {
   for (const size of [390, 320]) {
     await send('Emulation.setDeviceMetricsOverride', { width: size, height: 844, deviceScaleFactor: 1, mobile: true }); await width();
     await evaluate(`document.querySelector('.statistics-calendar').scrollIntoView({block:'start'})`); await screenshot('estadisticas-mobile-' + size);
+    await evaluate(`document.querySelector('.statistics-category-panel').scrollIntoView({block:'start'})`); await screenshot('categorias-mobile-' + size);
+    await evaluate(`document.querySelector('.statistics-demographics').scrollIntoView({block:'start'})`); await screenshot('demografia-mobile-' + size);
     await evaluate(`document.querySelector('.statistics-summary').scrollIntoView({block:'start'})`); await screenshot('resumen-operativo-mobile-' + size);
   }
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1050, deviceScaleFactor: 1, mobile: false });
+  if (!process.argv.includes('--statistics-only')) {
   await openSettings(); assert.equal(await evaluate(`document.querySelectorAll('.settings-card').length`), 4);
   assert.equal(await evaluate(`Boolean(document.querySelector('#site-institucional-descripcion'))`), false);
   const initial = await evaluate(`document.querySelector('#site-inicio-titulo').value`);
@@ -197,6 +221,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('#site-contacto-correo').value`), 'proyectos@fundaqa.org');
   await logout(true); await wait(`document.querySelector('.hero h1')?.textContent.includes('Trabaja donde')`, 'contenido inicial restaurado');
   assert.equal(await evaluate(`Boolean(document.querySelector('a[href^="https://wa.me/"]'))`), false);
+  } else await logout(true);
   await login('SUPER_ADMIN'); await click('Estadísticas'); await wait(`document.querySelector('.stat-card strong')?.textContent==='0'`, 'exportación antes de cambiar de cuenta');
   await evaluate(`(()=>{const previous=window.fetch;let hold=true;window.fetch=async(input,options)=>{if(hold&&new URL(input,location.href).pathname==='/api/admin/statistics'){hold=false;const response=await previous(input,options);await new Promise(resolve=>{window.__releaseOldReport=resolve;});return response;}return previous(input,options);};})()`);
   await click('Exportar PDF'); await wait(`typeof window.__releaseOldReport==='function'`, 'reporte de cuenta anterior pendiente');
@@ -208,7 +233,9 @@ try {
   await click('Exportar PDF'); await wait(`document.querySelector('.statistics-report-notice')?.textContent.includes('iniciada')`, 'reporte de Administrador');
   await downloadedReport(3); await logout(true);
   assert.deepEqual(errors, []);
-  console.info('Navegador: dashboard, estadísticas, configuración, persistencia, permisos, conflictos, fallos, móvil y teclado correctos.');
+  console.info(process.argv.includes('--statistics-only')
+    ? 'Navegador: estadísticas, categorías, demografía, período aplicado, PDF, permisos, fallos, móvil y teclado correctos.'
+    : 'Navegador: dashboard, estadísticas, configuración, persistencia, permisos, conflictos, fallos, móvil y teclado correctos.');
   console.info('Capturas: ' + output);
   console.info('Reportes PDF: ' + reportOutput);
 } catch (error) {

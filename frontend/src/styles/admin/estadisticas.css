@@ -955,6 +955,39 @@
     }
 }
 
+/* Aggregate comparisons retain the existing palette and keep scope visible beside the summary. */
+.estadisticas-screen .statistics-summary-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; }
+.estadisticas-screen .statistics-applied-period { margin: 0; color: #5b6755; font-size: 12px; line-height: 1.6; }
+.estadisticas-screen .statistics-category-panel, .estadisticas-screen .statistics-demographics { margin-top: 25px; }
+.statistics-table-scroll { overflow-x: auto; }
+.statistics-table-scroll:focus-visible { outline: 2px solid #82ba2e; outline-offset: 4px; border-radius: 4px; }
+.statistics-category-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.statistics-category-table caption { caption-side: bottom; padding-top: 12px; color: #66725f; text-align: left; font-size: 12px; }
+.statistics-category-table th, .statistics-category-table td { padding: 12px; border-bottom: 1px solid #e1e9dd; text-align: right; }
+.statistics-category-table th:first-child { text-align: left; overflow-wrap: anywhere; }
+.statistics-category-table thead, .statistics-category-table tfoot { background: #f3f8ed; color: #193007; }
+.statistics-category-table tbody th { font-weight: 500; }
+.statistics-category-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 18px; font-size: 12px; color: #5b6755; }
+.statistics-demographics-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+.statistics-demographics-heading h3 { margin: 0; font-size: 20px; color: #193007; }
+.statistics-demographics-heading p { margin: 6px 0 0; color: #5b6755; font-size: 12px; line-height: 1.6; }
+.statistics-demographics-heading > strong { align-self: flex-start; padding: 9px 14px; border-radius: 10px; background: #edf5e3; color: #315912; font-size: 14px; }
+/* Cards in each row share their top and bottom edges while keeping all distribution rows visible. */
+.statistics-breakdown-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 25px; align-items: stretch; }
+.statistics-distribution-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 15px; }
+.statistics-distribution-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 13px; color: #374151; }
+.statistics-distribution-label > span { overflow-wrap: anywhere; min-width: 0; }
+.statistics-distribution-label strong { flex-shrink: 0; color: #193007; font-size: 13px; }
+.statistics-distribution-label small { font-weight: 400; color: #5b6755; }
+.statistics-distribution-track { height: 7px; margin-top: 7px; border-radius: 5px; background: #eef3e9; overflow: hidden; }
+.statistics-distribution-track > span { display: block; height: 100%; border-radius: inherit; background: #82ba2e; }
+@media (max-width: 900px) { .statistics-breakdown-grid { grid-template-columns: 1fr; gap: 20px; } }
+@media (max-width: 600px) {
+  .statistics-category-table { min-width: 440px; }
+  .statistics-category-table th, .statistics-category-table td { padding: 10px 8px; }
+  .estadisticas-screen .statistics-summary-title { flex-direction: column; align-items: flex-start; }
+}
+
 /* Calendar controls reuse the existing filter and card palette. */
 .statistics-calendar {
     display: flex;

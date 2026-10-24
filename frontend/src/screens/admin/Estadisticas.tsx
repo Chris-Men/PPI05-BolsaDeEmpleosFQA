@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAdministrativeStatistics } from '../../hooks/useAdministrativeStatistics';
 import { useOperationalReport } from '../../hooks/useOperationalReport';
 import { Download } from 'lucide-react';
-import { operationalStatisticsCards, primaryStatisticsCards } from '../../utils/statisticsPresentation';
+import { operationalStatisticsCards, primaryStatisticsCards, statisticsCalendarLabel } from '../../utils/statisticsPresentation';
+import { CandidateDemographicsSection, CategoryStatisticsTable } from '../../components/admin/StatisticsBreakdowns';
 import { statisticsPresetRange, statisticsRangeError, type StatisticsPreset } from '../../utils/statisticsDates';
 import { APPLICATION_LABELS } from '../../types/application';
 import { KIND_LABELS } from '../../types/opportunity';
@@ -63,9 +64,12 @@ export default function Estadisticas() {
         <div className="simple-stat-list">{data?.states.map(item => <div key={item.status}><span>{APPLICATION_LABELS[item.status]}</span><strong>{item.count}</strong></div>)}{data?.applications === 0 && <p>No hubo postulaciones en este período.</p>}</div>
       </div>
     </div>
-    <div className="statistics-box statistics-summary"><div className="statistics-box-header"><div><h3>Resumen operativo</h3><span>Totales acumulados, actividad del período y disponibilidad actual.</span></div></div><div className="summary-grid">
+    <CategoryStatisticsTable key={range.from + '/' + range.to} rows={data?.byCategory} published={data?.publishedOpportunities} applications={data?.applications} />
+    <div className="statistics-box statistics-summary"><div className="statistics-box-header"><div><div className="statistics-summary-title"><h3>Resumen operativo</h3>
+      <p className="statistics-applied-period">Período consultado · El Salvador: {statisticsCalendarLabel(range.from)} — {statisticsCalendarLabel(range.to)}</p></div>
+      <span>Indicadores acumulados, actividad del período y documentos actuales.</span></div></div><div className="summary-grid">
       {operationalStatisticsCards(data).map(card => <div className="summary-item" key={card.key}><span>{card.label}</span><strong>{card.value}</strong><small>{card.description}</small></div>)}
-      <div className="summary-item"><span>Período consultado · El Salvador</span><strong>{range.from} — {range.to}</strong></div>
     </div></div>
+    <CandidateDemographicsSection data={data?.demographics} />
   </section>;
 }
