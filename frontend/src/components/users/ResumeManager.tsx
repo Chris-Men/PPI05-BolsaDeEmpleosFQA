@@ -265,7 +265,7 @@ export function ResumeManager({
       )}
 
       {application?.error && (
-        <p role="alert" className="resume-manager-field-error">
+        <p id={inputId + '-error'} role="alert" className="resume-manager-field-error">
           {application.error}
         </p>
       )}
@@ -285,6 +285,8 @@ export function ResumeManager({
           type="button"
           className="resume-action-primary"
           disabled={busy || Boolean(state.resumeError)}
+          aria-invalid={Boolean(application?.error)}
+          aria-describedby={application?.error ? inputId + '-error' : undefined}
           onClick={() => input.current?.click()}
         >
           <Upload size={17} aria-hidden="true" />

@@ -70,7 +70,7 @@ describe('respaldos completos y restauración privada', () => {
     await writeFile(join(env.RESUME_STORAGE_DIRECTORY!, secondKey), pdf);
     firstFile = (await prisma.files.create({ data: { userId: actor('CANDIDATE').id, fileType: 'RESUME', filePath: firstKey, originalName: 'histórico.pdf', mimeType: 'application/pdf', sizeBytes: pdf.length } })).id;
     secondFile = (await prisma.files.create({ data: { userId: actor('CANDIDATE').id, fileType: 'RESUME', filePath: secondKey, originalName: 'actual.pdf', mimeType: 'application/pdf', sizeBytes: pdf.length } })).id;
-    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { resumeFileId: secondFile } });
+    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { resumeFileId: secondFile, birthDate: new Date('2000-02-29T00:00:00Z'), sex: 'UNDISCLOSED' } });
     jobId = (await prisma.jobs.create({ data: { title: prefix, slug: prefix, description: 'Prueba de respaldo', jobStatuses: { connect: { name: 'Borrador' } } } })).id;
     applicationId = (await prisma.applications.create({ data: { userId: actor('CANDIDATE').id, jobId, statusId: (await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Pendiente' } })).id,
       referenceNumber: randomUUID(), resumeId: firstFile } })).id;
@@ -183,13 +183,14 @@ describe('respaldos completos y restauración privada', () => {
 
   it('restaura perfiles, borradores, CV históricos y datos; invalida sesiones, enlaces y correos recuperados', async () => {
     const latest = (await backupCoordinator.status(await access())).latest!;
-    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { firstName: 'Cambio posterior', resumeFileId: null } });
+    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { firstName: 'Cambio posterior', resumeFileId: null, birthDate: null, sex: null } });
     await unlink(join(env.RESUME_STORAGE_DIRECTORY!, firstKey)); await unlink(join(env.RESUME_STORAGE_DIRECTORY!, secondKey));
     const ticket = await json<BackupOperationTicket>(await request('POST', '/admin/backups/restore', 'SUPER_ADMIN', { requestId: randomUUID(), backupId: latest.id, currentPassword: password, confirmation: 'RESTAURAR' }), 202);
     assert.equal((await request('GET', '/profile/me', 'CANDIDATE')).status, 503);
     const result = await wait(backupCoordinator, ticket); assert.equal(result.phase, 'SUCCEEDED', result.message);
     assert.equal((await request('GET', '/profile/me', 'CANDIDATE')).status, 401);
     const profile = await prisma.userProfile.findUniqueOrThrow({ where: { userId: actor('CANDIDATE').id } }); assert.equal(profile.firstName, 'Candidato'); assert.equal(profile.resumeFileId, secondFile);
+    assert.equal(profile.birthDate?.toISOString().slice(0, 10), '2000-02-29'); assert.equal(profile.sex, 'UNDISCLOSED');
     assert.equal(await prisma.applicationDrafts.count({ where: { userId: actor('CANDIDATE').id, resumeId: secondFile } }), 1);
     assert.deepEqual(await readFile(join(env.RESUME_STORAGE_DIRECTORY!, firstKey)), pdf);
     assert.equal(await prisma.authSession.count({ where: { revokedAt: null } }), 0);

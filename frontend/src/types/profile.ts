@@ -1,3 +1,12 @@
+/** Explicit disclosure choice is distinct from an unanswered profile field. */
+export type Sex = 'FEMALE' | 'MALE' | 'UNDISCLOSED';
+/** Location choices are served by the API and reused by the vacancy editor. */
+export interface LocationZone { name: string; departments: Array<{ name: string; municipalities: string[] }> }
+/** Canonical selectable values; no catalog is duplicated in the browser. */
+export interface CandidateCatalogs {
+  locationZones: LocationZone[]; educationLevels: string[]; sexes: Array<{ value: Sex; label: string }>;
+}
+
 /** Editable professional history; null end dates indicate ongoing entries. */
 export interface WorkExperience {
   companyName: string; position: string; description: string | null;
@@ -10,6 +19,7 @@ export interface Education {
 /** Profile snapshot owned by the authenticated candidate. */
 export interface CandidateProfileData {
   email: string; firstName: string; lastName: string; phone: string | null;
+  birthDate: string | null; sex: Sex | null;
   department: string | null; municipality: string | null; profession: string | null;
   educationLevel: string | null; professionalSummary: string | null;
   workExperiences: WorkExperience[]; educations: Education[]; skills: string[];

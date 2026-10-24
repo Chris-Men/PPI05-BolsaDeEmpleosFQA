@@ -218,6 +218,7 @@
 }
 
 .candidate-editor .candidate-editor-field input,
+.candidate-editor .candidate-editor-field select,
 .candidate-editor .candidate-editor-field textarea {
   width: 100%;
   max-width: 100%;
@@ -251,11 +252,13 @@
 }
 
 .candidate-editor .candidate-editor-field input:hover:not([readonly]):not(:disabled),
+.candidate-editor .candidate-editor-field select:hover:not(:disabled),
 .candidate-editor .candidate-editor-field textarea:hover:not([readonly]):not(:disabled) {
   border-color: #b8d68f;
 }
 
 .candidate-editor .candidate-editor-field input:focus,
+.candidate-editor .candidate-editor-field select:focus,
 .candidate-editor .candidate-editor-field textarea:focus {
   outline: none;
   border-color: var(--cp-green-dark);
@@ -265,6 +268,7 @@
 /* Modo lectura: se ve como dato, no como campo editable */
 
 .candidate-editor .candidate-editor-field input[readonly],
+.candidate-editor .candidate-editor-field select:disabled,
 .candidate-editor .candidate-editor-field textarea[readonly] {
   border-color: #edf1e9;
   background: #f8faf5;
@@ -281,6 +285,7 @@
 /* Ocupado / deshabilitado */
 
 .candidate-editor .candidate-editor-field input:disabled,
+.candidate-editor .candidate-editor-field select:disabled,
 .candidate-editor .candidate-editor-field textarea:disabled {
   opacity: 0.65;
   cursor: not-allowed;
@@ -289,6 +294,7 @@
 /* Campo con error */
 
 .candidate-editor .candidate-editor-field input[aria-invalid="true"],
+.candidate-editor .candidate-editor-field select[aria-invalid="true"],
 .candidate-editor .candidate-editor-field textarea[aria-invalid="true"] {
   border-color: #e3a3ab;
   background: #fffafa;

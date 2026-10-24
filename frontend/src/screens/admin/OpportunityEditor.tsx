@@ -3,7 +3,8 @@ import { ApiError } from '../../services/api';
 import { createOpportunity, setOpportunityStatus, updateOpportunity } from '../../services/opportunityService';
 import { KIND_LABELS, type Opportunity, type OpportunityCatalogs, type OpportunityInput, type OpportunityKind } from '../../types/opportunity';
 import { canManageVacancies } from '../../utils/vacancyManagement';
-import { ZONES, municipalitiesOf } from '../../utils/elSalvadorLocations';
+import { municipalitiesOf } from '../../utils/elSalvadorLocations';
+import type { LocationZone } from '../../types/profile';
 import { useAuth } from '../../hooks/useAuth';
 import { VacancySuccessAlert } from '../../components/admin/VacancySuccessAlert';
 
@@ -27,15 +28,15 @@ const initialValues = (value: Opportunity | null): FormValues => ({
 const numberValue = (value: string): number | null => value === '' ? null : Number(value);
 
 /** Zona a la que pertenece un departamento ('' si no se reconoce). */
-const zoneOf = (department: string): string =>
-  ZONES.find((zone) => zone.departments.some((item) => item.name === department))?.name ?? '';
+const zoneOf = (department: string, zones: LocationZone[]): string =>
+  zones.find((zone) => zone.departments.some((item) => item.name === department))?.name ?? '';
 
 /** All four types share one editor; a saved vacancy retains its original discriminator. */
 export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCancel }: OpportunityEditorProps) {
   const { session } = useAuth();
   const [kind, setKind] = useState<OpportunityKind>(opportunity?.kind ?? 'EMPLOYMENT');
   const [values, setValues] = useState(() => initialValues(opportunity));
-  const [zone, setZone] = useState(() => zoneOf(opportunity?.department ?? ''));
+  const [zone, setZone] = useState(() => zoneOf(opportunity?.department ?? '', catalogs.locationZones));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -121,13 +122,13 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   };
 
   /** Zona → Departamento → Municipio: cada lista es corta. Cambiar un nivel limpia los siguientes. */
-  const zoneDepartments = ZONES.find((item) => item.name === zone)?.departments ?? [];
+  const zoneDepartments = catalogs.locationZones.find((item) => item.name === zone)?.departments ?? [];
   const zoneField = <label key="zone">
     <span className="field-label">Zona</span>
     <select aria-label="Zona" disabled={busy} value={zone}
       onChange={(event) => { setZone(event.target.value); setValues((current) => ({ ...current, department: '', municipality: '' })); }}>
       <option value="">Seleccionar</option>
-      {ZONES.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
+      {catalogs.locationZones.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
     </select>
   </label>;
   const departmentField = <label key="department">
@@ -142,7 +143,7 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   </label>;
 
   /** Municipio depende del departamento elegido. */
-  const municipalities = municipalitiesOf(values.department);
+  const municipalities = municipalitiesOf(values.department, catalogs.locationZones);
   const municipalityField = <label key="municipality">
     {labelText('Municipio', true)}
     <select aria-label="Municipio" aria-required aria-invalid={Boolean(errors.municipality)} disabled={busy || !values.department} value={values.municipality}

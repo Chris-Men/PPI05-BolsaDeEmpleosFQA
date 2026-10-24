@@ -18,7 +18,9 @@ export function useApplicationDraft(key:string,onSubmitted:(value:Application)=>
     if(!mounted.current)return;
     setError(failure instanceof Error?failure.message:'No fue posible guardar la postulación.');
     if(failure instanceof ApiError){
-      setFields(Object.fromEntries(failure.validationErrors.map(field=>[field.field.replace(/^data\./,''),field.message])));
+      const errors=Object.fromEntries(failure.validationErrors.map(field=>[field.field.replace(/^data\./,''),field.message]));setFields(errors);
+      const first=Object.keys(errors)[0];
+      if(first){const next=first.startsWith('personal.')?1:first.startsWith('experience.')?2:3;state.current.step=next;setStep(next);}
       if(failure.status===409){state.current.conflict=true;setConflict(true);}
     }
   },[]);

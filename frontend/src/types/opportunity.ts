@@ -33,7 +33,7 @@ export interface Category extends CatalogItem { slug: string; description: strin
 /** Writable category values. */
 export interface CategoryInput { name: string; description?: string | null; parentId?: number | null; isActive?: boolean }
 /** Vacancy editor dictionaries. */
-export interface OpportunityCatalogs { categories: Array<CatalogItem & { parentId: number | null; slug: string; description: string | null }>; organizations: CatalogItem[]; employmentTypes: CatalogItem[]; experienceLevels: CatalogItem[] }
+export interface OpportunityCatalogs { categories: Array<CatalogItem & { parentId: number | null; slug: string; description: string | null }>; organizations: CatalogItem[]; employmentTypes: CatalogItem[]; experienceLevels: CatalogItem[]; locationZones: import('./profile').LocationZone[] }
 /** Spanish labels shared by admin and public presentations. */
 export const KIND_LABELS: Record<OpportunityKind, string> = { EMPLOYMENT: 'Empleo', VOLUNTEER: 'Voluntariado', SOCIAL_HOURS: 'Horas sociales', INTERNSHIP: 'Práctica profesional' };
 /** Lifecycle labels include unsupported historical records without misclassifying them. */
