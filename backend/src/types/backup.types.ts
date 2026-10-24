@@ -10,7 +10,7 @@ export interface BackupSummary {
 export type BackupPhase = 'QUEUED' | 'DRAINING' | 'BACKING_UP' | 'VERIFYING' | 'PREPARING' | 'RESTORING' | 'RECOVERING' | 'SUCCEEDED' | 'FAILED';
 export interface BackupOperation {
   id: string;
-  kind: 'BACKUP' | 'RESTORE';
+  kind: 'BACKUP' | 'RESTORE' | 'IMPORT';
   phase: BackupPhase;
   startedAt: string;
   finishedAt: string | null;

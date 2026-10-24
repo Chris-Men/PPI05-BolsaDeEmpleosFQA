@@ -124,6 +124,63 @@ describe('respaldos completos y restauración privada', () => {
     assert.equal((await request('POST', '/admin/backups/restore', 'SUPER_ADMIN', { ...body, backupId: randomUUID() })).status, 409);
   });
 
+  it('exporta e importa DB y CV cifrados sin restaurar datos, con idempotencia y permisos antes de recibir archivos', async () => {
+    const latest = (await backupCoordinator.status(await access())).latest!;
+    const route = '/admin/backups/export?backupId=' + latest.id;
+    for (const [role, status] of [[undefined, 401], ['ADMINISTRATOR', 403], ['CANDIDATE', 403]] as const) {
+      assert.equal((await request('GET', route, role)).status, status);
+      assert.equal((await request('POST', '/admin/backups/import', role)).status, status);
+    }
+    assert.equal((await request('GET', '/admin/backups/export?backupId=' + randomUUID(), 'SUPER_ADMIN')).status, 409);
+    const response = await request('GET', route, 'SUPER_ADMIN'); assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-disposition') ?? '', /attachment.*\.fqabackup/);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(bytes.includes(pdf), false);
+    const sendImport = async (requestId: string, backupId: string) => {
+      const body = new FormData(); body.set('requestId', requestId); body.set('backupId', backupId); body.set('confirmation', 'IMPORTAR');
+      body.set('file', new Blob([bytes]), 'respaldo.fqabackup');
+      return fetch(api.baseUrl + '/api/admin/backups/import', { method: 'POST', headers: { Authorization: 'Bearer ' + actor().token, 'X-FQA-Request': '1' }, body });
+    };
+    await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { firstName: 'Importar conserva los datos' } });
+    const requestId = randomUUID(); const release = backupRuntime.enterWorker()!;
+    let ticket: BackupOperationTicket;
+    try {
+      ticket = await json<BackupOperationTicket>(await sendImport(requestId, latest.id), 202);
+      const replay = await json<BackupOperationTicket>(await sendImport(requestId, latest.id), 202); assert.equal(replay.operation.id, ticket.operation.id);
+    } finally { release(); }
+    assert.equal(ticket.operation.kind, 'IMPORT'); const result = await wait(backupCoordinator, ticket); assert.equal(result.phase, 'SUCCEEDED', result.message);
+    assert.equal((await prisma.userProfile.findUniqueOrThrow({ where: { userId: actor('CANDIDATE').id } })).firstName, 'Importar conserva los datos');
+    assert.equal((await request('GET', '/profile/me', 'CANDIDATE')).status, 200);
+    const imported = (await backupCoordinator.status(await access())).latest!; assert.notEqual(imported.id, latest.id);
+    assert.equal(imported.createdAt, latest.createdAt); assert.equal(imported.resumeCount, 2);
+    assert.equal((await readdir(env.BACKUP_DIRECTORY!)).filter(name => /^[a-f0-9-]{36}$/.test(name)).length, 1);
+    const storage = new BackupStorage(env.BACKUP_DIRECTORY!, Buffer.from(env.BACKUP_ENCRYPTION_KEY!, 'hex'));
+    const manifest = await storage.manifest(imported.id); const restored = join(env.BACKUP_DIRECTORY!, 'import-verified.pdf');
+    await storage.decrypt(join(storage.generation(imported.id), firstKey + '.enc'), manifest.resumes.find(file => file.key === firstKey)!, restored);
+    assert.deepEqual(await readFile(restored), pdf); await unlink(restored);
+  });
+
+  it('rechaza archivos inválidos, corrupción y pantallas desactualizadas conservando el respaldo anterior', async () => {
+    const latest = (await backupCoordinator.status(await access())).latest!;
+    const exported = await request('GET', '/admin/backups/export?backupId=' + latest.id, 'SUPER_ADMIN'); assert.equal(exported.status, 200);
+    const bytes = Buffer.from(await exported.arrayBuffer()); const corrupt = Buffer.from(bytes); corrupt[corrupt.length - 1] = corrupt[corrupt.length - 1]! ^ 1;
+    const send = (content: Buffer, name = 'respaldo.fqabackup', confirmation = 'IMPORTAR', backupId = latest.id) => {
+      const body = new FormData(); body.set('requestId', randomUUID()); body.set('backupId', backupId); body.set('confirmation', confirmation);
+      body.set('file', new Blob([Uint8Array.from(content)]), name);
+      return fetch(api.baseUrl + '/api/admin/backups/import', { method: 'POST', headers: { Authorization: 'Bearer ' + actor().token, 'X-FQA-Request': '1' }, body });
+    };
+    assert.equal((await send(bytes, 'archivo.sql')).status, 400);
+    assert.equal((await send(bytes, 'archivo.fqabackup', 'importar')).status, 400);
+    assert.equal((await send(bytes, 'archivo.fqabackup', 'IMPORTAR', randomUUID())).status, 409);
+    for (const content of [Buffer.alloc(0), Buffer.from('no es un respaldo'), bytes.subarray(0, bytes.length - 1), corrupt]) {
+      const ticket = await json<BackupOperationTicket>(await send(content), 202);
+      assert.equal((await wait(backupCoordinator, ticket)).phase, 'FAILED'); assert.equal((await backupCoordinator.status(await access())).latest?.id, latest.id);
+    }
+    assert.equal(backupRuntime.mode, 'OPEN');
+    assert.equal((await prisma.userProfile.findUniqueOrThrow({ where: { userId: actor('CANDIDATE').id } })).firstName, 'Importar conserva los datos');
+    assert.deepEqual(await readdir(join(env.BACKUP_DIRECTORY!, 'uploads')), []);
+  });
+
   it('restaura perfiles, borradores, CV históricos y datos; invalida sesiones, enlaces y correos recuperados', async () => {
     const latest = (await backupCoordinator.status(await access())).latest!;
     await prisma.userProfile.update({ where: { userId: actor('CANDIDATE').id }, data: { firstName: 'Cambio posterior', resumeFileId: null } });

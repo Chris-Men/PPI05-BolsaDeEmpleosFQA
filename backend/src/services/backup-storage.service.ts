@@ -37,11 +37,24 @@ export class BackupStorage {
   /** HMAC authenticates metadata, including all plaintext digests and random file keys. */
   async manifest(id: string): Promise<BackupManifest> {
     try {
-      const record = signedManifestSchema.parse(JSON.parse(await readFile(join(this.generation(id), 'manifest.json'), 'utf8')));
-      const expected = createHmac('sha256', this.secret).update(JSON.stringify(record.payload)).digest();
-      if (!timingSafeEqual(expected, Buffer.from(record.signature, 'hex')) || record.payload.id !== id) throw new Error();
-      return record.payload;
+      const manifest = this.authenticateManifest(await readFile(join(this.generation(id), 'manifest.json'), 'utf8'));
+      if (manifest.id !== id) throw new Error();
+      return manifest;
     } catch { throw new AppError(503, 'El respaldo no superó la comprobación de integridad o su clave no coincide.'); }
+  }
+  /** Portable manifests use the same dedicated key; the key is never part of an export. */
+  authenticateManifest(content: string): BackupManifest {
+    try {
+      const record = signedManifestSchema.parse(JSON.parse(content));
+      const expected = createHmac('sha256', this.secret).update(JSON.stringify(record.payload)).digest();
+      if (!timingSafeEqual(expected, Buffer.from(record.signature, 'hex'))) throw new Error();
+      return record.payload;
+    } catch { throw new AppError(400, 'El archivo está dañado o fue cifrado con una clave diferente.'); }
+  }
+  /** Produces authenticated metadata without exposing encryption credentials. */
+  serializeManifest(manifest: BackupManifest): string {
+    const payload = backupManifestSchema.parse(manifest);
+    return JSON.stringify({ payload, signature: createHmac('sha256', this.secret).update(JSON.stringify(payload)).digest('hex') });
   }
   /** The monitor credential grants only read access to one operation, independent of restored sessions. */
   monitorToken(id: string): string { return createHmac('sha256', this.secret).update('operation:' + uuid.parse(id)).digest('hex'); }
@@ -65,10 +78,7 @@ export class BackupStorage {
   }
   /** Promotion happens only after every artifact and the native dump have been checked. */
   async publish(manifest: BackupManifest): Promise<void> {
-    const payload = backupManifestSchema.parse(manifest);
-    await writePrivateJson(join(this.generation(manifest.id), 'manifest.json'), {
-      payload, signature: createHmac('sha256', this.secret).update(JSON.stringify(payload)).digest('hex'),
-    });
+    await writePrivateJson(join(this.generation(manifest.id), 'manifest.json'), JSON.parse(this.serializeManifest(manifest)));
     await writePrivateJson(join(this.root, 'latest.json'), { id: manifest.id });
   }
   /** Removes only validated generation directories inside the dedicated root, preserving latest. */
