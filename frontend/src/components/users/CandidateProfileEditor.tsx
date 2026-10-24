@@ -2,7 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { ApiError } from '../../services/api';
 import type { CandidateProfileState } from '../../hooks/useCandidateProfile';
 import type { CandidateProfileData, Education, WorkExperience } from '../../types/profile';
-import '../../styles/users/candidateEditor.css';
+import '../../styles/users/candidateProfile.css';
 
 interface CandidateProfileEditorProps { state: CandidateProfileState }
 interface ProfileFieldProps {

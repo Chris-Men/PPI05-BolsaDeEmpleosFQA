@@ -4,6 +4,7 @@ import { ApiError } from '../../services/api';
 import { createUser, updateUser } from '../../services/adminUserService';
 import { getAccountIdentityValidationError, getRegistrationValidationError } from '../../validation/register';
 import { buildUserUpdate, ROLE_LABELS } from '../../utils/userManagement';
+import { useBackdropClose } from '../../hooks/useBackdropClose';
 
 interface UserFormDialogProps {
   user: ManagedUser | null;
@@ -24,6 +25,8 @@ export function UserFormDialog({ user, creationRoles, onClose, onSaved }: UserFo
   });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  /** Tocar fuera del diálogo equivale a Cancelar (salvo mientras se guarda). */
+  useBackdropClose(dialogRef, onClose, busy);
   useEffect(() => {
     const dialog = dialogRef.current;
     dialog?.showModal();

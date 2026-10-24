@@ -9,7 +9,8 @@ export type AdminMenuName =
   | 'Estadísticas'
   | 'Usuarios'
   | 'Respaldos'
-  | 'Configuración';
+  | 'Configuración'
+  | 'Ayuda';
 
 /** Minimal administrator identity consumed by the preserved dashboard UI. */
 export interface AdminIdentity {

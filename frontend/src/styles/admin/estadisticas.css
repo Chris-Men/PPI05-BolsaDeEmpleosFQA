@@ -954,14 +954,158 @@
         min-height: 90px;
     }
 }
+
 /* Calendar controls reuse the existing filter and card palette. */
-.statistics-calendar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.statistics-calendar label { display: grid; gap: 6px; color: var(--gd, #234820); font-size: 12px; }
-.statistics-calendar input { min-height: 40px; padding: 8px 10px; border: 1px solid #d7e5d0; border-radius: 8px; background: white; font: inherit; }
-.statistics-error { padding: 12px; color: #942e3b; background: #fff0f0; border-radius: 8px; margin-bottom: 16px; }
-.statistics-summary .summary-item small { color: #64748b; font-size: 11px; line-height: 1.5; }
-.estadisticas-screen .statistics-export-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #5ba222; border-color: #5ba222; color: white; }
-.estadisticas-screen .statistics-export-button:hover:not(:disabled) { background: #47851a; }
-.statistics-export-hint { margin: -10px 0 20px; color: #64748b; font-size: 12px; }
-.statistics-report-notice { padding: 12px; margin-bottom: 16px; border-radius: 8px; color: #31572a; background: #edf5e7; }
-@media (max-width: 600px) { .statistics-calendar { width: 100%; } .statistics-calendar label { flex: 0 0 auto; width: 100%; min-width: 0; } .statistics-calendar input, .statistics-calendar select { width: 100%; min-width: 0; box-sizing: border-box; } }
+.statistics-calendar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+/* Mantiene los campos y botones alineados en escritorio */
+@media (min-width: 701px) {
+    .estadisticas-screen .statistics-calendar {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+    .estadisticas-screen .statistics-calendar label {
+        flex-shrink: 0;
+    }
+
+    .estadisticas-screen .statistics-calendar .statistics-refresh-button {
+        flex-shrink: 0;
+        height: 42px;
+        min-height: 42px;
+        white-space: nowrap;
+    }
+
+    .estadisticas-screen .statistics-calendar input,
+    .estadisticas-screen .statistics-calendar select {
+        box-sizing: border-box;
+        height: 42px;
+    }
+}
+
+.statistics-calendar label {
+    display: grid;
+    gap: 6px;
+    color: var(--gd, #234820);
+    font-size: 12px;
+}
+
+.statistics-calendar input {
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #d7e5d0;
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+}
+
+.statistics-error {
+    padding: 12px;
+    color: #942e3b;
+    background: #fff0f0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.statistics-summary .summary-item small {
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Botón Exportar PDF */
+.estadisticas-screen .statistics-export-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    height: 42px;
+    min-height: 42px;
+    padding: 0 17px;
+
+    background: #82ba2e;
+    border: 1px solid #82ba2e;
+    border-radius: 9px;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+/* Colores al pasar el cursor */
+.estadisticas-screen .statistics-export-button:hover:not(:disabled) {
+    background: #65961c;
+    border-color: #6fa51f;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* Efecto al presionar */
+.estadisticas-screen .statistics-export-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Estado deshabilitado */
+.estadisticas-screen .statistics-export-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+    transform: none;
+}
+
+.statistics-export-hint {
+    margin: -10px 0 20px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.statistics-report-notice {
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    color: #31572a;
+    background: #edf5e7;
+}
+
+@media (max-width: 600px) {
+    .statistics-calendar {
+        width: 100%;
+    }
+
+    .statistics-calendar label {
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .statistics-calendar input,
+    .statistics-calendar select {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+}
+
+/* Aplicar y Actualizar: negro sin cambio de color al pasar el cursor */
+
+.estadisticas-screen .statistics-calendar button.statistics-refresh-button:not(.statistics-export-button):hover:not(:disabled),
+.estadisticas-screen .statistics-calendar button.statistics-refresh-button:not(.statistics-export-button):active:not(:disabled) {
+    color: #111111;
+}

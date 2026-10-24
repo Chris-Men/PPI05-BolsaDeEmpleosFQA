@@ -15,12 +15,7 @@ export default function JobDetail({
       <div className="d-hero">
         <div className="dh-glow"></div>
         <div className="dh-left">
-          <div className="dh-logo">
-            <svg viewBox="0 0 40 40" fill="none" width="38" height="38">
-              <circle cx="20" cy="8" r="5.5" stroke="#82BA2E" strokeWidth="2.3"/>
-              <path d="M10 16c0-5.5 4.5-8 10-8s10 2.5 10 8" stroke="#82BA2E" strokeWidth="2.3" strokeLinecap="round"/>
-            </svg>
-          </div>
+         
           <div className="dh-info">
             <h2>{selectedJob.title}</h2>
             <p className="dh-org">{selectedJob.org} · {selectedJob.location}, El Salvador</p>

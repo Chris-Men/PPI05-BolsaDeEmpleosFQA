@@ -698,10 +698,386 @@
     background: #F5F7F3;
     border-color: #C8D0C4;
 }
-.configuration-error, .configuration-confirm { padding: 14px; margin-bottom: 16px; border-radius: 10px; background: #fff0f0; color: #942e3b; }
-.configuration-notice { padding: 12px; margin-bottom: 16px; border-radius: 8px; background: #edf5e7; color: #31572a; }
-.configuration-field-error { color: #942e3b; font-size: 12px; margin-top: 5px; }
-.configuration-error button, .configuration-confirm button { margin: 8px 8px 0 0; padding: 8px 12px; border: 1px solid #d7e5d0; border-radius: 8px; background: white; cursor: pointer; font: inherit; }
-.configuracion-screen input:read-only, .configuracion-screen textarea:read-only { background: #f6f8f4; }
-.configuracion-screen .form-actions { flex-wrap: wrap; }
-.configuracion-screen button:disabled { opacity: .55; cursor: default; }
+
+.configuration-error,
+.configuration-confirm {
+    padding: 14px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: #fff0f0;
+    color: #942e3b;
+}
+
+.configuration-notice {
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background: #edf5e7;
+    color: #31572a;
+}
+
+.configuration-field-error {
+    color: #942e3b;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.configuration-error button,
+.configuration-confirm button {
+    margin: 8px 8px 0 0;
+    padding: 8px 12px;
+    border: 1px solid #d7e5d0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font: inherit;
+}
+
+.configuracion-screen input:read-only,
+.configuracion-screen textarea:read-only {
+    background: #f6f8f4;
+}
+
+.configuracion-screen .form-actions {
+    flex-wrap: wrap;
+}
+
+.configuracion-screen button:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
+/* ---------- Botones del formulario en móvil: apilados, a ancho completo ---------- */
+@media (max-width: 700px) {
+    .configuracion-screen .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .configuracion-screen .form-actions button {
+        flex: 0 0 auto;
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+    }
+}
+
+/* ---------- Alerta de confirmación ---------- */
+.configuration-dialog {
+    box-sizing: border-box;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: auto;
+    padding: 28px 24px 24px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    color: #283824;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.configuration-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+.configuration-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.configuration-dialog h2 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+.configuration-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.configuration-dialog .configuration-dialog-error {
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff0ee;
+    color: #91251f;
+}
+
+.configuration-dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+/* Prefijo de clase para ganar a ".configuration-error button" y similares */
+.configuration-dialog .configuration-dialog-actions button {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    margin: 0;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.configuration-dialog .configuration-dialog-actions button:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.configuration-dialog .configuration-dialog-actions button:focus-visible {
+    outline: 2px solid #82ba2e;
+    outline-offset: 2px;
+}
+
+.configuration-dialog .configuration-dialog-actions button:disabled {
+    opacity: .6;
+    cursor: wait;
+    transform: none;
+}
+
+/* Acción destructiva (descartar, restaurar): Cancelar verde, Confirmar rojo */
+.configuration-dialog[data-tone="danger"] [data-role="cancel"] {
+    background: #82ba2e;
+}
+
+.configuration-dialog[data-tone="danger"] [data-role="confirm"] {
+    background: #b3261e;
+}
+
+/* Acción normal: Cancelar rojo, Confirmar verde */
+.configuration-dialog[data-tone="safe"] [data-role="cancel"] {
+    background: #b3261e;
+}
+
+.configuration-dialog[data-tone="safe"] [data-role="confirm"] {
+    background: #82ba2e;
+}
+
+@media (max-width: 450px) {
+    .configuration-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .configuration-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .configuration-dialog-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .configuration-dialog .configuration-dialog-actions button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+/* Base común para los dos botones secundarios: mismo tamaño que "Guardar cambios" */
+.configuracion-screen .form-actions .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease,
+        transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+@media (min-width: 701px) {
+    .configuracion-screen .form-actions .secondary-button {
+        min-width: 180px;
+    }
+}
+
+.configuracion-screen .form-actions .secondary-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.configuracion-screen .form-actions .secondary-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.configuracion-screen .form-actions .secondary-button:focus-visible {
+    outline: 2px solid #82BA2E;
+    outline-offset: 2px;
+}
+
+/* Cancelar cambios: rojo (acción de descartar) */
+.configuracion-screen .form-actions .secondary-button[data-action="discard"] {
+    color: #b3261e;
+    background: #FFFFFF;
+    border: 1px solid #e4b4b0;
+}
+
+.configuracion-screen .form-actions .secondary-button[data-action="discard"]:hover:not(:disabled) {
+    color: #b3261e;
+    background: #FCEAEA;
+    border-color: #d99b9b;
+}
+
+/* Restaurar valores iniciales: mostaza (acción de precaución) */
+.configuracion-screen .form-actions .secondary-button[data-action="reset"] {
+    color: #8a6100;
+    background: #FFFAEB;
+    border: 1px solid #e6c76a;
+}
+
+.configuracion-screen .form-actions .secondary-button[data-action="reset"]:hover:not(:disabled) {
+    color: #8a6100;
+    background: #FFF1C2;
+    border-color: #d9a800;
+}
+
+
+/* =====================================================
+   CONFIGURACIÓN: alerta de éxito con cierre automático
+===================================================== */
+
+.configuration-success-dialog {
+    box-sizing: border-box;
+    width: min(400px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: hidden;
+    margin: auto;
+    padding: 28px 24px 20px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    color: #283824;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.configuration-success-dialog[open] {
+    animation: configurationSuccessIn 0.2s ease;
+}
+
+.configuration-success-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+/* Icono de éxito */
+.configuration-success-dialog::before {
+    content: "✓";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #82ba2e;
+    border-radius: 50%;
+    color: #82ba2e;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.configuration-success-dialog h2 {
+    margin: 0 0 10px;
+    color: #193007;
+    font-size: 20px;
+}
+
+.configuration-success-dialog p {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+/* Barra de progreso del tiempo restante */
+.configuration-success-dialog::after {
+    content: "";
+    display: block;
+    height: 4px;
+    margin-top: 16px;
+    border-radius: 2px;
+    background: #82ba2e;
+    transform-origin: left center;
+    animation: configurationSuccessBar var(--alert-duration, 2000ms) linear forwards;
+}
+
+@keyframes configurationSuccessIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes configurationSuccessBar {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .configuration-success-dialog[open],
+    .configuration-success-dialog::after {
+        animation: none;
+    }
+}
+
+@media (max-width: 450px) {
+    .configuration-success-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .configuration-success-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+}

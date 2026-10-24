@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { changeOrganizationStatus } from '../../services/organizationService';
 import type { ManagedOrganization } from '../../types/organization';
+import { useBackdropClose } from '../../hooks/useBackdropClose';
 
 interface OrganizationStatusDialogProps {
   organization: ManagedOrganization;
@@ -18,6 +19,9 @@ export function OrganizationStatusDialog({ organization, onClose, onSaved }: Org
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const deactivating = organization.status === 'ACTIVE';
+
+  // Click/tap outside behaves like "Cancelar"; blocked while the request is running.
+  useBackdropClose(dialogRef, onClose, busy);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -46,21 +50,21 @@ export function OrganizationStatusDialog({ organization, onClose, onSaved }: Org
     } finally { submitting.current = false; setBusy(false); }
   };
 
-  return <dialog ref={dialogRef} className="organizaciones-modal organizations-dialog"
+  return <dialog ref={dialogRef} className="organization-dialog organization-confirm-dialog"
+    data-tone={deactivating ? 'danger' : 'safe'}
     aria-labelledby={titleId} aria-describedby={questionId} aria-busy={busy}
     onCancel={(event) => { event.preventDefault(); if (!submitting.current) onClose(); }}>
-    <div className="organizaciones-modal-header">
-      <h2 id={titleId}>{deactivating ? 'Desactivar organización' : 'Activar organización'}</h2>
-      <button type="button" className="organizaciones-modal-close" disabled={busy} onClick={onClose} aria-label="Cerrar">×</button>
-    </div>
-    <div className="organizaciones-modal-body">
-      <p id={questionId}>¿Deseas {deactivating ? 'desactivar' : 'activar'} <strong>{organization.name}</strong>?</p>
-      {error && <p className="organizations-error" role="alert">{error}</p>}
-      {busy && <p role="status">Actualizando el estado…</p>}
-    </div>
-    <div className="organizaciones-modal-footer">
-      <button ref={cancelRef} type="button" className="modal-secondary-button" disabled={busy} onClick={onClose}>Cancelar</button>
-      <button type="button" className="modal-primary-button" disabled={busy} onClick={() => void confirm()}>
+    <h2 id={titleId} className="organization-dialog-title">{deactivating ? 'Desactivar organización' : 'Activar organización'}</h2>
+    <p id={questionId} className="organization-dialog-text">
+      ¿Deseas {deactivating ? 'desactivar' : 'activar'} <strong>{organization.name}</strong>?
+    </p>
+    {error && <p className="organization-dialog-error" role="alert">{error}</p>}
+    {busy && <p className="organization-dialog-text" role="status">Actualizando el estado…</p>}
+    <div className="organization-dialog-actions">
+      <button ref={cancelRef} type="button" className="organization-dialog-button" data-role="cancel" disabled={busy} onClick={onClose}>
+        Cancelar
+      </button>
+      <button type="button" className="organization-dialog-button" data-role="confirm" disabled={busy} onClick={() => void confirm()}>
         {busy ? 'Actualizando…' : 'Confirmar'}
       </button>
     </div>

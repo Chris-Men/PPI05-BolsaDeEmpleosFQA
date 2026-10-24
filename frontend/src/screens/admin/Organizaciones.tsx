@@ -79,10 +79,13 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
             <td><span className={'status ' + (organization.status === 'ACTIVE' ? 'status-active' : 'status-inactive')}>
               {organization.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}</span></td>
             <td><div className="table-actions">
-              <button className="edit-button" type="button" disabled={busy} onClick={() => void open(organization, 'view')}>Ver</button>
-              {permissions.includes('organizations.update') && <button className="edit-button" type="button" disabled={busy}
-                onClick={() => void open(organization, 'edit')}>Editar</button>}
+              <button className="edit-button" type="button" data-action="view" disabled={busy}
+                aria-label={'Ver ' + organization.name} onClick={() => void open(organization, 'view')}>Ver</button>
+              {permissions.includes('organizations.update') && <button className="edit-button" type="button" data-action="edit" disabled={busy}
+                aria-label={'Editar ' + organization.name} onClick={() => void open(organization, 'edit')}>Editar</button>}
               {permissions.includes('organizations.status.update') && <button className="edit-button" type="button" disabled={busy}
+                data-action={organization.status === 'ACTIVE' ? 'deactivate' : 'activate'}
+                aria-label={(organization.status === 'ACTIVE' ? 'Desactivar ' : 'Activar ') + organization.name}
                 onClick={() => { setNotice(''); setTransition(organization); }}>{organization.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}</button>}
             </div></td>
           </tr>) : !error && <tr><td colSpan={4} className="organizaciones-empty">No se encontraron organizaciones.</td></tr>}

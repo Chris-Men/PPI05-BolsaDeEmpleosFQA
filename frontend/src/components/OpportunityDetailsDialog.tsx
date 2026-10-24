@@ -3,12 +3,14 @@ import { BriefcaseBusiness, X } from 'lucide-react';
 import { useModalDialog } from '../hooks/useModalDialog';
 import { KIND_LABELS, STATUS_LABELS, type Opportunity } from '../types/opportunity';
 import { opportunitySalary } from '../utils/opportunityPresentation';
+import { useBackdropClose } from '../hooks/useBackdropClose';
 import '../styles/components/detailDialog.css';
 /** The caller supplies a fresh, authorized detail response. */
 interface OpportunityDetailsDialogProps { opportunity: Opportunity; onClose: () => void; returnFocus?: HTMLElement | null }
 /** Uses the same detail layout for candidates and administrators, preserving each vacancy's fields. */
 export function OpportunityDetailsDialog({ opportunity, onClose, returnFocus }: OpportunityDetailsDialogProps) {
   const ref = useModalDialog(returnFocus);
+  useBackdropClose(ref, onClose);
   const titleId = useId();
   const sections = [{ title: 'Responsabilidades', lines: opportunity.responsibilities }, { title: 'Requisitos', lines: opportunity.requirements }, { title: 'Beneficios', lines: opportunity.benefits }];
   return <dialog ref={ref} className="opportunity-details-dialog detail-dialog" aria-labelledby={titleId} onCancel={(event) => { event.preventDefault(); onClose(); }}>
@@ -46,6 +48,6 @@ export function OpportunityDetailsDialog({ opportunity, onClose, returnFocus }: 
         <h3>{section.title}</h3><ul className="detail-dialog-list">{section.lines.map((line, index) => <li key={index}>{line}</li>)}</ul>
       </section>)}
     </div>
-    <footer className="detail-dialog-footer"><button type="button" className="detail-dialog-button" onClick={onClose}>Cerrar</button></footer>
+    {/* <footer className="detail-dialog-footer"><button type="button" className="detail-dialog-button" onClick={onClose}>Cerrar</button></footer> */}
   </dialog>;
 }

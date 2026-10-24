@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { UserLifecycleAction } from '../../types/adminUser';
+import { useBackdropClose } from '../../hooks/useBackdropClose';
 import '../../styles/users/accountActions.css';
 
 interface AccountActionDialogProps {
@@ -19,6 +20,8 @@ export function AccountActionDialog({ action, accountName, ownAccount = false, o
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** Tocar fuera del diálogo equivale a Cancelar (salvo mientras se procesa). */
+  useBackdropClose(dialogRef, onClose, busy);
   useEffect(() => {
     const dialog = dialogRef.current;
     dialog?.showModal(); cancelRef.current?.focus();

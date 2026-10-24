@@ -1,0 +1,538 @@
+/* =========================================================
+   FQA EMPLEOS — PERFIL PROFESIONAL DEL CANDIDATO
+========================================================= */
+
+/* ---------------------------------------------------------
+   1. TARJETA PRINCIPAL
+--------------------------------------------------------- */
+
+.profile-card.candidate-editor {
+  --cp-green: #82ba2e;
+  --cp-green-dark: #5ba222;
+  --cp-green-deep: #193007;
+  --cp-green-soft: #f3f9eb;
+  --cp-border: #e3ebdc;
+  --cp-text: #263522;
+  --cp-muted: #74816e;
+  --cp-danger: #a22f40;
+  --cp-danger-soft: #fff4f4;
+  --cp-danger-border: #f2d3d3;
+
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 28px 30px;
+
+  border: 1px solid var(--cp-border);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--cp-text);
+
+  box-shadow:
+    0 3px 12px rgba(25, 48, 7, 0.035),
+    0 1px 3px rgba(25, 48, 7, 0.025);
+
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.profile-card.candidate-editor *,
+.profile-card.candidate-editor *::before,
+.profile-card.candidate-editor *::after {
+  box-sizing: border-box;
+}
+
+.candidate-editor form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------
+   2. ENCABEZADO
+--------------------------------------------------------- */
+
+.candidate-editor .candidate-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  margin: 0 0 22px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid #e7ede2;
+}
+
+.candidate-editor .candidate-editor-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin: 0;
+  color: var(--cp-green-deep);
+  font-size: clamp(21px, 2.4vw, 27px);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+
+.candidate-editor .candidate-editor-heading h2::before {
+  content: "";
+  display: block;
+  flex: 0 0 5px;
+  width: 5px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--cp-green), var(--cp-green-dark));
+}
+
+/* Correo y textos sueltos */
+
+.candidate-editor form>p {
+  margin: 0;
+  padding: 11px 14px;
+
+  border: 1px solid #e0eacf;
+  border-radius: 10px;
+  background: var(--cp-green-soft);
+  color: #527a30;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+/* Títulos de sección */
+
+.candidate-editor h3 {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  margin: 12px 0 0;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #edf1e9;
+
+  color: #28441b;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.candidate-editor h3::before {
+  content: "";
+  display: block;
+  flex: 0 0 4px;
+  width: 4px;
+  height: 22px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--cp-green), var(--cp-green-dark));
+}
+
+/* Mensajes de "sin experiencia / sin estudios" (dentro del form, tras un h3) */
+
+.candidate-editor h3+p {
+  margin: 0;
+  padding: 14px 16px;
+
+  border: 1px dashed #cfe2b9;
+  border-radius: 11px;
+  background: #f8faf5;
+  color: var(--cp-muted);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------
+   3. ALERTAS Y ESTADOS
+--------------------------------------------------------- */
+
+.candidate-editor>p[role="status"] {
+  margin: 0 0 18px;
+  padding: 11px 14px;
+
+  border: 1px solid #cfe2b9;
+  border-radius: 10px;
+  background: var(--cp-green-soft);
+  color: #3f7a17;
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.candidate-editor>p[role="alert"] {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+
+  border: 1px solid var(--cp-danger-border);
+  border-radius: 10px;
+  background: var(--cp-danger-soft);
+  color: var(--cp-danger);
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* Error por campo */
+
+.candidate-editor .candidate-editor-field small[role="alert"] {
+  display: block;
+  margin: 0;
+  color: var(--cp-danger);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------
+   4. CAMPOS Y REJILLA
+--------------------------------------------------------- */
+
+.candidate-editor .candidate-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.candidate-editor .candidate-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.candidate-editor .candidate-editor-field label {
+  color: #3d5233;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.candidate-editor .candidate-editor-field input,
+.candidate-editor .candidate-editor-field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 11px 14px;
+
+  border: 1.5px solid #dbe5d2;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--cp-text);
+
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.candidate-editor .candidate-editor-field textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.candidate-editor .candidate-editor-field input::placeholder,
+.candidate-editor .candidate-editor-field textarea::placeholder {
+  color: #a3ae9d;
+}
+
+.candidate-editor .candidate-editor-field input:hover:not([readonly]):not(:disabled),
+.candidate-editor .candidate-editor-field textarea:hover:not([readonly]):not(:disabled) {
+  border-color: #b8d68f;
+}
+
+.candidate-editor .candidate-editor-field input:focus,
+.candidate-editor .candidate-editor-field textarea:focus {
+  outline: none;
+  border-color: var(--cp-green-dark);
+  box-shadow: 0 0 0 4px rgba(130, 186, 46, 0.18);
+}
+
+/* Modo lectura: se ve como dato, no como campo editable */
+
+.candidate-editor .candidate-editor-field input[readonly],
+.candidate-editor .candidate-editor-field textarea[readonly] {
+  border-color: #edf1e9;
+  background: #f8faf5;
+  color: #475640;
+  cursor: default;
+}
+
+.candidate-editor .candidate-editor-field input[readonly]:focus,
+.candidate-editor .candidate-editor-field textarea[readonly]:focus {
+  border-color: #cfe2b9;
+  box-shadow: none;
+}
+
+/* Ocupado / deshabilitado */
+
+.candidate-editor .candidate-editor-field input:disabled,
+.candidate-editor .candidate-editor-field textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Campo con error */
+
+.candidate-editor .candidate-editor-field input[aria-invalid="true"],
+.candidate-editor .candidate-editor-field textarea[aria-invalid="true"] {
+  border-color: #e3a3ab;
+  background: #fffafa;
+}
+
+.candidate-editor .candidate-editor-field input[aria-invalid="true"]:focus {
+  border-color: var(--cp-danger);
+  box-shadow: 0 0 0 4px rgba(162, 47, 64, 0.12);
+}
+
+/* ---------------------------------------------------------
+   5. TARJETAS DE EXPERIENCIA Y EDUCACIÓN
+--------------------------------------------------------- */
+
+.candidate-editor .candidate-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 22px 22px 20px;
+
+  border: 1px solid #e3eadc;
+  border-radius: 16px;
+  background: #fff;
+
+  box-shadow: 0 2px 8px rgba(25, 48, 7, 0.03);
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.candidate-editor .candidate-history:hover {
+  border-color: #c8dfae;
+  box-shadow: 0 7px 20px rgba(53, 91, 24, 0.07);
+}
+
+.candidate-editor .candidate-history legend {
+  padding: 5px 13px;
+
+  border: 1px solid #cfe2b9;
+  border-radius: 999px;
+  background: var(--cp-green-soft);
+  color: #3f7a17;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* ---------------------------------------------------------
+   6. BOTONES
+--------------------------------------------------------- */
+
+/* Base: botón secundario verde claro */
+
+.candidate-editor button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 42px;
+  padding: 10px 18px;
+
+  border: 1.5px solid var(--cp-green);
+  border-radius: 10px;
+  background: var(--cp-green-soft);
+  color: #3f7a17;
+  -webkit-text-fill-color: #3f7a17;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.candidate-editor button:hover:not(:disabled) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  background: linear-gradient(135deg, var(--cp-green), var(--cp-green-dark));
+  border-color: var(--cp-green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(91, 162, 34, 0.22);
+}
+
+.candidate-editor button:focus-visible {
+  outline: 3px solid rgba(130, 186, 46, 0.35);
+  outline-offset: 3px;
+}
+
+.candidate-editor button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botón "Añadir ..." (hijo directo del form): estilo punteado */
+
+.candidate-editor form>button[type="button"] {
+  align-self: flex-start;
+  border-style: dashed;
+  background: #fafdf6;
+}
+
+/* Botón "Eliminar ..." dentro de cada tarjeta: estilo de peligro */
+
+.candidate-editor .candidate-history>button {
+  align-self: flex-end;
+
+  border-color: var(--cp-danger-border);
+  background: var(--cp-danger-soft);
+  color: var(--cp-danger);
+  -webkit-text-fill-color: var(--cp-danger);
+}
+
+.candidate-editor .candidate-history>button:hover:not(:disabled) {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  background: linear-gradient(135deg, #c24457, var(--cp-danger));
+  border-color: var(--cp-danger);
+  box-shadow: 0 5px 14px rgba(162, 47, 64, 0.22);
+}
+
+.candidate-editor .candidate-history>button:focus-visible {
+  outline-color: rgba(162, 47, 64, 0.3);
+}
+
+/* Botón principal: "Guardar perfil" */
+
+.candidate-editor .profile-primary-button {
+  min-height: 46px;
+  padding: 12px 24px;
+
+  border: 1px solid var(--cp-green-dark);
+  background: linear-gradient(135deg, var(--cp-green), var(--cp-green-dark));
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.candidate-editor .profile-primary-button:hover:not(:disabled) {
+  filter: brightness(0.96);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(91, 162, 34, 0.22);
+}
+
+/* Barra de acciones final */
+
+.candidate-editor .candidate-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 8px;
+  padding-top: 18px;
+  border-top: 1px solid #e4ebdf;
+}
+
+/* ---------------------------------------------------------
+   7. TABLET
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .profile-card.candidate-editor {
+    padding: 24px 22px;
+  }
+
+  .candidate-editor .candidate-history {
+    padding: 20px 18px 18px;
+  }
+}
+
+/* ---------------------------------------------------------
+   8. MÓVILES
+--------------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .profile-card.candidate-editor {
+    padding: 18px 14px;
+    border-radius: 14px;
+  }
+
+  .candidate-editor .candidate-editor-heading {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .candidate-editor .candidate-editor-heading button {
+    width: 100%;
+  }
+
+  .candidate-editor .candidate-editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .candidate-editor .candidate-history {
+    padding: 18px 14px 16px;
+    border-radius: 13px;
+  }
+
+  .candidate-editor .candidate-history>button,
+  .candidate-editor form>button[type="button"] {
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .candidate-editor .candidate-editor-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .candidate-editor .candidate-editor-actions button {
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+  }
+}
+
+/* Pantallas muy estrechas */
+
+@media (max-width: 360px) {
+  .profile-card.candidate-editor {
+    padding: 15px 11px;
+  }
+
+  .candidate-editor .candidate-editor-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -9,9 +9,15 @@ import { OpportunityDetailsDialog } from '../../components/OpportunityDetailsDia
 import '../../styles/admin/vacancies.css';
 
 /** Both administrative menu entries reuse the same persistence and lifecycle controls. */
-interface OpportunityManagementProps { startCreating?: boolean; onBack?: () => void; onChanged?: () => void }
+interface OpportunityManagementProps {
+  startCreating?: boolean;
+  onBack?: () => void;
+  onPublished?: () => void;
+  onChanged?: () => void;
+}
 /** Persistent management for all types, including server pagination and permission-aware actions. */
-export default function OpportunityManagement({ startCreating = false, onBack, onChanged }: OpportunityManagementProps) {
+
+export default function OpportunityManagement({ startCreating = false, onBack, onPublished, onChanged, }: OpportunityManagementProps) {
   const { session } = useAuth();
   const [filters, setFilters] = useState<OpportunityFilters>({ page: 1, pageSize: 20 });
   const [page, setPage] = useState<Page<Opportunity>>({ items: [], total: 0, page: 1, pageSize: 20 });
@@ -55,11 +61,11 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
   };
   const updateFilters = (value: Partial<OpportunityFilters>): void => setFilters({ ...filters, ...value, page: 1 });
   return <section className="vacancy-section">
-    <div className="vacancy-header"><h1>Vacantes</h1>{!editor && canManageVacancies(session, 'opportunities.create') && <button type="button" onClick={() => { setMessage(''); setEditor({ opportunity: null }); }}>Nueva vacante</button>}</div>
+    <div className="vacancy-header"><h1>Vacantes</h1>{!editor && canManageVacancies(session, 'opportunities.create') && <button className="primary-button" type="button" onClick={() => { setMessage(''); setEditor({ opportunity: null }); }}>+ Nueva vacante</button>}</div>
     {message && <p role="status">{message}</p>}
     {error && <p role="alert">{error} <button type="button" onClick={() => setRevision(revision + 1)}>Reintentar</button></p>}
     {loading && <p role="status">Cargando vacantes…</p>}
-    {editor && catalogs ? <OpportunityEditor key={editor.opportunity?.key ?? session?.user.id} opportunity={editor.opportunity} catalogs={catalogs} onSaved={() => { onChanged?.(); if (!mounted.current) return; setEditor(null); setMessage('Vacante guardada correctamente.'); setRevision(revision + 1); if (startCreating) onBack?.(); }} onCancel={() => { setEditor(null); if (startCreating) onBack?.(); }} /> : !editor && <>
+    {editor && catalogs ? <OpportunityEditor key={editor.opportunity?.key ?? session?.user.id} opportunity={editor.opportunity} catalogs={catalogs} onSaved={() => { onChanged?.(); if (!mounted.current) return; setEditor(null); setMessage('Vacante guardada correctamente.'); setRevision((value) => value + 1); if (startCreating) { onPublished?.(); } }} onCancel={() => { setEditor(null); if (startCreating) onBack?.(); }} /> : !editor && <>
       <div className="vacancy-filters">
         <input aria-label="Buscar vacantes" placeholder="Buscar por título u organización" value={filters.search ?? ''} onChange={(event) => updateFilters({ search: event.target.value })} />
         <select aria-label="Tipo de vacante" value={filters.kind ?? ''} onChange={(event) => updateFilters({ kind: (event.target.value || undefined) as OpportunityFilters['kind'] })}><option value="">Todos los tipos</option>{Object.entries(KIND_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
@@ -68,16 +74,17 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
       </div>
       {!loading && !error && page.items.length === 0 && <p>No hay vacantes para estos filtros.</p>}
       <div className="vacancy-table-wrap"><table className="vacancy-table"><thead><tr><th>Título</th><th>Tipo</th><th>Organización</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
-        {page.items.map((value) => <tr key={value.key}><td>{value.title}</td><td>{KIND_LABELS[value.kind]}</td><td>{value.organization?.name ?? 'Sin asignar'}</td><td>{value.category?.name ?? 'Sin asignar'}</td><td>{STATUS_LABELS[value.status]}{value.status === 'OPEN' && value.expiresAt && Date.parse(value.expiresAt) <= Date.now() ? ' (vencida)' : ''}</td><td><div className="vacancy-actions">
-          <button type="button" disabled={loading} onClick={() => void open(value, false)}>Ver</button>
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.update') && <button type="button" disabled={loading} onClick={() => void open(value, true)}>Editar</button>}
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.status.update') && <button type="button" onClick={() => setAction({ opportunity: value, type: value.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}>{value.status === 'OPEN' ? 'Cerrar' : 'Publicar'}</button>}
-          {!value.archivedAt && canManageVacancies(session, 'opportunities.archive') && <button type="button" onClick={() => setAction({ opportunity: value, type: 'ARCHIVED' })}>Archivar</button>}
-        </div></td></tr>)}
+        {page.items.map((value) => <tr key={value.key}><td>{value.title}</td><td>{KIND_LABELS[value.kind]}</td><td>{value.organization?.name ?? 'Sin asignar'}</td><td>{value.category?.name ?? 'Sin asignar'}</td><td>{STATUS_LABELS[value.status]}{value.status === 'OPEN' && value.expiresAt && Date.parse(value.expiresAt) <= Date.now() ? ' (vencida)' : ''}</td><td>
+          <div className="vacancy-actions">
+            <button type="button" data-action="view" disabled={loading} onClick={() => void open(value, false)}>Ver</button>
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.update') && <button type="button" data-action="edit" disabled={loading} onClick={() => void open(value, true)}>Editar</button>}
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.status.update') && <button type="button" data-action={value.status === 'OPEN' ? 'close' : 'publish'} onClick={() => setAction({ opportunity: value, type: value.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}>{value.status === 'OPEN' ? 'Cerrar' : 'Publicar'}</button>}
+            {!value.archivedAt && canManageVacancies(session, 'opportunities.archive') && <button type="button" data-action="archive" onClick={() => setAction({ opportunity: value, type: 'ARCHIVED' })}>Archivar</button>}
+          </div></td></tr>)}
       </tbody></table></div>
       <div className="vacancy-pagination"><span>{page.total} vacantes · Página {filters.page}</span><button type="button" disabled={loading || (filters.page ?? 1) <= 1} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}>Anterior</button><button type="button" disabled={loading || (filters.page ?? 1) * 20 >= page.total} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}>Siguiente</button></div>
     </>}
-    {action && <VacancyActionDialog title={action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
+    {action && <VacancyActionDialog danger={action.type !== 'OPEN'} title={action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
       if (action.type === 'ARCHIVED') await archiveOpportunity(action.opportunity.key); else await setOpportunityStatus(action.opportunity.key, action.type);
       setAction(null); setMessage('Estado de la vacante actualizado.'); setRevision(revision + 1); onChanged?.();
     }} />}

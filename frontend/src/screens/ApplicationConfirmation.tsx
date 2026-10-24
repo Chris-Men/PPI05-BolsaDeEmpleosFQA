@@ -1,6 +1,6 @@
 import type { Application } from '../types/application';
 import { KIND_LABELS } from '../types/opportunity';
-import '../styles/users/applications.css';
+import '../styles/users/applicationsConfirmation.css';
 interface ApplicationConfirmationProps { application:Application; onView:()=>void; onBrowse:()=>void }
 /** Success is shown only for the persisted API response, including its real reference. */
 export function ApplicationConfirmation({application,onView,onBrowse}:ApplicationConfirmationProps) {

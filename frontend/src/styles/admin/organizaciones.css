@@ -1185,13 +1185,350 @@
     }
 
 }
+
 /* API feedback and native modal retain the existing organization visual language. */
-.organizations-dialog { position: fixed; margin: auto; padding: 0; border: 0; width: min(600px, calc(100vw - 32px)); max-height: 90vh; overflow-y: auto; }
-.organizations-dialog::backdrop { background: rgba(0, 0, 0, .45); }
-.organizaciones-form-field textarea { font: inherit; padding: 12px; min-height: 110px; border: 1px solid #ddd; border-radius: 8px; resize: vertical; }
-.organizations-error { color: #a32121; padding: 12px; background: #fff0f0; border-radius: 8px; }
-.organizations-notice { color: #276315; padding: 12px; background: #eef8e9; border-radius: 8px; }
-.organizations-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; flex-wrap: wrap; }
-.organizations-pagination button { font: inherit; margin: 4px; padding: 8px 14px; border: 1px solid #ccc; border-radius: 8px; background: white; cursor: pointer; }
-.organizaciones-screen button:disabled { opacity: .55; cursor: wait; }
-.organizaciones-screen .status-inactive { color: #666; background: #eee; }
+.organizations-dialog {
+    position: fixed;
+    margin: auto;
+    padding: 0;
+    border: 0;
+    width: min(600px, calc(100vw - 32px));
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.organizations-dialog::backdrop {
+    background: rgba(0, 0, 0, .45);
+}
+
+.organizaciones-form-field textarea {
+    font: inherit;
+    padding: 12px;
+    min-height: 110px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+}
+
+.organizations-error {
+    color: #a32121;
+    padding: 12px;
+    background: #fff0f0;
+    border-radius: 8px;
+}
+
+.organizations-notice {
+    color: #276315;
+    padding: 12px;
+    background: #eef8e9;
+    border-radius: 8px;
+}
+
+.organizations-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 0;
+    flex-wrap: wrap;
+}
+
+.organizations-pagination button {
+    font: inherit;
+    margin: 4px;
+    padding: 8px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+
+.organizaciones-screen button:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.organizaciones-screen .status-inactive {
+    color: #666;
+    background: #eee;
+}
+
+/* =====================================================
+   ORGANIZACIONES: ACCIONES DE FILA, FORMULARIOS Y ALERTAS
+===================================================== */
+
+/* ---------- Acciones por fila (Ver / Editar / Desactivar) ---------- */
+.organizaciones-screen .table-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.organizaciones-screen .table-actions button[data-action] {
+    min-width: 0;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid #ccd3c6;
+    border-radius: 7px;
+    background: #fff;
+    color: #234615;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease,
+        transform 0.2s ease, box-shadow 0.25s ease;
+}
+
+.organizaciones-screen .table-actions button[data-action]:hover:not(:disabled) {
+    background: #F5F9EF;
+    border-color: #C7DBAF;
+    color: #234615;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.organizaciones-screen .table-actions button[data-action]:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.organizaciones-screen .table-actions button[data-action]:focus-visible {
+    outline: 2px solid #82BA2E;
+    outline-offset: 2px;
+}
+
+/* Desactivar: rojo */
+.organizaciones-screen .table-actions button[data-action="deactivate"] {
+    color: #a82924;
+    border-color: #dfb8b5;
+}
+
+.organizaciones-screen .table-actions button[data-action="deactivate"]:hover:not(:disabled) {
+    background: #FCEAEA;
+    border-color: #D99B9B;
+    color: #a82924;
+}
+
+/* Activar: verde */
+.organizaciones-screen .table-actions button[data-action="activate"] {
+    color: #3f7a12;
+    border-color: #c7dbaf;
+}
+
+/* ---------- Diálogo base (formulario y alerta) ---------- */
+.organization-dialog {
+    box-sizing: border-box;
+    width: min(500px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: auto;
+    padding: 28px 24px 24px;
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    color: #283824;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.22);
+}
+
+.organization-dialog::backdrop {
+    background: rgba(25, 48, 7, 0.48);
+    backdrop-filter: blur(3px);
+}
+
+/* Icono de advertencia (para quitarlo del formulario, borra esta regla) */
+.organization-dialog::before {
+    content: "!";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border: 3px solid #f5b87a;
+    border-radius: 50%;
+    color: #f5b87a;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.organization-dialog-title {
+    margin: 0 0 14px;
+    color: #193007;
+    font-size: 20px;
+    text-align: center;
+}
+
+.organization-dialog-text,
+.organization-dialog-meta {
+    margin: 0 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.organization-dialog-meta {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #52604e;
+}
+
+.organization-dialog strong {
+    color: #193007;
+    overflow-wrap: anywhere;
+}
+
+.organization-dialog-error {
+    margin: 0 0 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fff0ee;
+    color: #91251f;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ---------- Campos del formulario ---------- */
+.organization-dialog-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.organization-dialog-field label {
+    color: #193007;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.organization-dialog-field input,
+.organization-dialog-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #bdcbb4;
+    border-radius: 8px;
+    background: #fff;
+    color: #283824;
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.organization-dialog-field textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.organization-dialog-field input:focus,
+.organization-dialog-field textarea:focus {
+    outline: none;
+    border-color: #82ba2e;
+    box-shadow: 0 0 0 3px rgba(130, 186, 46, 0.14);
+}
+
+.organization-dialog-field [aria-invalid="true"] {
+    border-color: #d98a8a;
+    background: #fff8f8;
+}
+
+.organization-dialog-field input:read-only,
+.organization-dialog-field textarea:read-only {
+    background: #f3f6f0;
+}
+
+.organization-dialog-field small {
+    color: #91251f;
+    font-size: 12px;
+}
+
+/* ---------- Botones (por data-role, no dependen del orden) ---------- */
+.organization-dialog-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+.organization-dialog .organization-dialog-button {
+    box-sizing: border-box;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.organization-dialog .organization-dialog-button:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.organization-dialog .organization-dialog-button:focus-visible {
+    outline: 2px solid #82ba2e;
+    outline-offset: 2px;
+}
+
+.organization-dialog .organization-dialog-button:disabled {
+    opacity: .6;
+    cursor: wait;
+    transform: none;
+}
+
+/* Acción normal (guardar, activar): Cancelar salmón, Confirmar verde */
+.organization-dialog[data-tone="safe"] [data-role="cancel"] {
+    background: #b3261e;
+}
+
+.organization-dialog[data-tone="safe"] [data-role="confirm"] {
+    background: #82ba2e;
+}
+
+/* Acción destructiva (desactivar): Cancelar verde, Confirmar rojo */
+.organization-dialog[data-tone="danger"] [data-role="cancel"] {
+    background: #82ba2e;
+}
+
+.organization-dialog[data-tone="danger"] [data-role="confirm"] {
+    background: #b3261e;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 700px) {
+    .organization-dialog-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .organization-dialog .organization-dialog-button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 450px) {
+    .organization-dialog {
+        padding: 20px 16px 16px;
+    }
+
+    .organization-dialog::before {
+        width: 52px;
+        height: 52px;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+}

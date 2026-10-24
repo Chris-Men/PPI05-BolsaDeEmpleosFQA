@@ -453,36 +453,46 @@ a {
   pointer-events: all;
 }
 
+
+
+
 /* ═══════════════════════════════════════════════
-   S1 — HERO
+   S1 — HERO (IMAGEN DE FONDO + CONTENIDO SUPERPUESTO)
 ═══════════════════════════════════════════════ */
-.hero {
-  background: var(--gd);
-  padding: 72px 48px 60px;
+.hero-banner {
   position: relative;
+  width: 100%;
+  background: var(--gd);
   overflow: hidden;
   flex-shrink: 0;
+  margin-top: 40px;
 }
 
-.hero-glow {
+/* Escritorio: la imagen define la altura y se ve completa */
+.hero-banner picture {
+  display: block;
+  width: 100%;
+}
+
+.hero-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Contenido sobre la zona vacía (izquierda) de la imagen */
+.hero-content {
   position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(130, 186, 46, .16) 0%, transparent 68%);
-}
-
-.hero-glow-1 {
-  width: 700px;
-  height: 700px;
-  right: -140px;
-  top: -200px;
-}
-
-.hero-glow-2 {
-  width: 380px;
-  height: 380px;
-  left: 42%;
-  bottom: -120px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 48%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 48px;
 }
 
 .hero-eyebrow {
@@ -490,7 +500,7 @@ a {
   align-items: center;
   gap: 8px;
   background: rgba(130, 186, 46, .1);
-  border: 1px solid rgba(130, 186, 46, .26);
+  border: 1px solid rgba(130, 186, 46, .4);
   border-radius: 100px;
   padding: 5px 16px;
   font-size: 11px;
@@ -498,7 +508,7 @@ a {
   color: var(--g);
   letter-spacing: .13em;
   text-transform: uppercase;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .hero-dot {
@@ -523,32 +533,33 @@ a {
   }
 }
 
-.hero h1 {
-  font-size: 52px;
+.hero-content h1 {
+  font-size: clamp(34px, 3.9vw, 52px);
   font-weight: 800;
   color: var(--w);
   line-height: 1.06;
-  max-width: 640px;
-  margin-bottom: 18px;
+  max-width: 600px;
+  margin-bottom: 16px;
   letter-spacing: -.02em;
 }
 
-.hero h1 em {
+.hero-content h1 em {
   color: var(--g);
   font-style: normal;
 }
 
 .hero-sub {
-  font-size: 15.5px;
-  color: rgba(255, 255, 255, .56);
-  max-width: 500px;
-  line-height: 1.72;
-  margin-bottom: 40px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, .72);
+  max-width: 460px;
+  line-height: 1.65;
+  margin-bottom: 24px;
 }
 
 .hero-search {
   display: flex;
-  max-width: 700px;
+  width: 100%;
+  max-width: 560px;
   background: var(--w);
   border-radius: var(--rad-lg);
   overflow: hidden;
@@ -562,9 +573,10 @@ a {
 
 .hero-search input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
-  padding: 18px 22px;
+  padding: 16px 20px;
   font-size: 14px;
   color: var(--c700);
   background: transparent;
@@ -577,13 +589,13 @@ a {
 .hero-vdiv {
   width: 1px;
   background: var(--c100);
-  margin: 14px 0;
+  margin: 12px 0;
 }
 
 .hero-search select {
   border: none;
   outline: none;
-  padding: 18px 14px;
+  padding: 16px 12px;
   font-size: 13px;
   color: var(--c600);
   background: transparent;
@@ -593,7 +605,7 @@ a {
 .hero-search-btn {
   background: var(--g);
   border: none;
-  padding: 0 30px;
+  padding: 0 26px;
   font-weight: 700;
   font-size: 14px;
   color: var(--w);
@@ -602,6 +614,7 @@ a {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .hero-search-btn:hover {
@@ -617,13 +630,13 @@ a {
 .hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 52px;
-  margin-top: 40px;
+  gap: 40px;
+  margin-top: 28px;
 }
 
 .hero-stats strong {
   display: block;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   color: var(--w);
   line-height: 1;
@@ -632,7 +645,7 @@ a {
 .hero-stats span {
   font-size: 11px;
   font-weight: 500;
-  color: rgba(255, 255, 255, .4);
+  color: rgba(255, 255, 255, .6);
   text-transform: uppercase;
   letter-spacing: .12em;
   margin-top: 5px;
@@ -640,7 +653,7 @@ a {
 }
 
 .home-statistics-error {
-  margin-top: 16px;
+  margin-top: 14px;
   color: var(--w);
   font-size: 13px;
 }
@@ -658,10 +671,107 @@ a {
   color: var(--g);
   font: inherit;
   text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Tablet y móvil: la imagen pasa a ser fondo y el contenido define la altura */
+@media (max-width: 900px) {
+  .hero-banner {
+    display: flex;
+    min-height: 640px;
+  }
+
+  .hero-banner picture {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+  }
+
+  .hero-banner-img {
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* capa oscura para que el texto se lea sobre la foto */
+  .hero-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(10, 40, 5, .78) 0%, rgba(10, 40, 5, .55) 55%, rgba(10, 40, 5, .25) 100%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    width: 100%;
+    padding: 40px 20px 32px;
+    justify-content: flex-start;
+  }
+
+  .hero-content h1 {
+    max-width: 100%;
+  }
+
+  .hero-search {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 600px) {
+  .hero-banner {
+    min-height: 600px;
+  }
+
   .hero-search {
+    flex-wrap: wrap;
+  }
+
+  .hero-search input {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .hero-search select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-vdiv {
+    display: none;
+  }
+
+  .hero-search-btn {
+    padding: 15px 20px;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    width: 100%;
+  }
+}
+
+
+.home-statistics-error button,
+.home-listing-message button {
+  border: none;
+  background: none;
+  color: var(--g);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .hero-panel {
+    padding: 24px 20px 32px;
+  }
+
+  .hero-search {
+
     flex-wrap: wrap;
   }
 
@@ -690,6 +800,7 @@ a {
     gap: 24px;
   }
 }
+
 
 /* TRUST STRIP */
 .trust-strip {
@@ -3972,7 +4083,23 @@ body {
     transition: none;
   }
 }
-.site-social-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-.site-social-links:empty { display: none; }
-.site-social-links a { color: inherit; font-size: 12px; }
-.site-home-description { white-space: pre-line; }
+
+.site-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.site-social-links:empty {
+  display: none;
+}
+
+.site-social-links a {
+  color: inherit;
+  font-size: 12px;
+}
+
+.site-home-description {
+  white-space: pre-line;
+}

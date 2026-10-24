@@ -1,15 +1,1324 @@
-.candidate-editor { margin-bottom: 24px; padding: 24px; }
-.candidate-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.candidate-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.candidate-editor-field { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; min-width: 0; }
-.candidate-editor-field input, .candidate-editor-field textarea { font: inherit; width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #ccc; border-radius: 8px; }
-.candidate-editor-field textarea { min-height: 110px; resize: vertical; }
-.candidate-editor input:read-only, .candidate-editor textarea:read-only { background: #f7faf5; }
-.candidate-editor-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
-.candidate-editor button, .resume-manager button { font: inherit; padding: 9px 14px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
-.candidate-editor [role=alert], .resume-manager [role=alert] { color: #a32121; }
-.candidate-editor [role=status], .resume-manager [role=status] { color: #276315; }
-.candidate-editor button:disabled, .resume-manager button:disabled { opacity: .55; cursor: wait; }
-.candidate-history { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin: 12px 0; min-width: 0; }
-.resume-manager { min-width: 0; padding: 16px; overflow-wrap: anywhere; }
-@media (max-width: 640px) { .candidate-editor { padding: 16px; } .candidate-editor-grid { grid-template-columns: 1fr; } }
+/* =========================================================
+   FQA EMPLEOS — FORMULARIO DE POSTULACIÓN (completo)
+   Cubre TODAS las clases usadas en ApplicationForm.tsx:
+   layout, barra de progreso, panel verde, pasos, campos,
+   revisión, errores, botones y estados de carga.
+   Este archivo es independiente de resumeManager.full.css.
+========================================================= */
+
+.screen.application-form {
+  --af-header-h: 53px;
+  /* alto de la barra superior de la app */
+  --af-aside-w: 240px;
+  /* ancho del panel verde */
+  --af-green: #82ba2e;
+  --af-green-dark: #5ba222;
+  --af-ink: #203b13;
+  --af-text: #34432d;
+  --af-muted: #74816c;
+  --af-line: #e8eee2;
+  --af-border: #dfe8d6;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  min-height: calc(100dvh - var(--af-header-h));
+  max-height: none;
+  margin: 0;
+  padding: 20px 24px 24px;
+  overflow: visible;
+  color: var(--af-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.application-form,
+.application-form * {
+  box-sizing: border-box;
+}
+
+/* ---------- Barra de progreso ---------- */
+.application-form .form-prog-bar {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 4px;
+  margin: 0 0 16px;
+  overflow: hidden;
+  background: #e3e9dc;
+  border-radius: 999px;
+}
+
+.application-form .form-prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--af-green), var(--af-green-dark));
+  border-radius: 999px;
+  transition: width 300ms ease;
+}
+
+/* ---------- Tarjeta: panel verde + formulario ---------- */
+.application-form .form-shell {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: var(--af-aside-w) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #e2ebd9;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgb(35 61 21 / 6%);
+}
+
+/* ---------- Panel verde ---------- */
+.application-form .form-aside {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+  padding: 24px 18px;
+  color: #fff;
+  background: var(--af-ink);
+  border-radius: 17px 0 0 17px;
+}
+
+.application-form .fa-hd {
+  margin: 0 0 14px;
+  color: rgb(255 255 255 / 45%);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.application-form .step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+
+.application-form .step-n {
+  display: flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.application-form .step-n.done {
+  color: var(--af-ink);
+  background: var(--af-green);
+}
+
+.application-form .step-n.cur {
+  color: #fff;
+  background: var(--af-green-dark);
+  box-shadow: 0 0 0 3px rgb(130 186 46 / 28%);
+}
+
+.application-form .step-n.pend {
+  color: rgb(255 255 255 / 35%);
+  background: rgb(255 255 255 / 8%);
+}
+
+.application-form .step-info {
+  min-width: 0;
+}
+
+.application-form .step-lbl {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Vacante: empujada al fondo del panel */
+.application-form .fa-vac {
+  margin-top: auto;
+  padding: 12px 14px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(130 186 46 / 35%);
+  border-radius: 10px;
+}
+
+.application-form .fa-vac-lbl {
+  margin-bottom: 4px;
+  color: var(--af-green);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.application-form .fa-vac-title {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.application-form .fa-vac-org {
+  margin-top: 2px;
+  color: rgb(255 255 255 / 55%);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.application-form .form-aside .btn-back-f {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* ---------- Zona del formulario ---------- */
+.application-form .form-content-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  margin: 0;
+  padding: 20px 28px 18px;
+}
+
+.application-form .form-pages {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-inline-size: 0;
+  /* el fieldset por defecto impide encoger */
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.application-form .form-pages:disabled {
+  opacity: 0.75;
+}
+
+.application-form .form-page {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Guardado automático */
+.application-form .autosave-row {
+  display: inline-block;
+  width: fit-content;
+  margin: 0 0 12px;
+  padding: 4px 10px;
+  color: #497a27;
+  background: #f1f7e9;
+  border: 1px solid #dcebcf;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Encabezado del paso */
+.application-form .fp-hd {
+  margin: 0 0 14px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--af-line);
+}
+
+.application-form .fp-hd h3 {
+  margin: 0 0 3px;
+  color: var(--af-ink);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.application-form .fp-hd p {
+  margin: 0;
+  color: var(--af-muted);
+  font-size: 13px;
+}
+
+/* ---------- Campos ---------- */
+.application-form .fg2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  width: 100%;
+}
+
+.application-form .ff {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+}
+
+.application-form .ff.full {
+  grid-column: 1 / -1;
+}
+
+.application-form .ff label {
+  color: #6f8f4f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.application-form .ff input,
+.application-form .ff textarea,
+.application-form .ff select {
+  width: 100%;
+  max-width: 100%;
+  padding: 9px 12px;
+  color: var(--af-ink);
+  background: #fff;
+  border: 1px solid var(--af-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.application-form .ff input {
+  height: 38px;
+}
+
+.application-form .ff textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.application-form .ff input:focus,
+.application-form .ff textarea:focus,
+.application-form .ff select:focus {
+  outline: none;
+  border-color: var(--af-green);
+  box-shadow: 0 0 0 3px rgb(130 186 46 / 20%);
+}
+
+.application-form .ff input[readonly] {
+  color: var(--af-muted);
+  background: #f6f9f2;
+}
+
+.application-form .ff input[aria-invalid='true'] {
+  border-color: #d9534f;
+}
+
+.application-form .application-field-error {
+  margin: 0;
+  color: #ae322e;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ---------- Revisión (paso 4) ---------- */
+.application-form .review-block {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  background: #fafcf8;
+  border: 1px solid #e3ebd9;
+  border-radius: 12px;
+}
+
+.application-form .review-block p {
+  margin: 2px 0;
+  color: var(--af-text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.application-form .rb-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.application-form .rb-hd span {
+  color: #6f8f4f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.application-form .rb-hd button {
+  padding: 4px 10px;
+  color: #497a27;
+  background: #f1f7e9;
+  border: 1px solid #dcebcf;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.application-form .rb-hd button:hover {
+  background: #e6f1d9;
+}
+
+.application-form .application-prewrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Errores y avisos ---------- */
+.application-form .application-error {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  color: #a52f2a;
+  background: #fff3f1;
+  border: 1px solid #f0d3cf;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.application-form .application-error p {
+  margin: 6px 0;
+}
+
+.application-form .application-error button {
+  margin-top: 4px;
+  padding: 6px 12px;
+  color: #7e2b26;
+  background: #fff;
+  border: 1px solid #e7c4c0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Botones ---------- */
+.application-form .btn-back-f {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  color: #3f7a1c;
+  background: #fff;
+  border: 1px solid var(--af-green);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.application-form .form-aside .btn-back-f {
+  background: #f5faee;
+}
+
+.application-form .btn-back-f:hover:not(:disabled) {
+  background: #eef6e2;
+  box-shadow: 0 3px 10px rgb(40 70 22 / 10%);
+}
+
+.application-form .btn-next-f {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  color: #fff;
+  background: linear-gradient(180deg, var(--af-green), var(--af-green-dark));
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: filter 160ms ease, box-shadow 160ms ease;
+}
+
+.application-form .btn-next-f:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgb(91 162 34 / 30%);
+}
+
+.application-form .btn-back-f:disabled,
+.application-form .btn-next-f:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---------- Pie: Anterior / Paso X de 4 / Continuar ---------- */
+.application-form .form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--af-line);
+}
+
+.application-form .prog-txt {
+  color: var(--af-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---------- Estados de carga / error de la pantalla ---------- */
+.application-form.session-status,
+.session-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: #607a4d;
+  font-size: 13px;
+  text-align: center;
+}
+
+.session-status button {
+  padding: 8px 16px;
+  color: #3f7a1c;
+  background: #fff;
+  border: 1px solid #82ba2e;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Pantallas bajas: compactar ---------- */
+@media (max-height: 760px) {
+  .screen.application-form {
+    padding-top: 12px;
+    padding-bottom: 16px;
+  }
+
+  .application-form .form-prog-bar {
+    margin-bottom: 10px;
+  }
+
+  .application-form .form-aside {
+    padding: 18px 16px;
+  }
+
+  .application-form .step-item {
+    padding: 7px 0;
+  }
+
+  .application-form .form-content-wrap {
+    padding: 14px 24px;
+  }
+
+  .application-form .fp-hd {
+    margin-bottom: 10px;
+  }
+
+  .application-form .fp-hd h3 {
+    font-size: 21px;
+  }
+
+  .application-form .fg2 {
+    gap: 10px 16px;
+  }
+}
+
+/* ---------- Tablet / móvil ---------- */
+@media (max-width: 860px) {
+  .screen.application-form {
+    padding: 14px;
+  }
+
+  .application-form .form-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-form .form-aside {
+    border-radius: 17px 17px 0 0;
+  }
+
+  .application-form .fa-vac {
+    margin-top: 14px;
+  }
+
+  .application-form .form-content-wrap {
+    padding: 16px;
+  }
+
+  .application-form .fg2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-form .form-footer {
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   DOCUMENTOS DE POSTULACIÓN — RESUME MANAGER (compacto)
+========================================================= */
+
+.resume-manager,
+.resume-manager * {
+  box-sizing: border-box;
+}
+
+.resume-manager {
+  --resume-green: #82ba2e;
+  --resume-green-hover: #5ba222;
+  --resume-dark: #203b13;
+  --resume-text: #34432d;
+  --resume-muted: #74816c;
+
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: none;
+  padding: 18px 20px;
+  margin: 0;
+  overflow: visible;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbf4 100%);
+  border: 1px solid #e2ebd9;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgb(35 61 21 / 6%);
+  color: var(--resume-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Encabezado */
+.resume-manager .resume-manager-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid #e8eee2;
+}
+
+.resume-manager .resume-manager-heading-icon {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #548b22;
+  background: #edf6e4;
+  border: 1px solid #deedcf;
+  border-radius: 12px;
+}
+
+.resume-manager .resume-manager-heading-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.resume-manager .resume-manager-heading-copy h3 {
+  margin: 0 0 2px;
+  color: var(--resume-dark);
+  font-size: 17px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+}
+
+.resume-manager .resume-manager-heading-copy p {
+  margin: 0;
+  color: var(--resume-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-private {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  color: #497a27;
+  background: #f0f7e9;
+  border: 1px solid #dcebcf;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+/* Información del formato */
+.resume-manager .resume-manager-format {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: #f7faf3;
+  border: 1px solid #e7eddf;
+  border-radius: 11px;
+}
+
+.resume-manager .resume-manager-pdf-badge {
+  display: inline-flex;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 38px;
+  color: #a23c32;
+  background: #fff0ed;
+  border: 1px solid #f4d9d4;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.resume-manager .resume-manager-format>div {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.resume-manager .resume-manager-format strong {
+  color: var(--resume-dark);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.resume-manager .resume-manager-format span:not(.resume-manager-pdf-badge) {
+  color: var(--resume-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* Tarjeta del documento seleccionado */
+.resume-manager .resume-document-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: linear-gradient(120deg, #f4f9ee, #fbfdf8);
+  border: 1px solid #dce9d0;
+  border-radius: 13px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.resume-manager .resume-document-card:hover {
+  border-color: #c4dda9;
+  box-shadow: 0 5px 16px rgb(52 87 28 / 6%);
+}
+
+.resume-manager .resume-document-icon {
+  display: flex;
+  flex: 0 0 46px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 46px;
+  min-height: 52px;
+  padding: 6px;
+  color: #548525;
+  background: #e7f2dc;
+  border: 1px solid #d7e8c7;
+  border-radius: 11px;
+}
+
+.resume-manager .resume-document-icon span {
+  color: #a04438;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.resume-manager .resume-document-info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.resume-manager .resume-document-status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+  color: #527541;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.resume-manager .resume-status-dot {
+  display: inline-block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #78b83b;
+  box-shadow: 0 0 0 3px #e2f0d6;
+}
+
+.resume-manager .resume-document-name {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  color: #273d1d;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
+}
+
+.resume-manager .resume-document-size {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: #77836f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.resume-manager .resume-document-check {
+  display: flex;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #619a30;
+  background: #e7f3dc;
+  border-radius: 50%;
+}
+
+/* Estado sin archivo */
+.resume-manager .resume-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  margin: 12px 0;
+  padding: 18px;
+  text-align: center;
+  background: #fafcf8;
+  border: 1px dashed #cddfc0;
+  border-radius: 14px;
+}
+
+.resume-manager .resume-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+  color: #639c32;
+  background: #edf6e5;
+  border-radius: 13px;
+}
+
+.resume-manager .resume-empty-state h4 {
+  margin: 0 0 4px;
+  color: var(--resume-dark);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.resume-manager .resume-empty-state p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--resume-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Aviso sobre el documento de la postulación */
+.resume-manager .resume-application-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  margin: 12px 0;
+  padding: 9px 12px;
+  color: #4f6e3b;
+  background: #f1f7eb;
+  border: 1px solid #deebd2;
+  border-radius: 10px;
+}
+
+.resume-manager .resume-application-note>svg {
+  flex: 0 0 16px;
+  margin-top: 2px;
+}
+
+.resume-manager .resume-application-note p {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Acciones */
+.resume-manager .resume-manager-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #e8eee2;
+}
+
+.resume-manager .resume-manager-actions button {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 7px 13px;
+  border: 1px solid #dbe5d2;
+  border-radius: 9px;
+  background: #fff;
+  color: #405a30;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease,
+    border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.resume-manager .resume-manager-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f5f9f0;
+  border-color: #a9cb89;
+  box-shadow: 0 4px 12px rgb(40 70 22 / 7%);
+}
+
+.resume-manager .resume-manager-actions .resume-action-primary {
+  color: #fff;
+  background: #6da925;
+  border-color: #6da925;
+}
+
+.resume-manager .resume-manager-actions .resume-action-primary:hover:not(:disabled) {
+  color: #fff;
+  background: #568c1c;
+  border-color: #568c1c;
+}
+
+.resume-manager .resume-manager-actions .resume-action-danger {
+  color: #b33a35;
+  background: #fff;
+  border-color: #edcfcc;
+}
+
+.resume-manager .resume-manager-actions .resume-action-danger:hover:not(:disabled) {
+  color: #fff;
+  background: #bd3933;
+  border-color: #bd3933;
+}
+
+.resume-manager .resume-manager-actions .resume-action-text {
+  color: #597d3f;
+  background: transparent;
+  border-color: transparent;
+}
+
+.resume-manager .resume-manager-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mensajes y errores */
+.resume-manager .resume-manager-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  margin: 10px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+}
+
+.resume-manager .resume-manager-message>svg {
+  flex: 0 0 18px;
+  margin-top: 2px;
+}
+
+.resume-manager .resume-manager-message p {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-message.is-error {
+  color: #a52f2a;
+  background: #fff3f1;
+  border: 1px solid #f0d3cf;
+}
+
+.resume-manager .resume-manager-message.is-success {
+  color: #376923;
+  background: #f0f8e9;
+  border: 1px solid #d8e9cb;
+}
+
+.resume-manager .resume-manager-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 10px 0;
+  color: #607a4d;
+  font-size: 12px;
+}
+
+.resume-manager .resume-manager-field-error {
+  margin: 8px 0;
+  color: #ae322e;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-manager-retry {
+  margin: 6px 0 0;
+  padding: 6px 12px;
+  color: #7e2b26;
+  background: #fff;
+  border: 1px solid #e7c4c0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Modal personalizado de eliminación */
+.resume-manager .resume-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(17 32 11 / 60%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.resume-manager .resume-delete-modal {
+  position: relative;
+  width: min(100%, 440px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  /* solo por seguridad en pantallas muy bajas */
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid #e5eadd;
+  border-radius: 18px;
+  box-shadow: 0 25px 80px rgb(0 0 0 / 24%);
+  animation: resume-modal-appear 200ms ease-out;
+}
+
+.resume-manager .resume-delete-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #6d7865;
+  background: #f5f7f2;
+  border: 1px solid #e5e9df;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.resume-manager .resume-delete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 12px;
+  color: #b63731;
+  background: #fff0ee;
+  border: 1px solid #f3d7d3;
+  border-radius: 14px;
+}
+
+.resume-manager .resume-delete-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: #799164;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.resume-manager .resume-delete-modal h2 {
+  margin: 0 0 8px;
+  padding-right: 20px;
+  color: #253b1b;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.resume-manager .resume-delete-modal>p {
+  margin: 0 0 14px;
+  color: #687361;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.resume-manager .resume-delete-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  color: #4d6e39;
+  background: #f2f8ed;
+  border: 1px solid #dfebd5;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.resume-manager .resume-delete-warning svg {
+  flex: 0 0 18px;
+}
+
+.resume-manager .resume-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resume-manager .resume-delete-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 1px solid #dce4d5;
+  border-radius: 9px;
+  background: #fff;
+  color: #42533a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resume-manager .resume-delete-actions .resume-delete-confirm {
+  color: #fff;
+  background: #bd3933;
+  border-color: #bd3933;
+}
+
+.resume-manager .resume-delete-actions .resume-delete-confirm:hover:not(:disabled) {
+  background: #a72c28;
+  border-color: #a72c28;
+}
+
+.resume-manager .resume-delete-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes resume-modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================================================
+   Pantallas de poca altura: compactar un poco más
+========================================================= */
+@media (max-height: 760px) {
+  .resume-manager {
+    padding: 14px 18px;
+  }
+
+  .resume-manager .resume-manager-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .resume-manager .resume-manager-format,
+  .resume-manager .resume-document-card,
+  .resume-manager .resume-empty-state,
+  .resume-manager .resume-application-note {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .resume-manager .resume-empty-state {
+    padding: 12px 16px;
+  }
+
+  .resume-manager .resume-empty-icon {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 6px;
+  }
+
+  .resume-manager .resume-manager-actions {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+}
+
+/* =========================================================
+   Responsive
+========================================================= */
+@media (max-width: 640px) {
+  .resume-manager {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .resume-manager .resume-manager-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .resume-manager .resume-manager-heading-icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .resume-manager .resume-manager-heading-copy {
+    flex-basis: calc(100% - 52px);
+  }
+
+  .resume-manager .resume-manager-heading-copy h3 {
+    font-size: 16px;
+  }
+
+  .resume-manager .resume-manager-private {
+    margin-left: 48px;
+  }
+
+  .resume-manager .resume-document-card {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .resume-manager .resume-document-icon {
+    flex-basis: 40px;
+    width: 40px;
+    min-height: 48px;
+  }
+
+  .resume-manager .resume-document-check {
+    flex-basis: 26px;
+    width: 26px;
+    height: 26px;
+  }
+
+  .resume-manager .resume-document-name {
+    font-size: 13px;
+  }
+
+  .resume-manager .resume-manager-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .resume-manager .resume-manager-actions button {
+    width: 100%;
+  }
+
+  .resume-manager .resume-delete-modal {
+    padding: 20px 16px;
+  }
+
+  .resume-manager .resume-delete-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resume-manager .resume-delete-actions button {
+    width: 100%;
+  }
+}

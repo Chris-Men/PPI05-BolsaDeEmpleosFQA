@@ -36,8 +36,8 @@ export function OpportunityListingLayout({ controls, children, salaryFilter }: O
   const totalPages = Math.max(1, Math.ceil(controls.total / controls.pageSize));
 
   return (
-    <div className="listing-wrap opportunity-listing">
-      <aside className="l-aside" aria-label="Filtros de oportunidades">
+
+<div className="listing-wrap opportunity-listing" style={{ paddingTop: '20px' }}>      <aside className="l-aside" aria-label="Filtros de oportunidades">
         <div className="aside-hd">
           FILTROS
           <button type="button" aria-label="Limpiar filtros" onClick={controls.onClear}>Limpiar</button>

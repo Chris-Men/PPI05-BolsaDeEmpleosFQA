@@ -33,6 +33,7 @@ import {
 
 import nosotrosDesktop from "../components/imagenes/img/nosotros.png";
 import nosotrosResponsive from "../components/imagenes/img/nosotros renponsiv.png";
+import fundadorImg from "../components/imagenes/img/Fundador.png";
 import "../styles/users/nosotros.css";
 import { useSiteSettings } from '../hooks/useSiteSettings';
 
@@ -208,53 +209,53 @@ export default function Nosotros() {
           </div>
         </div>
       </section>
-
+ 
       <main className="fqa-main">
-        <section className="intro-section section-container">
-          <div className="section-heading">
-            <span className="section-kicker">
-              <HandHeart size={16} /> ¿QUIÉNES SOMOS?
-            </span>
-            <h2>
-              Fundación Quintanilla <span>Amaya.</span>
-            </h2>
-          </div>
+       <section className="intro-section section-container">
+  <div className="intro-grid">
+    <div className="intro-text">
+      <div className="section-heading">
+        <span className="section-kicker">
+          <HandHeart size={16} /> ¿QUIÉNES SOMOS?
+        </span>
+        <h2>
+          Fundación Quintanilla <span>Amaya.</span>
+        </h2>
+      </div>
 
-          <div className="intro-grid">
-            <div className="intro-text">
-              <p>
-                Somos una organización comprometida con el desarrollo integral
-                de las personas, las familias y las comunidades.
-              </p>
-              <p>
-                A través de iniciativas en educación, salud, desarrollo y
-                bienestar social, medioambiente y sostenibilidad, y autonomía
-                económica, trabajamos para generar oportunidades que
-                contribuyan a mejorar la calidad de vida y promover un
-                desarrollo sostenible.
-              </p>
-              <p>
-                Nuestra labor se fundamenta en la promoción de valores,
-                principios y acciones que favorecen la inclusión, la
-                solidaridad y la transformación social.
-              </p>
-            </div>
+      <p>
+        Somos una organización comprometida con el desarrollo integral
+        de las personas, las familias y las comunidades.
+      </p>
+      <p>
+        A través de iniciativas en educación, salud, desarrollo y
+        bienestar social, medioambiente y sostenibilidad, y autonomía
+        económica, trabajamos para generar oportunidades que
+        contribuyan a mejorar la calidad de vida y promover un
+        desarrollo sostenible.
+      </p>
+      <p>
+        Nuestra labor se fundamenta en la promoción de valores,
+        principios y acciones que favorecen la inclusión, la
+        solidaridad y la transformación social.
+      </p>
+    </div>
 
-            <div className="intro-highlight">
-              <div className="intro-highlight-icon">
-                <UsersRound size={25} />
-              </div>
-              <div>
-                <strong>Desarrollo integral</strong>
-                <p>
-                  Trabajamos desde una visión que conecta diferentes áreas
-                  para generar oportunidades y fortalecer a las personas,
-                  las familias y las comunidades.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+    <figure className="intro-founder">
+      <img
+        src={fundadorImg}
+        alt="Fundador de la Fundación Quintanilla Amaya"
+        loading="lazy"
+        decoding="async"
+      />
+      <figcaption className="intro-founder-caption">
+    <strong>Joel Quintanilla Amaya</strong>
+    <br></br>
+    <span>Fundador</span>
+  </figcaption>
+    </figure>
+  </div>
+</section>
 
         <section className="mission-vision-section">
           <div className="section-container">
