@@ -29,6 +29,7 @@ services:
       - backend_node_modules:/app/node_modules
       - resume_data:/app/private/resumes
       - backup_data:/app/private/backups
+      - statistics_export_data:/app/private/statistics-exports
     command: npm run dev
     environment:
       # Permite que tsx watch detecte cambios guardados desde Windows.
@@ -50,6 +51,7 @@ services:
       BACKUPS_ENABLED: "true"
       BACKUP_DIRECTORY: /app/private/backups
       BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+      STATISTICS_EXPORT_DIRECTORY: /app/private/statistics-exports
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,6 +87,7 @@ services:
       retries: 5
 
 volumes:
+  statistics_export_data:
   backup_data:
   resume_data:
   backend_node_modules:

@@ -64,6 +64,8 @@ Después de las gráficas del período se muestran **Oferta y demanda por catego
 
 ## Reporte operativo en PDF
 
+La exportación detallada a Excel tiene confirmación, cola persistente y cinco hojas; sus contratos y criterios se documentan en [Exportación administrativa XLSX](STATISTICS_EXCEL.md).
+
 **Exportar PDF**, en Estadísticas, descarga un reporte A4 para el período aplicado, incluido **Desde el inicio**, con tantas páginas como necesiten los datos:
 
 1. Resumen ejecutivo con las tarjetas principales, candidatos activos registrados, personas seleccionadas, su porcentaje y candidatos con CV activo.

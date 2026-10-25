@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
+import '../../styles/admin/configuracion.css';
 
 interface ConfigurationConfirmDialogProps {
   title: string;

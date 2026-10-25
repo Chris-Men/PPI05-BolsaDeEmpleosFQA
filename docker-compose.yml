@@ -22,6 +22,8 @@ services:
   backend:
     image: ghcr.io/${GHCR_OWNER}/fqa-empleos-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    volumes:
+      - statistics_export_data:/app/private/statistics-exports
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -36,6 +38,7 @@ services:
       SMTP_FROM: ${SMTP_FROM}
       RESET_PASSWORD_URL: https://${DOMAIN}/reset-password
       MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY}
+      STATISTICS_EXPORT_DIRECTORY: /app/private/statistics-exports
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +64,7 @@ services:
       retries: 3
 
 volumes:
+  statistics_export_data:
   caddy_data:
   caddy_config:
   postgres_data:

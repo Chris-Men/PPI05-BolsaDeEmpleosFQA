@@ -1,0 +1,12 @@
+/* Export progress uses the existing administrative palette without locking the page. */
+.statistics-export-panel { margin: 20px 0 25px; }
+.statistics-export-jobs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.statistics-export-jobs li { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px; background: #f6f9f1; border-radius: 12px; }
+.statistics-export-jobs li > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 13px; }
+.statistics-export-jobs strong { color: #193007; }
+.statistics-export-jobs span, .statistics-export-jobs small { color: #5b6755; }
+.statistics-export-monitor { position: fixed; right: 20px; bottom: 20px; z-index: 900; max-width: min(400px, calc(100vw - 40px)); display: flex; align-items: center; gap: 12px; background: #193007; color: white; padding: 14px 18px; border-radius: 14px; box-shadow: 0 8px 24px #19300733; font-size: 13px; }
+.statistics-export-monitor p { margin: 0; line-height: 1.5; }
+.statistics-export-monitor button { background: none; border: 0; color: white; cursor: pointer; font-size: 24px; }
+.statistics-export-monitor button:focus-visible { outline: 2px solid #82ba2e; }
+@media (max-width: 600px) { .statistics-export-jobs li { align-items: flex-start; flex-direction: column; } .statistics-export-jobs button { width: 100%; } .statistics-export-monitor { bottom: 12px; right: 12px; max-width: calc(100vw - 24px); } }

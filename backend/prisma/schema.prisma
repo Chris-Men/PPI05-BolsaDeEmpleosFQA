@@ -36,9 +36,48 @@ model User {
   status                   UserStatus                 @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_status")
   volunteerRegistrations   VolunteerRegistrations[]
   workExperiences          WorkExperiences[]
+  statisticsExports        StatisticsExport[]
 
   @@index([statusId], map: "ix_users_status_id")
   @@map("users")
+}
+
+/// Durable, account-owned XLSX jobs; files remain outside the public web root.
+model StatisticsExport {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  requestId String @map("request_id") @db.Uuid
+  from DateTime @db.Date
+  to DateTime @db.Date
+  status StatisticsExportStatus @default(QUEUED)
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at")
+  leaseToken String? @map("lease_token") @db.Uuid
+  lockedUntil DateTime? @map("locked_until")
+  createdAt DateTime @default(now()) @map("created_at")
+  startedAt DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  expiresAt DateTime? @map("expires_at")
+  snapshotAt DateTime? @map("snapshot_at")
+  fileKey String? @map("file_key") @db.Uuid
+  sizeBytes Int? @map("size_bytes")
+  rowCounts Json? @map("row_counts")
+  error String? @db.VarChar(500)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, requestId])
+  @@index([status, nextAttemptAt, lockedUntil, createdAt])
+  @@index([userId, createdAt])
+  @@map("statistics_exports")
+}
+
+/// Terminal failures can be regenerated only through a newly confirmed request.
+enum StatisticsExportStatus {
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
 }
 
 /// Recuperacion de contraseña

@@ -20,6 +20,7 @@ const envSchema = z.object({
   BACKUPS_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
   BACKUP_DIRECTORY: z.string().optional(),
   BACKUP_ENCRYPTION_KEY: z.string().optional(),
+  STATISTICS_EXPORT_DIRECTORY: z.string().min(1).optional(),
 }).superRefine((values, context) => {
   if (Boolean(values.RESUME_STORAGE_DRIVER) !== Boolean(values.RESUME_STORAGE_DIRECTORY)) {
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'Configura juntos el proveedor y directorio de CV.' });

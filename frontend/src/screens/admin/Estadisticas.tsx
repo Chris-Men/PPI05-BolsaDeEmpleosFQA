@@ -2,6 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAdministrativeStatistics } from '../../hooks/useAdministrativeStatistics';
 import { useOperationalReport } from '../../hooks/useOperationalReport';
 import { Download } from 'lucide-react';
+import { useStatisticsExports } from '../../hooks/useStatisticsExports';
+import { StatisticsExportPanel } from '../../components/admin/StatisticsExportPanel';
+import { ConfigurationConfirmDialog } from '../../components/admin/ConfigurationConfirmDialog';
+import type { StatisticsExportRequest } from '../../types/statisticsExport';
+import type { StatisticsRange } from '../../types/statistics';
 import { operationalStatisticsCards, primaryStatisticsCards, statisticsCalendarLabel } from '../../utils/statisticsPresentation';
 import { CandidateDemographicsSection, CategoryStatisticsTable } from '../../components/admin/StatisticsBreakdowns';
 import { statisticsPresetRange, statisticsRangeError, type StatisticsPreset } from '../../utils/statisticsDates';
@@ -17,6 +22,12 @@ export default function Estadisticas() {
   const [error, setError] = useState('');
   const result = useAdministrativeStatistics(range);
   const report = useOperationalReport(range);
+  const excel = useStatisticsExports();
+  const [confirmation, setConfirmation] = useState<StatisticsExportRequest | null>(null);
+  /** A new dialog captures its own immutable range and clears errors from older actions. */
+  const confirmExcelExport = (value: StatisticsRange): void => {
+    excel.dismiss(); setConfirmation({ ...value, requestId: crypto.randomUUID(), confirmed: true });
+  };
   const data = result.data;
   const unapplied = draft.from !== range.from || draft.to !== range.to;
   const canExport = Boolean(data && !result.loading && !report.busy && !unapplied);
@@ -43,6 +54,7 @@ export default function Estadisticas() {
       <button type="submit" className="statistics-refresh-button" disabled={report.busy}>Aplicar</button>
       <button type="button" className="statistics-refresh-button" disabled={result.loading || report.busy} onClick={result.reload}>{result.loading ? 'Actualizando…' : 'Actualizar'}</button>
       <button type="button" className="statistics-refresh-button statistics-export-button" aria-busy={report.busy} aria-describedby="statistics-export-hint" disabled={!canExport} onClick={() => void report.download()}><Download size={16} aria-hidden="true" />{report.busy ? 'Generando PDF…' : 'Exportar PDF'}</button>
+      {excel.allowed && <button type="button" className="statistics-refresh-button statistics-excel-button" disabled={!data || result.loading || unapplied || report.busy || excel.requesting || Boolean(excel.activeJob)} onClick={() => confirmExcelExport(range)}><Download size={16} aria-hidden="true" />{excel.requesting ? 'Encolando…' : 'Exportar Excel'}</button>}
     </form></div>
     <p className="statistics-export-hint" id="statistics-export-hint">{unapplied ? 'Aplica el período elegido antes de exportar.' : 'El PDF incluirá los indicadores y gráficas actualizados del período aplicado.'}</p>
     {report.error && <div role="alert" className="statistics-error statistics-report-error">{report.error} <button type="button" className="statistics-refresh-button" disabled={!canExport} onClick={() => void report.download()}>Reintentar descarga</button></div>}
@@ -50,6 +62,9 @@ export default function Estadisticas() {
     {error && <p role="alert" className="statistics-error">{error}</p>}
     {result.error && <p role="alert" className="statistics-error">{result.error} <button type="button" onClick={result.reload}>Reintentar indicadores</button></p>}
     {result.loading && <p role="status">Cargando indicadores…</p>}
+    <StatisticsExportPanel onRegenerate={confirmExcelExport} />
+    {confirmation && <ConfigurationConfirmDialog title="Confirmar exportación de Excel" description={'¿Exportar los datos del período ' + statisticsCalendarLabel(confirmation.from) + ' — ' + statisticsCalendarLabel(confirmation.to) + '?'} cancelLabel="Cancelar" confirmLabel="Confirmar exportación" danger={false} busy={excel.requesting} error={excel.error}
+      onCancel={() => setConfirmation(null)} onConfirm={() => { void excel.request(confirmation).then(created => { if (created) setConfirmation(null); }); }} />}
     <div className="statistics-grid">
       {primaryStatisticsCards(data).map(card => <div className="stat-card" key={card.key}><span>{card.label}</span><strong>{card.value}</strong><small>{card.description}</small></div>)}
     </div>

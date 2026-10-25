@@ -55,6 +55,7 @@ class FailingPostgres extends BackupPostgres {
 }
 
 describe('respaldos completos y restauración privada', () => {
+  let excelExportId: number;
   before(async () => {
     assert.equal(env.NODE_ENV, 'test'); assert.ok(new URL(env.DATABASE_URL).pathname.endsWith('_test'));
     assert.ok(env.BACKUP_DIRECTORY?.includes('test')); assert.ok(env.RESUME_STORAGE_DIRECTORY?.includes('test'));
@@ -77,6 +78,7 @@ describe('respaldos completos y restauración privada', () => {
     await prisma.applicationDrafts.create({ data: { userId: actor('CANDIDATE').id, jobId, resumeId: secondFile, data: { motivation: 'Borrador conservado' } } });
     await prisma.passwordResetToken.create({ data: { userId: actor('CANDIDATE').id, tokenHash: randomBytes(32).toString('hex'), expiresAt: new Date(Date.now() + 3_600_000) } });
     await prisma.emailOutbox.create({ data: { eventKey: prefix, kind: 'APPLICATION_SUBMITTED', recipientEmail: actor('CANDIDATE').email, encryptedPayload: 'fixture', iv: 'a'.repeat(24), authTag: 'a'.repeat(24) } });
+    excelExportId = (await prisma.statisticsExport.create({ data: { userId: actor('SUPER_ADMIN').id, requestId: randomUUID(), from: new Date('2026-01-01'), to: new Date('2026-01-31'), status: 'READY', fileKey: randomUUID(), expiresAt: new Date(Date.now() + 86_400_000) } })).id;
   });
   after(async () => {
     await backupCoordinator.stop(); backupRuntime.mode = 'OPEN';
@@ -196,6 +198,8 @@ describe('respaldos completos y restauración privada', () => {
     assert.equal(await prisma.authSession.count({ where: { revokedAt: null } }), 0);
     assert.equal(await prisma.passwordResetToken.count({ where: { usedAt: null } }), 0);
     assert.ok((await prisma.emailOutbox.findUniqueOrThrow({ where: { eventKey: prefix } })).discardedAt);
+    const excel = await prisma.statisticsExport.findUniqueOrThrow({ where: { id: excelExportId } });
+    assert.equal(excel.status, 'EXPIRED'); assert.equal(excel.fileKey, null); assert.equal(excel.leaseToken, null);
     let delivered = 0; await processEmailOutboxBatch({ sendMail: async () => { delivered += 1; } }); assert.equal(delivered, 0);
     await login('SUPER_ADMIN'); await login('CANDIDATE');
     const download = await request('GET', '/applications/' + applicationId + '/resume/download', 'CANDIDATE'); assert.equal(download.status, 200); assert.deepEqual(Buffer.from(await download.arrayBuffer()), pdf);
