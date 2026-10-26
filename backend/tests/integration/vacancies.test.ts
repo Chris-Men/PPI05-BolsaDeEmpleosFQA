@@ -39,14 +39,14 @@ const createCategory = async (fields: object = {}): Promise<Category> => {
 };
 /** Minimal draft fixture has no invented required references. */
 const draft = async (kind: OpportunityType = 'EMPLOYMENT', fields: object = {}): Promise<Opportunity> => {
-  const result = await request('POST', '/admin/opportunities', admin(), { kind, title: runId + '-' + randomUUID(), ...fields });
+  const result = await request('POST', '/admin/opportunities', admin(), { kind, title: runId + '-' + randomUUID(), contactEmail: 'fixture@example.test', ...fields });
   assert.equal(result.status, 201);
   return await result.json() as Opportunity;
 };
 /** Type-specific publication fields use actual catalog identities. */
 const publicationFields = (kind: OpportunityType) => ({
   organizationId, categoryId, department: runId, municipality: 'Municipio', description: 'Descripción completa de una oportunidad con impacto social.',
-  modality: 'HYBRID', slots: 3, contact: 'contacto@example.test', requirements: ['Primer requisito'], responsibilities: ['Primera responsabilidad'], benefits: ['Aprendizaje'], expiresAt: '2099-12-31',
+  modality: 'HYBRID', slots: 3, contactEmail: 'contacto@example.test', requirements: ['Primer requisito'], responsibilities: ['Primera responsabilidad'], benefits: ['Aprendizaje'], expiresAt: '2099-12-31',
   ...(kind === 'EMPLOYMENT' ? { employmentTypeId, experienceLevelId, salaryMin: 500.25, salaryMax: 1000.5 } : {}),
   ...(kind === 'SOCIAL_HOURS' ? { socialHours: 100, experienceLevelId } : {}),
   ...(kind === 'INTERNSHIP' ? { duration: '4 meses', experienceLevelId } : {}),
@@ -197,10 +197,10 @@ describe('PB-129: vacantes y categorías persistentes', () => {
     assert.equal(invalid.status, 400);
     const before = await (await request('GET', '/admin/opportunities/' + value.key, admin())).json() as Opportunity;
     assert.equal(before.salaryMax, 1000.5);
-    const result = await request('PATCH', '/admin/opportunities/' + value.key, admin(), { requirements: [], contact: null, salaryMax: 1200 });
+    const result = await request('PATCH', '/admin/opportunities/' + value.key, admin(), { requirements: [], contactEmail: null, contactPhone: '50371234567', salaryMax: 1200 });
     assert.equal(result.status, 200);
     const saved = await result.json() as Opportunity;
-    assert.deepEqual(saved.requirements, []); assert.deepEqual(saved.benefits, ['Aprendizaje']); assert.equal(saved.contact, null); assert.equal(saved.salaryMin, 500.25);
+    assert.deepEqual(saved.requirements, []); assert.deepEqual(saved.benefits, ['Aprendizaje']); assert.equal(saved.contactEmail, null); assert.equal(saved.contactPhone, '71234567'); assert.equal(saved.salaryMin, 500.25);
     assert.equal(await prisma.jobRevisions.count({ where: { jobId: value.id } }), 1);
     for (const payload of [{ expiresAt: '2027-02-29' }, { kind: 'VOLUNTEER' }, { status: 'CLOSED' }, { organizationId: 2147483647 }, { department: null }]) {
       assert.equal((await request('PATCH', '/admin/opportunities/' + value.key, admin(), payload)).status, 400);
@@ -308,6 +308,74 @@ describe('PB-129: vacantes y categorías persistentes', () => {
     assert.ok(await prisma.volunteerRegistrations.findUnique({ where: { id: registration.id } }));
   });
 
+  it('persiste canales separados y nunca permite eliminar el último contacto mediante PATCH', async () => {
+    for (const kind of ['EMPLOYMENT', 'SOCIAL_HOURS', 'INTERNSHIP', 'VOLUNTEER'] as const) {
+      assert.equal((await request('POST', '/admin/opportunities', admin(), { kind, title: runId, contactEmail: '', contactPhone: null })).status, 400);
+      const value = await draft(kind, { contactEmail: null, contactPhone: '+503 7123-4567' });
+      const path = '/admin/opportunities/' + value.key;
+      assert.equal(value.contactEmail, null); assert.equal(value.contactPhone, '71234567');
+      assert.equal((await request('PATCH', path, admin(), { contactPhone: '' })).status, 400);
+      const unrelated = await request('PATCH', path, admin(), { title: runId + ' contacto' }); assert.equal(unrelated.status, 200);
+      assert.equal((await unrelated.json() as Opportunity).contactPhone, '71234567');
+      const changed = await request('PATCH', path, admin(), { contactEmail: 'NUEVO@EXAMPLE.TEST', contactPhone: null }); assert.equal(changed.status, 200);
+      const saved = await changed.json() as Opportunity; assert.equal(saved.contactEmail, 'nuevo@example.test'); assert.equal(saved.contactPhone, null);
+      assert.equal((await request('PATCH', path, admin(), { contactEmail: null })).status, 400);
+      assert.equal((await request('PATCH', path, admin(), { contactPhone: '+1 71234567' })).status, 400);
+      const both = await request('PATCH', path, admin(), { contactPhone: '50371234567' }); assert.equal(both.status, 200);
+      const row = kind === 'VOLUNTEER' ? await prisma.volunteerOpportunities.findUniqueOrThrow({ where: { id: value.id } }) : await prisma.jobs.findUniqueOrThrow({ where: { id: value.id } });
+      assert.equal(row.contactEmail, 'nuevo@example.test'); assert.equal(row.contactPhone, '71234567');
+    }
+  });
+
+  it('consulta contactos históricos y exige resolver los textos ambiguos al editar', async () => {
+    for (const kind of ['EMPLOYMENT', 'VOLUNTEER'] as const) {
+      const value = await draft(kind); const path = '/admin/opportunities/' + value.key;
+      for (const legacy of ['ANTERIOR@EXAMPLE.TEST', '+503 7123-4567', 'Preguntar por Ana']) {
+        const data = { contact: legacy, contactEmail: null, contactPhone: null };
+        if (kind === 'VOLUNTEER') await prisma.volunteerOpportunities.update({ where: { id: value.id }, data });
+        else await prisma.jobs.update({ where: { id: value.id }, data });
+        const response = await request('GET', path, admin()); assert.equal(response.status, 200);
+        const historical = await response.json() as Opportunity; assert.equal(historical.contact, legacy);
+        assert.equal(historical.contactEmail, legacy.includes('@') ? 'anterior@example.test' : null);
+        assert.equal(historical.contactPhone, legacy.startsWith('+503') ? '71234567' : null);
+        if (legacy.startsWith('Preguntar')) {
+          assert.equal((await request('PATCH', path, admin(), { description: 'Cambio independiente' })).status, 400);
+          assert.equal((await request('PATCH', path, admin(), { contactPhone: '71234567' })).status, 200);
+          const after = await (await request('GET', path, admin())).json() as Opportunity;
+          assert.equal(after.contact, legacy); assert.equal(after.contactPhone, '71234567');
+        }
+      }
+    }
+  });
+
+  it('recupera los cuatro tipos sin publicar ni alterar la primera publicación y repite sin duplicar auditoría', async () => {
+    for (const kind of ['EMPLOYMENT', 'SOCIAL_HOURS', 'INTERNSHIP', 'VOLUNTEER'] as const) {
+      for (const wasPublished of [false, true]) {
+        const value = wasPublished ? await published(kind) : await draft(kind);
+        const path = '/admin/opportunities/' + value.key;
+        assert.equal((await request('DELETE', path, admin())).status, 200);
+        for (let repeat = 0; repeat < 2; repeat++) {
+          const response = await request('POST', path + '/unarchive', admin()); assert.equal(response.status, 200);
+          const restored = await response.json() as Opportunity;
+          assert.equal(restored.status, wasPublished ? 'CLOSED' : 'DRAFT'); assert.equal(restored.archivedAt, null); assert.equal(restored.publishedAt, value.publishedAt);
+        }
+        assert.equal((await request('GET', '/opportunities/' + value.key)).status, 404);
+        assert.equal((await request('PATCH', path, admin(), { description: 'Editada después de recuperarse.' })).status, 200);
+        assert.equal(await prisma.auditLogs.count({ where: { entityType: kind === 'VOLUNTEER' ? 'VolunteerOpportunity' : 'Job', entityId: value.id, action: 'UNARCHIVE' } }), 1);
+      }
+    }
+  });
+
+  it('rechaza por API salarios cero, texto, cupos inválidos, rangos parciales invertidos y cierres pasados', async () => {
+    const value = await draft('EMPLOYMENT', { salaryMin: 100, salaryMax: 200 });
+    const path = '/admin/opportunities/' + value.key;
+    for (const input of [{ salaryMin: 0 }, { salaryMax: 0 }, { slots: -1 }, { slots: '3' }, { salaryMin: 201 }, { salaryMax: 99 }, { expiresAt: '2020-01-01' }]) assert.equal((await request('PATCH', path, admin(), input)).status, 400);
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const response = await request('PATCH', path, admin(), { expiresAt: today, salaryMin: 0.25, salaryMax: 0.25, slots: 1 });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json() as Opportunity).expiresAt, new Date(today + 'T23:59:59.999-06:00').toISOString());
+  });
+
   it('rechaza sesiones ausentes, candidatos y permisos revocados en todas las operaciones', async () => {
     const value = await draft();
     const routes = [
@@ -318,6 +386,7 @@ describe('PB-129: vacantes y categorías persistentes', () => {
       ['PATCH', '/admin/opportunities/' + value.key, { description: 'Texto' }, PERMISSIONS.OPPORTUNITY_UPDATE],
       ['PATCH', '/admin/opportunities/' + value.key + '/status', { status: 'OPEN' }, PERMISSIONS.OPPORTUNITY_STATUS_UPDATE],
       ['DELETE', '/admin/opportunities/' + value.key, undefined, PERMISSIONS.OPPORTUNITY_ARCHIVE],
+      ['POST', '/admin/opportunities/' + value.key + '/unarchive', undefined, PERMISSIONS.OPPORTUNITY_ARCHIVE],
       ['GET', '/admin/categories', undefined, PERMISSIONS.CATEGORY_READ],
       ['POST', '/admin/categories', { name: runId }, PERMISSIONS.CATEGORY_CREATE],
       ['PATCH', '/admin/categories/' + categoryId, { description: 'Texto' }, PERMISSIONS.CATEGORY_UPDATE],

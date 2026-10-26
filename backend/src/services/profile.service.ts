@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, type PermissionCode } from '../constants/authorization.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
@@ -7,6 +8,14 @@ import type { CandidateProfile } from '../types/profile.types.js';
 import type { UpdateProfileDTO } from '../validation/profile.schema.js';
 import { AppError } from '../utils/app-error.js';
 import { assertPermission } from './authorization.service.js';
+import { CANDIDATE_CATALOGS } from '../constants/candidate-catalogs.constants.js';
+import { validateCandidateLocation } from '../validation/candidate.schema.js';
+
+/** Candidate catalogs expose choices only after the same role and grant checks as profile reads. */
+export const getCandidateCatalogs = (actor: AccessContext) => {
+  assertCandidateAccess(actor, PERMISSIONS.PROFILE_READ_OWN);
+  return CANDIDATE_CATALOGS;
+};
 
 /** Own profile operations require the candidate role, even with an accidental grant. */
 export const assertCandidateAccess = (actor: AccessContext, permission: PermissionCode): void => {
@@ -27,6 +36,7 @@ export const readProfile = async (userId: number, database: Prisma.TransactionCl
   const p = user.profile;
   return {
     email: user.email, firstName: p.firstName, lastName: p.lastName, phone: p.phone,
+    birthDate: p.birthDate?.toISOString().slice(0, 10) ?? null, sex: p.sex,
     department: p.department, municipality: p.municipality, profession: p.profession,
     educationLevel: p.educationLevel, professionalSummary: p.professionalSummary,
     workExperiences: user.workExperiences.map((item) => ({
@@ -54,11 +64,20 @@ export const updateCandidateProfile = async (
     options: { isolationLevel: Prisma.TransactionIsolationLevel }) => Promise<T> = prisma.$transaction.bind(prisma),
 ): Promise<CandidateProfile> => {
   assertCandidateAccess(actor, PERMISSIONS.PROFILE_UPDATE_OWN);
-  const { workExperiences, educations, skills, ...personal } = payload;
+  const { workExperiences, educations, skills, birthDate, ...personal } = payload;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await transact(async (database) => {
-        await database.userProfile.update({ where: { userId: actor.userId }, data: personal });
+        if (payload.department !== undefined || payload.municipality !== undefined) {
+          const current = await database.userProfile.findUniqueOrThrow({ where: { userId: actor.userId } });
+          z.object({ department: z.string().nullable(), municipality: z.string().nullable() }).superRefine(validateCandidateLocation).parse({
+            department: payload.department === undefined ? current.department : payload.department,
+            municipality: payload.municipality === undefined ? current.municipality : payload.municipality,
+          });
+        }
+        await database.userProfile.update({ where: { userId: actor.userId }, data: {
+          ...personal, ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate + 'T00:00:00Z') : null } : {}),
+        } });
         if (workExperiences) {
           await database.workExperiences.deleteMany({ where: { userId: actor.userId } });
           if (workExperiences.length) await database.workExperiences.createMany({ data: workExperiences.map((item) => ({

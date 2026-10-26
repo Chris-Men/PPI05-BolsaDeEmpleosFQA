@@ -3,11 +3,11 @@ import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
 import { OPPORTUNITY_KINDS, OPPORTUNITY_STATUS_NAMES } from '../constants/opportunity.constants.js';
 import { APPLICATION_STATUS_NAMES, applicationStatusFor } from '../constants/application.constants.js';
-import { USER_STATUS_NAMES } from '../constants/user.constants.js';
 import type { AccessContext } from '../types/authorization.types.js';
 import { statisticsDateBounds, type StatisticsRange } from '../validation/statistics.schema.js';
 import { assertVacancyAccess } from './vacancy-policy.service.js';
 import { opportunityStatusCode, publicOpportunityWhere } from './opportunity-visibility.js';
+import { ACTIVE_CANDIDATE_FILTER, candidateDemographics, categoryStatistics } from './statistics-breakdown.service.js';
 
 /** Aggregates submitted attempts, including legacy documents and withdrawn attempts. */
 const applicationMetrics = async (database: Prisma.TransactionClient, where: Prisma.ApplicationsWhereInput = {}) => {
@@ -42,8 +42,7 @@ const activeCount = async (database: Prisma.TransactionClient) => {
 /** Counts active, non-deleted candidate accounts and their lifetime selections once per person. */
 const userMetrics = async (database: Prisma.TransactionClient, bounds: ReturnType<typeof statisticsDateBounds>) => {
   const candidate: Prisma.UserWhereInput = { deletedAt: null, userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } } } };
-  const registered: Prisma.UserWhereInput = { ...candidate, status: { name: USER_STATUS_NAMES.ACTIVE },
-    userRoles: { some: { roles: { name: ROLE_NAMES.CANDIDATE } }, every: { roles: { name: ROLE_NAMES.CANDIDATE } } } };
+  const registered = ACTIVE_CANDIDATE_FILTER;
   const selectedStatus = await database.applicationStatuses.findUnique({ where: { name: APPLICATION_STATUS_NAMES.SELECTED }, select: { id: true } });
   const [total, candidates, selected, newCandidates, withResume] = await Promise.all([
     database.user.count({ where: registered }),
@@ -75,19 +74,22 @@ const firstActivityDate = async (database: Prisma.TransactionClient): Promise<st
 /** One consistent snapshot supplies every metric, never a limited listing page. */
 export const getStatistics = async (range: StatisticsRange, actor: AccessContext) => {
   assertVacancyAccess(actor, PERMISSIONS.STATISTICS_READ);
+  const now = new Date();
   return prisma.$transaction(async database => {
     const bounds = statisticsDateBounds(range);
-    const [jobs, volunteers, organizations, applications, activeOpportunities, users, firstDate] = await Promise.all([
+    const [jobs, volunteers, organizations, applications, activeOpportunities, users, firstDate, byCategory] = await Promise.all([
       database.jobs.groupBy({ by: ['kind'], where: { publishedAt: bounds }, _count: true }),
       database.volunteerOpportunities.count({ where: { publishedAt: bounds } }),
       database.organizations.count(), applicationMetrics(database, { createdAt: bounds }), activeCount(database),
       userMetrics(database, bounds),
       firstActivityDate(database),
+      categoryStatistics(database, bounds),
     ]);
+    const demographics = await candidateDemographics(database, users.total, now);
     const byKind = OPPORTUNITY_KINDS.map(kind => ({ kind, count: kind === 'VOLUNTEER' ? volunteers : jobs.find(row => row.kind === kind)?._count ?? 0 }));
     return { range: { ...range, timeZone: 'America/El_Salvador', firstActivityDate: firstDate }, publishedOpportunities: byKind.reduce((sum, row) => sum + row.count, 0),
       organizations, applications: applications.total, applicants: applications.candidates, byKind, states: applications.states, activeOpportunities,
-      users, opportunitiesWithApplications: applications.opportunityCount,
+      users, byCategory, demographics, opportunitiesWithApplications: applications.opportunityCount,
       pendingApplications: applications.states.filter(row => row.status === 'PENDING' || row.status === 'IN_REVIEW').reduce((sum, row) => sum + row.count, 0),
       applicationsPerOpportunity: applications.opportunityCount ? applications.total / applications.opportunityCount : 0,
       selectionRate: applications.total ? (applications.states.find(row => row.status === 'SELECTED')?.count ?? 0) * 100 / applications.total : 0 };

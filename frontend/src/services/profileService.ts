@@ -1,5 +1,9 @@
 import { apiRequest } from './api';
-import type { CandidateProfileData, ProfileUpdate, ResumeMetadata } from '../types/profile';
+import type { CandidateCatalogs, CandidateProfileData, ProfileUpdate, ResumeMetadata } from '../types/profile';
+
+/** Loads the same canonical choices that the backend uses to validate submitted fields. */
+export const getCandidateCatalogs = (signal?: AbortSignal): Promise<CandidateCatalogs> =>
+  apiRequest('/profile/catalogs', { authenticated: true, signal });
 
 /** Loads the authenticated candidate's persistent profile. */
 export const getProfile = (signal?: AbortSignal): Promise<CandidateProfileData> =>

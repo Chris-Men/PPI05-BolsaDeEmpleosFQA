@@ -5,7 +5,7 @@ import { AppError } from '../utils/app-error.js';
 /** Health and narrowly scoped operation monitoring remain available during maintenance. */
 export const backupMaintenance: RequestHandler = (request, response, next): void => {
   if (request.path === '/api/health' || /^\/api\/admin\/backups\/operations\/[0-9a-f-]{36}$/.test(request.path)) { next(); return; }
-  const command = request.method === 'POST' && /^\/api\/admin\/backups(?:\/restore)?\/?$/.test(request.path);
+  const command = request.method === 'POST' && /^\/api\/admin\/backups(?:\/(?:restore|import))?\/?$/.test(request.path);
   const release = backupRuntime.enter(!command && !['GET', 'HEAD', 'OPTIONS'].includes(request.method));
   if (!release) {
     response.set('Retry-After', '10');

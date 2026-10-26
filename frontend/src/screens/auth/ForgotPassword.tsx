@@ -1,3 +1,5 @@
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { emailError, fieldErrors } from '../../validation/fields';
 import { useRef, useState, type FormEvent,type CSSProperties} from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
 
@@ -22,6 +24,7 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const submitting = useRef(false);
+  const live = useLiveValidation({ email }, values => fieldErrors({ email: emailError(values.email) }));
 
   const pageStyle: AuthPageStyle = {
     '--login-bg-desktop': `url("${fondoDesktop}")`,
@@ -33,7 +36,7 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
   ): Promise<void> => {
     event.preventDefault();
 
-    if (submitting.current) return;
+    if (submitting.current || !live.check(event.currentTarget)) return;
 
     setError('');
     setSuccess('');
@@ -131,6 +134,7 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
 
             <form
               className="login-form"
+              onChangeCapture={live.watch}
               onSubmit={submit}
               noValidate
               aria-busy={loading}
@@ -147,7 +151,7 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
                     aria-hidden="true"
                   />
 
-                  <input
+                  <input {...live.bind('email')}
                     id="forgot-password-email"
                     name="email"
                     type="email"
@@ -156,15 +160,9 @@ const ForgotPassword = ({ navigateTo }: ForgotPasswordProps) => {
                     onChange={(event) => setEmail(event.target.value)}
                     required
                     disabled={loading}
-                    aria-describedby={
-                      error
-                        ? 'forgot-password-error'
-                        : success
-                          ? 'forgot-password-success'
-                          : undefined
-                    }
                   />
                 </div>
+{live.error('email')}
               </div>
 
               <button

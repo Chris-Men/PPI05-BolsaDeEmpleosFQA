@@ -80,7 +80,7 @@ describe('Perfil y CV persistentes del candidato', () => {
   });
 
   it('persiste datos y colecciones; conserva omitidos y elimina solo los enviados vacíos', async () => {
-    const payload = { firstName: 'Ana', lastName: 'Rivera', phone: '70000000', department: 'San Salvador', municipality: 'San Salvador',
+    const payload = { firstName: 'Ana', lastName: 'Rivera', phone: '70000000', birthDate: '2000-02-29', sex: 'FEMALE', department: 'San Salvador', municipality: 'San Salvador Centro',
       profession: 'Docente', educationLevel: 'Universitario', professionalSummary: 'Educación comunitaria',
       workExperiences: [{ companyName: 'Fundación', position: 'Docente', description: 'Formación', startDate: '2023-01-01', endDate: null }],
       educations: [{ institution: 'Universidad', degree: 'Educación', startDate: '2018-01-01', endDate: '2022-12-01' }],
@@ -88,10 +88,12 @@ describe('Perfil y CV persistentes del candidato', () => {
     const response = await request('PATCH', '/profile/me', candidate.accessToken, payload); assert.equal(response.status, 200);
     const profile = await response.json() as CandidateProfile;
     assert.equal(profile.firstName, 'Ana'); assert.equal(profile.skills.length, 2);
+    assert.equal(profile.birthDate, '2000-02-29'); assert.equal(profile.sex, 'FEMALE');
     const reloaded = await request('GET', '/profile/me', candidate.accessToken); assert.deepEqual(await reloaded.json(), profile);
     const changed = await request('PATCH', '/profile/me', candidate.accessToken, { phone: null, educations: [] });
     const partial = await changed.json() as CandidateProfile;
     assert.equal(partial.phone, null); assert.deepEqual(partial.educations, []); assert.equal(partial.workExperiences.length, 1);
+    assert.equal(partial.birthDate, '2000-02-29'); assert.equal(partial.sex, 'FEMALE');
     const identity = await request('GET', '/auth/me', candidate.accessToken);
     assert.equal((await identity.json() as RegistrationResponse).user.fullName, 'Ana Rivera');
     const independent = await request('GET', '/profile/me', other.accessToken);
@@ -117,6 +119,32 @@ describe('Perfil y CV persistentes del candidato', () => {
       }, options);
     await assert.rejects(updateCandidateProfile({ firstName: 'No guardar', skills: [] }, actor, failingTransaction), /Auditoría/);
     assert.deepEqual(await getCandidateProfile(actor), before);
+  });
+
+  it('protege catálogos y valida ubicación efectiva, campos nuevos y limpieza parcial', async () => {
+    assert.equal((await request('GET', '/profile/catalogs')).status, 401);
+    assert.equal((await request('GET', '/profile/catalogs', administratorToken)).status, 403);
+    const options = await request('GET', '/profile/catalogs', candidate.accessToken); assert.equal(options.status, 200);
+    const catalogs = await options.json() as { locationZones: unknown[]; educationLevels: string[]; sexes: Array<{ value: string }> };
+    assert.equal(catalogs.locationZones.length, 3); assert.equal(catalogs.educationLevels.at(-1), 'Posgrado');
+    assert.deepEqual(catalogs.sexes.map(item => item.value), ['FEMALE', 'MALE', 'UNDISCLOSED']);
+    for (const payload of [{ birthDate: '2099-01-01' }, { sex: 'OTHER' }, { firstName: 'Ana1' }, { phone: '+1 71234567' }, { educationLevel: 'Inventado' }, { municipality: 'Santa Ana Centro' }, { department: 'Santa Ana' }]) {
+      assert.equal((await request('PATCH', '/profile/me', candidate.accessToken, payload)).status, 400);
+    }
+    const partial = await request('PATCH', '/profile/me', candidate.accessToken, { department: 'Santa Ana', municipality: null, birthDate: null, sex: '' });
+    assert.equal(partial.status, 200); const saved = await partial.json() as CandidateProfile;
+    assert.equal(saved.municipality, null); assert.equal(saved.birthDate, null); assert.equal(saved.sex, null);
+    const restored = await request('PATCH', '/profile/me', candidate.accessToken, { department: 'San Salvador', municipality: 'San Salvador Centro', phone: '+503 7123-4567', sex: 'UNDISCLOSED', birthDate: '2000-02-29' });
+    assert.equal(restored.status, 200); assert.equal((await restored.json() as CandidateProfile).phone, '71234567');
+  });
+
+  it('permite cambios independientes de valores históricos y exige corregir selecciones nuevas', async () => {
+    await prisma.userProfile.update({ where: { userId: candidate.userId }, data: { municipality: 'Municipio anterior', educationLevel: 'Maestría', phone: 'Teléfono anterior' } });
+    const response = await request('PATCH', '/profile/me', candidate.accessToken, { profession: 'Docente actualizado' }); assert.equal(response.status, 200);
+    const saved = await response.json() as CandidateProfile;
+    assert.equal(saved.municipality, 'Municipio anterior'); assert.equal(saved.educationLevel, 'Maestría'); assert.equal(saved.phone, 'Teléfono anterior');
+    assert.equal((await request('PATCH', '/profile/me', candidate.accessToken, { municipality: 'Municipio anterior' })).status, 400);
+    assert.equal((await request('PATCH', '/profile/me', candidate.accessToken, { municipality: 'San Salvador Centro', educationLevel: 'Universitario', phone: '70000000' })).status, 200);
   });
 
   it('sube y descarga bytes exactos, sin rutas internas ni acceso entre candidatos', async () => {

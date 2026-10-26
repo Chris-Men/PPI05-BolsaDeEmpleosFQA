@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
+import { closingInstant } from '../utils/site-date.js';
+import { opportunityContact } from '../utils/opportunity-contact.js';
 import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { PERMISSIONS, ROLE_NAMES } from '../constants/authorization.constants.js';
@@ -15,7 +17,7 @@ import { isOpportunityAvailable, opportunityStatusCode as statusFor, publicOppor
 /** Shared projection excludes candidates, files, user identities and internal audit records. */
 const commonSelect = {
   id: true, title: true, slug: true, description: true, organizationId: true, categoryId: true, modality: true,
-  slots: true, contact: true, requirements: true, responsibilities: true, benefits: true,
+  slots: true, contact: true, contactEmail: true, contactPhone: true, requirements: true, responsibilities: true, benefits: true,
   createdAt: true, publishedAt: true, expiresAt: true, archivedAt: true,
   organizations: { select: { id: true, name: true, description: true, organizationStatuses: { select: { name: true } } } },
   jobCategories: { select: { id: true, name: true, isActive: true } },
@@ -45,7 +47,7 @@ const mapOpportunity = (row: JobRow | VolunteerRow) => {
     modality: row.modality, salaryMin: job?.salaryMin == null ? null : Number(job.salaryMin), salaryMax: job?.salaryMax == null ? null : Number(job.salaryMax),
     employmentTypeId: job?.employmentTypeId ?? null, employmentType: job?.employmentTypes?.name ?? null,
     experienceLevelId: job?.experienceLevelId ?? null, experienceLevel: job?.experienceLevels?.name ?? null,
-    slots: row.slots, socialHours: job?.socialHours ?? null, duration: job?.duration ?? null, contact: row.contact,
+    slots: row.slots, socialHours: job?.socialHours ?? null, duration: job?.duration ?? null, contact: row.contact, ...opportunityContact(row),
     requirements: row.requirements, responsibilities: row.responsibilities, benefits: row.benefits,
     status: statusFor('jobStatuses' in row ? row.jobStatuses.name : row.volunteerStatuses.name),
     createdAt: row.createdAt?.toISOString() ?? null, publishedAt: row.publishedAt?.toISOString() ?? null,
@@ -145,6 +147,9 @@ const validatePublication = (value: Opportunity, row: JobRow | VolunteerRow): vo
   requireField(row.jobCategories?.isActive === true, 'categoryId', 'Selecciona una categoría activa.');
   requireField(Boolean(value.department && value.municipality), 'municipality', 'Completa departamento y municipio.');
   requireField(!row.expiresAt || row.expiresAt > new Date(), 'expiresAt', 'La fecha de cierre debe ser futura.');
+  requireField(value.salaryMin == null || value.salaryMin > 0, 'salaryMin', 'El salario debe ser mayor que cero.');
+  requireField(value.salaryMax == null || value.salaryMax > 0, 'salaryMax', 'El salario debe ser mayor que cero.');
+  requireField(Boolean(value.contactEmail || value.contactPhone), 'contactEmail', 'Completa al menos el correo o el teléfono de contacto.');
   if (value.kind === 'EMPLOYMENT') requireField(value.employmentTypeId != null, 'employmentTypeId', 'Selecciona la jornada o contrato.');
   if (value.kind === 'SOCIAL_HOURS') requireField(value.socialHours != null, 'socialHours', 'Indica las horas sociales.');
   if (value.kind === 'INTERNSHIP') requireField(Boolean(value.duration), 'duration', 'Indica la duración de la práctica.');
@@ -152,6 +157,10 @@ const validatePublication = (value: Opportunity, row: JobRow | VolunteerRow): vo
 };
 /** Explicit references cannot target a missing record, even for incomplete drafts. */
 const prepareData = async (payload: CreateOpportunityDTO | UpdateOpportunityDTO, before: Opportunity | null, database: Prisma.TransactionClient) => {
+  const contactEmail = payload.contactEmail === undefined ? before?.contactEmail : payload.contactEmail;
+  const contactPhone = payload.contactPhone === undefined ? before?.contactPhone : payload.contactPhone;
+  if (!contactEmail && !contactPhone) throw new z.ZodError(['contactEmail', 'contactPhone'].map(field => ({ code: 'custom', path: [field], message: 'Completa al menos el correo o el teléfono de contacto.' })));
+  const touchesContact = payload.contactEmail !== undefined || payload.contactPhone !== undefined;
   const kind = before?.kind ?? ('kind' in payload ? payload.kind : 'EMPLOYMENT');
   if (kind !== 'EMPLOYMENT' && (payload.salaryMin != null || payload.salaryMax != null || payload.employmentTypeId != null)) throw new AppError(400, 'El salario y contrato solo corresponden a empleos.');
   if (kind !== 'SOCIAL_HOURS' && payload.socialHours != null) throw new AppError(400, 'Las horas sociales solo corresponden a ese tipo de vacante.');
@@ -180,9 +189,10 @@ const prepareData = async (payload: CreateOpportunityDTO | UpdateOpportunityDTO,
   if (min != null && max != null && min > max) throw new z.ZodError([{ code: 'custom', path: ['salaryMax'], message: 'El salario máximo debe ser mayor o igual al mínimo.' }]);
   return {
     title: payload.title, description: payload.description, organizationId: payload.organizationId, categoryId: payload.categoryId, locationId,
-    modality: payload.modality, slots: payload.slots, contact: payload.contact || (payload.contact === undefined ? undefined : null),
+    modality: payload.modality, slots: payload.slots,
+    contactEmail: touchesContact ? contactEmail : undefined, contactPhone: touchesContact ? contactPhone : undefined,
     requirements: payload.requirements, responsibilities: payload.responsibilities, benefits: payload.benefits,
-    expiresAt: payload.expiresAt === undefined ? undefined : payload.expiresAt === null ? null : new Date(payload.expiresAt + 'T23:59:59.999Z'),
+    expiresAt: payload.expiresAt === undefined ? undefined : payload.expiresAt === null ? null : closingInstant(payload.expiresAt),
   };
 };
 /** Audit stays inside the business transaction; no candidate details are included. */
@@ -256,6 +266,23 @@ export const changeOpportunityStatus = async (key: string, status: 'OPEN' | 'CLO
       : await database.jobs.update({ where: { id: before.id }, data: { ...data, jobStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES[status] } } }, select: jobSelect });
     const after = mapOpportunity(row);
     await audit(database, actor, status === 'OPEN' ? 'PUBLISH' : status === 'CLOSED' ? 'CLOSE' : 'ARCHIVE', before, after);
+    return after;
+  });
+};
+
+/** Recovery preserves publication history and never immediately publishes an archived vacancy. */
+export const unarchiveOpportunity = async (key: string, actor: AccessContext): Promise<Opportunity> => {
+  assertVacancyAccess(actor, PERMISSIONS.OPPORTUNITY_ARCHIVE);
+  return mutateVacancy(async database => {
+    const original = await findRow(key, database);
+    const before = mapOpportunity(original);
+    if (!before.archivedAt && before.status !== 'ARCHIVED') return before;
+    const status = original.publishedAt ? 'CLOSED' : 'DRAFT';
+    const row = before.kind === 'VOLUNTEER'
+      ? await database.volunteerOpportunities.update({ where: { id: before.id }, data: { archivedAt: null, volunteerStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES[status] } } }, select: volunteerSelect })
+      : await database.jobs.update({ where: { id: before.id }, data: { archivedAt: null, jobStatuses: { connect: { name: OPPORTUNITY_STATUS_NAMES[status] } } }, select: jobSelect });
+    const after = mapOpportunity(row);
+    await audit(database, actor, 'UNARCHIVE', before, after);
     return after;
   });
 };

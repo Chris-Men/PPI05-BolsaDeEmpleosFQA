@@ -1,5 +1,5 @@
 import { apiRequest } from './api';
-import type { BackupOperation, BackupOperationTicket, BackupStatus, RestoreBackupRequest } from '../types/backup';
+import type { BackupOperation, BackupOperationTicket, BackupStatus, ImportBackupRequest, RestoreBackupRequest } from '../types/backup';
 
 /** Administrative commands keep the original identity across access-token renewal. */
 export const getBackupStatus = (userId: number, signal?: AbortSignal): Promise<BackupStatus> =>
@@ -13,3 +13,14 @@ export const restoreBackup = (payload: RestoreBackupRequest, userId: number, sig
 /** A scoped monitor credential never enters the URL and cannot initiate any operation. */
 export const getBackupOperation = (ticket: BackupOperationTicket, signal?: AbortSignal): Promise<BackupOperation> =>
   apiRequest('/admin/backups/operations/' + encodeURIComponent(ticket.operation.id), { signal, headers: { 'X-FQA-Operation-Token': ticket.monitorToken } });
+
+/** Downloads ciphertext through the shared transport, retaining identity checks and session renewal. */
+export const exportBackup = (backupId: string, userId: number, signal?: AbortSignal): Promise<Blob> =>
+  apiRequest('/admin/backups/export?backupId=' + encodeURIComponent(backupId), { authenticated: true, expectedUserId: userId, responseType: 'blob', signal });
+
+/** Multipart bodies are replayable only for the same identity and idempotent request identifier. */
+export const importBackup = (payload: ImportBackupRequest, userId: number, signal?: AbortSignal): Promise<BackupOperationTicket> => {
+  const body = new FormData(); body.set('requestId', payload.requestId); body.set('backupId', payload.backupId ?? '');
+  body.set('confirmation', payload.confirmation); body.set('file', payload.file);
+  return apiRequest('/admin/backups/import', { method: 'POST', authenticated: true, expectedUserId: userId, signal, body });
+};

@@ -7,7 +7,7 @@ Los recursos se seleccionan con la identidad de la sesión, nunca con un ID envi
 por el navegador. Administradores, cuentas mixtas, visitantes, usuarios eliminados
 o deshabilitados no pueden usar estas operaciones.
 
-`GET /api/profile/me` devuelve correo, nombres, apellidos, teléfono, departamento,
+`GET /api/profile/me` devuelve correo, nombres, apellidos, teléfono, fecha de nacimiento, sexo, departamento,
 municipio, profesión, nivel educativo, descripción profesional, experiencias,
 estudios y habilidades. El correo se consulta pero no se modifica desde el perfil.
 
@@ -17,11 +17,35 @@ sus asociaciones en una sola transacción; `[]` las vacía. El catálogo global 
 habilidades se conserva y se reutilizan nombres sin distinguir mayúsculas.
 La auditoría registra los nombres de campos modificados, no documentos ni secretos.
 
+`birthDate` utiliza `YYYY-MM-DD` sin zona horaria y se almacena como `DATE`. `sex`
+acepta `FEMALE`, `MALE` o `UNDISCLOSED` (Femenino, Masculino y Prefiero no indicar).
+Ambos admiten `null` o texto vacío para limpiar el dato; omitirlos conserva el valor.
+El perfil puede permanecer incompleto. Una fecha ingresada debe existir y corresponder
+a una persona con 16 años cumplidos según el calendario de `America/El_Salvador`.
+
+`GET /api/profile/catalogs` requiere el mismo rol y permiso de lectura del perfil.
+Devuelve `{ locationZones, educationLevels, sexes }`; `sexes` contiene objetos
+`{ value, label }`. Los niveles son Sin estudios, Educación básica, Bachillerato,
+Técnico, Universitario y Posgrado. Las ubicaciones también se incluyen como
+`locationZones` en los catálogos de vacantes y proceden de una definición única.
+
+Perfil y postulación comparten selectores de departamento agrupado por zona y
+municipio dependiente, sin un campo adicional de Zona. Cambiar departamento limpia
+municipio. En el perfil puede guardarse solo departamento; si se incluye municipio,
+debe pertenecer al departamento efectivo, considerando también los valores omitidos.
+Los valores históricos se muestran como anteriores y no se convierten automáticamente.
+El editor envía únicamente campos modificados para conservar datos históricos ajenos
+al cambio. Los errores aparecen junto al campo al salir de él y antes de guardar.
+
 Nombres y apellidos admiten hasta 100 caracteres; teléfono 30; ubicación y nivel
 educativo 100; profesión 150; descripción 5.000. Se permiten 50 elementos por
 colección. Los apellidos vacíos preservan la compatibilidad con cuentas registradas
 con un solo nombre. Las fechas usan `YYYY-MM-DD`, deben existir y la final no puede
 preceder a la inicial. `endDate: null` representa trabajo o estudios actuales.
+
+Nombres y apellidos admiten letras Unicode, tildes, espacios, puntos, apóstrofes y
+guiones, con al menos una letra. Los teléfonos aceptan ocho dígitos con espacios,
+guiones y prefijo `+503` opcional; el servidor guarda los ocho dígitos normalizados.
 
 La sección **Datos Personales**, debajo de **Mi perfil** en la barra lateral,
 permite consultar, editar, cancelar y guardar el perfil profesional. El nombre confirmado
@@ -77,6 +101,11 @@ Frontend y PostgreSQL conservan sus puertos, volúmenes y contratos actuales.
 La migración aditiva `20261004223220_candidate_profile_resume` amplía perfiles y
 metadatos y vincula explícitamente el CV activo. Aplicar migraciones y regenerar
 Prisma antes de iniciar esta versión del backend.
+
+La migración aditiva `20261024064330_candidate_personal_fields` agrega los dos campos
+opcionales y el enum `Sex`, sin sustituir perfiles existentes. Después de aplicarla,
+los respaldos nuevos incluyen ambos datos; los respaldos anteriores conservan la
+restricción de compatibilidad exacta del historial de migraciones al importar o restaurar.
 
 En producción todavía debe elegirse volumen privado o DigitalOcean Spaces.
 No se configura un proveedor implícito: sin configuración, los endpoints de CV

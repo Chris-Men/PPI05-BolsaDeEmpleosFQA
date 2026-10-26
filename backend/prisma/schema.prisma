@@ -36,9 +36,48 @@ model User {
   status                   UserStatus                 @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_status")
   volunteerRegistrations   VolunteerRegistrations[]
   workExperiences          WorkExperiences[]
+  statisticsExports        StatisticsExport[]
 
   @@index([statusId], map: "ix_users_status_id")
   @@map("users")
+}
+
+/// Durable, account-owned XLSX jobs; files remain outside the public web root.
+model StatisticsExport {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  requestId String @map("request_id") @db.Uuid
+  from DateTime @db.Date
+  to DateTime @db.Date
+  status StatisticsExportStatus @default(QUEUED)
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at")
+  leaseToken String? @map("lease_token") @db.Uuid
+  lockedUntil DateTime? @map("locked_until")
+  createdAt DateTime @default(now()) @map("created_at")
+  startedAt DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  expiresAt DateTime? @map("expires_at")
+  snapshotAt DateTime? @map("snapshot_at")
+  fileKey String? @map("file_key") @db.Uuid
+  sizeBytes Int? @map("size_bytes")
+  rowCounts Json? @map("row_counts")
+  error String? @db.VarChar(500)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, requestId])
+  @@index([status, nextAttemptAt, lockedUntil, createdAt])
+  @@index([userId, createdAt])
+  @@map("statistics_exports")
+}
+
+/// Terminal failures can be regenerated only through a newly confirmed request.
+enum StatisticsExportStatus {
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+  EXPIRED
 }
 
 /// Recuperacion de contraseña
@@ -85,6 +124,8 @@ model UserProfile {
   firstName String  @map("first_name") @db.VarChar(100)
   lastName  String  @map("last_name") @db.VarChar(100)
   phone     String? @db.VarChar(30)
+  birthDate DateTime? @map("birth_date") @db.Date
+  sex       Sex?
   department String? @db.VarChar(100)
   municipality String? @db.VarChar(100)
   profession String? @db.VarChar(150)
@@ -366,6 +407,9 @@ model Jobs {
   socialHours       Int?              @map("social_hours")
   duration          String?           @db.VarChar(120)
   contact           String?           @db.VarChar(255)
+  /// Separate optional channels; vacancy writes require at least one valid channel.
+  contactEmail      String?           @map("contact_email") @db.VarChar(255)
+  contactPhone      String?           @map("contact_phone") @db.VarChar(30)
   requirements      String[]          @default([])
   responsibilities  String[]          @default([])
   benefits          String[]          @default([])
@@ -397,6 +441,13 @@ model Jobs {
 }
 
 /// Volunteer records retain their separate registration structure.
+/// Explicit disclosure choice is distinct from an unanswered nullable field.
+enum Sex {
+  FEMALE
+  MALE
+  UNDISCLOSED
+}
+
 enum OpportunityKind {
   EMPLOYMENT
   INTERNSHIP
@@ -578,6 +629,9 @@ model VolunteerOpportunities {
   modality               WorkModality             @default(ON_SITE)
   slots                  Int?
   contact                String?                  @db.VarChar(255)
+  /// The original free-text contact remains available for historical records.
+  contactEmail           String?                  @map("contact_email") @db.VarChar(255)
+  contactPhone           String?                  @map("contact_phone") @db.VarChar(30)
   requirements           String[]                 @default([])
   responsibilities       String[]                 @default([])
   benefits               String[]                 @default([])

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { applicationDataSchema, finalApplicationDataSchema, updateDraftSchema, applicationFiltersSchema, applicationDecisionSchema } from '../../src/validation/application.schema.js';
 /** Blank fields can autosave; submission uses a separate required-field validation. */
-const blank={personal:{firstName:'',lastName:'',phone:'',department:'',municipality:'',profession:'',educationLevel:''},experience:{lastRole:'',lastOrg:'',skills:'',motivation:''}};
+const blank={personal:{firstName:'',lastName:'',phone:'',birthDate:'',sex:'',department:'',municipality:'',profession:'',educationLevel:''},experience:{lastRole:'',lastOrg:'',skills:'',motivation:''}};
 test('borradores incompletos conservan límites y el envío exige datos completos',()=>{
-  assert.equal(applicationDataSchema.safeParse(blank).success,true);const final=finalApplicationDataSchema.safeParse(blank);assert.equal(final.success,false);if(!final.success)assert.deepEqual(final.error.issues.map(issue=>issue.path.join('.')),['personal.firstName','personal.lastName','personal.phone','experience.motivation']);
+  assert.equal(applicationDataSchema.safeParse(blank).success,true);const final=finalApplicationDataSchema.safeParse(blank);assert.equal(final.success,false);if(!final.success)assert.deepEqual([...new Set(final.error.issues.map(issue=>issue.path.join('.')))],['personal.firstName','personal.lastName','personal.phone','personal.birthDate','personal.sex','personal.department','personal.municipality','personal.educationLevel','experience.motivation']);
   assert.equal(applicationDataSchema.safeParse({...blank,personal:{...blank.personal,firstName:'x'.repeat(101)}}).success,false);
   assert.equal(updateDraftSchema.safeParse({version:1,currentStep:2,data:blank,resumeId:null,userId:2}).success,false);
 });

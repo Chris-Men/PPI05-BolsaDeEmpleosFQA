@@ -1,4 +1,4 @@
-import type { AdministrativeStatistics } from '../types/statistics';
+import type { AdministrativeStatistics, CandidateDemographics, DistributionRow } from '../types/statistics';
 
 /** Cards share labels, scope and formatting between the screen and the exported report. */
 export interface StatisticsCard {
@@ -26,11 +26,27 @@ export const operationalStatisticsCards = (data: AdministrativeStatistics | null
   { key: 'newCandidates', label: 'Candidatos nuevos', value: count(data?.users.newCandidates), description: 'Registrados en el período seleccionado', scope: 'Período' },
   { key: 'resume', label: 'Candidatos con CV activo', value: count(data?.users.withResume), description: 'Actual · CV disponible en su perfil', scope: 'Actual' },
   { key: 'receivedOpportunities', label: 'Vacantes con postulaciones', value: count(data?.opportunitiesWithApplications), description: 'Recibieron al menos una en el período', scope: 'Período' },
-  { key: 'pending', label: 'Postulaciones por revisar', value: count(data?.pendingApplications), description: 'Del período · pendientes o en revisión', scope: 'Período' },
   { key: 'average', label: 'Postulaciones por vacante con postulaciones', value: data?.applicationsPerOpportunity.toFixed(1) ?? '—', description: 'Promedio del período seleccionado', scope: 'Período' },
   { key: 'selectionRate', label: 'Tasa de selección del período', value: percent(data?.selectionRate), description: 'Postulaciones seleccionadas del período', scope: 'Período' },
-  { key: 'active', label: 'Oportunidades activas actualmente', value: count(data?.activeOpportunities), description: 'Actual · disponibles para postular', scope: 'Actual' },
 ];
 
 /** ISO calendar dates are formatted without conversion to the browser's local timezone. */
 export const statisticsCalendarLabel = (value: string): string => value.split('-').reverse().join('/');
+
+/** The same percentage text is used on screen and in vector reports, including zero populations. */
+export const distributionPercent = (value: number, total: number): string => (total ? value * 100 / total : 0).toFixed(1) + '%';
+
+/** Ranks at most five visible groups without changing API aggregates or the full-roster denominator. */
+const topDemographicGroups = (rows: DistributionRow[] | undefined): DistributionRow[] | undefined => rows
+  ?.filter(row => row.key !== 'OTHER')
+  .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'es') || a.key.localeCompare(b.key))
+  .slice(0, 5);
+
+/** Shared chart definitions keep roster scope and captions consistent across both outputs. */
+export interface StatisticsDistribution { key: string; title: string; rows: DistributionRow[] | undefined; total: number | undefined }
+export const demographicStatisticsCharts = (data: CandidateDemographics | undefined): StatisticsDistribution[] => [
+  { key: 'age', title: 'Edad', rows: data?.byAge, total: data?.totalCandidates },
+  { key: 'sex', title: 'Sexo', rows: data?.bySex, total: data?.totalCandidates },
+  { key: 'education', title: 'Nivel educativo · Top 5', rows: topDemographicGroups(data?.byEducationLevel), total: data?.totalCandidates },
+  { key: 'department', title: 'Departamento de residencia · Top 5', rows: topDemographicGroups(data?.byDepartment), total: data?.totalCandidates },
+];

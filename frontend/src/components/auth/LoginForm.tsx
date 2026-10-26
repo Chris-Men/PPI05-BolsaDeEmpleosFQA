@@ -5,6 +5,8 @@ import { ApiError } from '../../services/api';
 import { getLoginValidationError } from '../../validation/login';
 import { PendingSavedNotice } from './PendingSavedNotice';
 import type { NavigateTo } from '../../types/models';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { emailError, fieldErrors } from '../../validation/fields';
 
 interface LoginFormProps { navigateTo: NavigateTo }
 
@@ -17,11 +19,13 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const submitting = useRef(false);
+  const live = useLiveValidation({ email, password }, values => fieldErrors({ email: emailError(values.email), password: !values.password ? 'La contraseña es obligatoria.' : new TextEncoder().encode(values.password).length > 72 ? 'Máximo 72 bytes UTF-8.' : '' }));
 
   /** Validates locally and prevents duplicate credential submissions. */
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (submitting.current) return;
+    if (!live.check(event.currentTarget)) return;
     const validation = getLoginValidationError({ email, password });
     setError(validation ?? '');
     if (validation) return;
@@ -39,17 +43,18 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
     } finally { submitting.current = false; setLoading(false); }
   };
 
-  return <form className="login-form" onSubmit={submit} noValidate aria-busy={loading}>
+  return <form className="login-form" onChangeCapture={live.watch} onSubmit={submit} noValidate aria-busy={loading}>
     <PendingSavedNotice />
     {error && <div id="login-error" className="auth-error" role="alert">{error}</div>}
     <div className="form-group">
       <label htmlFor="login-email">Correo electrónico</label>
       <div className="input-wrapper">
         <Mail size={25} className="input-icon" aria-hidden="true" />
-        <input id="login-email" name="email" type="email" autoComplete="username"
+        <input {...live.bind('email')} id="login-email" type="email" autoComplete="username"
           value={email} onChange={(event) => setEmail(event.target.value)} required
-          aria-describedby={error ? 'login-error' : undefined} disabled={loading} />
+          disabled={loading} />
       </div>
+      {live.error('email')}
     </div>
     <div className="form-group">
       <label htmlFor="login-password">Contraseña</label>
@@ -57,10 +62,10 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
       <div className="input-wrapper">
         <LockKeyhole size={25} className="input-icon" aria-hidden="true" />
 
-        <input id="login-password" name="password" type={visible ? 'text' : 'password'}
+        <input {...live.bind('password')} id="login-password" type={visible ? 'text' : 'password'}
           autoComplete="current-password" value={password} required disabled={loading}
           onChange={(event) => setPassword(event.target.value)}
-          aria-describedby={error ? 'login-error' : undefined} />
+          />
 
         <button className="password-toggle" type="button" onClick={() => setVisible(!visible)}
           aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={visible}>
@@ -68,6 +73,7 @@ export default function LoginForm({ navigateTo }: LoginFormProps) {
         </button>
 
       </div>
+      {live.error('password')}
     </div>
     <button
       type="button"

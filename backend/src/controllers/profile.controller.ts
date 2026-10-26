@@ -1,8 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
-import { getCandidateProfile, updateCandidateProfile } from '../services/profile.service.js';
+import { getCandidateCatalogs, getCandidateProfile, updateCandidateProfile } from '../services/profile.service.js';
 import { deleteResume, downloadResume, getResume, uploadResume } from '../services/resume.service.js';
 import type { UpdateProfileDTO } from '../validation/profile.schema.js';
 import { AppError } from '../utils/app-error.js';
+
+/** Returns the canonical personal-field choices for the authenticated candidate. */
+export const catalogs = (request: Request, response: Response, next: NextFunction): void => {
+  try {
+    if (!request.user) throw new AppError(401, 'Debes iniciar sesión.');
+    response.json(getCandidateCatalogs(request.user));
+  } catch (error: unknown) { next(error); }
+};
 
 /** Returns the profile owned by the authenticated candidate. */
 export const get = async (request: Request, response: Response, next: NextFunction): Promise<void> => {

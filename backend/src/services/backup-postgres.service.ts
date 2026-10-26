@@ -90,6 +90,8 @@ export class BackupPostgres {
       UPDATE public.auth_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL;
       UPDATE public.password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE used_at IS NULL;
       UPDATE public.email_outbox SET discarded_at = CURRENT_TIMESTAMP, locked_until = NULL WHERE sent_at IS NULL AND discarded_at IS NULL;
+      UPDATE public.statistics_exports SET status = 'EXPIRED', file_key = NULL, lease_token = NULL, locked_until = NULL,
+        error = 'La restauración invalidó esta exportación. Confirma el período para generar otra.';
       INSERT INTO public.audit_logs (user_id, entity_type, entity_id, action, changes, created_at)
       VALUES ((SELECT id FROM public.users WHERE id = ${actor.id ?? 'NULL'} AND email = ${literal(actor.email)} LIMIT 1),
         'DatabaseBackup', 0, 'RESTORE', ${changes}::jsonb, CURRENT_TIMESTAMP);

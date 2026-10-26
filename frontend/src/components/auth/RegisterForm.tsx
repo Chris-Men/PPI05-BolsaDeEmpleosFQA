@@ -17,6 +17,8 @@ import {
   type RegistrationFormValues,
 } from '../../validation/register';
 import type { NavigateTo } from '../../types/models';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { emailError, textError, passwordErrors, fieldErrors } from '../../validation/fields';
 
 interface RegisterFormProps {
   navigateTo: NavigateTo;
@@ -42,6 +44,10 @@ export default function RegisterForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const live = useLiveValidation(formData, values => {
+    const passwords = passwordErrors(values.password, values.confirmPassword);
+    return fieldErrors({ name: textError(values.name, 2, 150), email: emailError(values.email), password: passwords.password, confirmPassword: passwords.confirmation });
+  });
 
   // =====================================================
   // NIVEL DE SEGURIDAD DE CONTRASEÑA
@@ -95,10 +101,11 @@ export default function RegisterForm({
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const field = event.target.name as keyof RegistrationFormValues;
+    const value = event.target.value;
 
     setFormData((current) => ({
       ...current,
-      [field]: event.target.value,
+      [field]: value,
     }));
   };
 
@@ -109,7 +116,7 @@ export default function RegisterForm({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (submitting.current) return;
+    if (submitting.current || !live.check(event.currentTarget)) return;
 
     setError('');
 
@@ -161,6 +168,7 @@ export default function RegisterForm({
   return (
     <form
       className="login-form"
+      onChangeCapture={live.watch}
       onSubmit={handleSubmit}
       noValidate
     >
@@ -179,7 +187,7 @@ export default function RegisterForm({
             className="input-icon"
           />
 
-          <input
+          <input aria-label={"Nombre completo"} {...live.bind('name')}
             type="text"
             name="name"
             placeholder="Nombre completo"
@@ -191,6 +199,7 @@ export default function RegisterForm({
           />
 
         </div>
+{live.error('name')}
       </div>
 
 
@@ -207,7 +216,7 @@ export default function RegisterForm({
             className="input-icon"
           />
 
-          <input
+          <input aria-label={"Correo electrónico"} {...live.bind('email')}
             type="email"
             name="email"
             placeholder="Correo electrónico"
@@ -219,6 +228,7 @@ export default function RegisterForm({
           />
 
         </div>
+{live.error('email')}
       </div>
 
 
@@ -236,7 +246,7 @@ export default function RegisterForm({
             className="input-icon"
           />
 
-          <input
+          <input aria-label={"Contraseña"} {...live.bind('password')}
             type={
               showPassword
                 ? 'text'
@@ -272,6 +282,7 @@ export default function RegisterForm({
           </button>
 
         </div>
+{live.error('password')}
 
 
         {/* =================================================
@@ -422,7 +433,7 @@ export default function RegisterForm({
             className="input-icon"
           />
 
-          <input
+          <input aria-label={"Confirmar contraseña"} {...live.bind('confirmPassword')}
             type={
               showConfirmPassword
                 ? 'text'
@@ -458,6 +469,7 @@ export default function RegisterForm({
           </button>
 
         </div>
+{live.error('confirmPassword')}
 
       </div>
 
