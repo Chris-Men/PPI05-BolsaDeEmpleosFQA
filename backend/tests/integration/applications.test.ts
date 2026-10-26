@@ -28,7 +28,7 @@ const request=(method:string,path:string,actor?:RegistrationResponse,body?:unkno
 const expectJson=async<T>(response:Response,status=200):Promise<T>=>{const value=await response.json() as T;assert.equal(response.status,status,JSON.stringify(value));return value;};
 /** Each opportunity is isolated and published using the same administrative API as the UI. */
 const published=async(kind:OpportunityType='SOCIAL_HOURS',slots=3):Promise<Opportunity>=>{
-  const vacancy=await expectJson<Opportunity>(await request('POST','/admin/opportunities',admin,{kind,title:runId+' '+kind+' '+randomUUID(),description:'Una oportunidad completa de prueba para colaborar con la comunidad.',organizationId,categoryId,department:runId,municipality:'Municipio',modality:'REMOTE',slots,employmentTypeId:kind==='EMPLOYMENT'?employmentTypeId:undefined,socialHours:kind==='SOCIAL_HOURS'?80:undefined,duration:kind==='INTERNSHIP'?'3 meses':undefined,expiresAt:'2099-12-31'}),201);
+  const vacancy=await expectJson<Opportunity>(await request('POST','/admin/opportunities',admin,{kind,contactEmail:'contacto@example.test',title:runId+' '+kind+' '+randomUUID(),description:'Una oportunidad completa de prueba para colaborar con la comunidad.',organizationId,categoryId,department:runId,municipality:'Municipio',modality:'REMOTE',slots,employmentTypeId:kind==='EMPLOYMENT'?employmentTypeId:undefined,socialHours:kind==='SOCIAL_HOURS'?80:undefined,duration:kind==='INTERNSHIP'?'3 meses':undefined,expiresAt:'2099-12-31'}),201);
   return expectJson<Opportunity>(await request('PATCH','/admin/opportunities/'+vacancy.key+'/status',admin,{status:'OPEN'}));
 };
 /** Multipart upload tests the existing PDF validation before an immutable draft reference is selected. */

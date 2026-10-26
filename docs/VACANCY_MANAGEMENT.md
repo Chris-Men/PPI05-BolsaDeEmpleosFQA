@@ -20,14 +20,26 @@ docker compose -f docker-compose.dev.yml up -d backend frontend
 
 En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:production` en el backend de la versión desplegada. Los estados históricos no reconocidos se muestran como «Estado anterior» y permanecen fuera del catálogo público hasta que un administrador revise y publique esos registros. La configuración pendiente de almacenamiento privado de CV de PB-214 sigue siendo independiente.
 
+## Correo y teléfono de contacto
+
+La migración aditiva `20261025141230_opportunity_contact_fields`, generada con Prisma, agrega `contact_email` y `contact_phone` nullable a `jobs` y `volunteer_opportunities`. Conserva `contact`, los registros y las relaciones existentes. Aplicar `npm run prisma:deploy` y `npm run prisma:generate` antes de iniciar el backend actualizado.
+
+Los contratos de creación y edición reemplazan el campo escribible `contact` por `contactEmail` y `contactPhone`. Cada campo puede omitirse o limpiarse con `null`/cadena vacía, pero el resultado guardado siempre debe incluir al menos uno válido, incluso en borradores. Si se envían ambos, ambos deben ser válidos. El correo admite hasta 255 caracteres y se normaliza a minúsculas. El teléfono admite ocho dígitos salvadoreños con prefijo opcional `503`/`+503`, espacios o guiones, y se guarda como ocho dígitos; la UI muestra `+503 0000-0000`.
+
+En PATCH, omitir un campo conserva el valor anterior; al cambiar solo uno se valida contra el otro almacenado dentro de la transacción. Quitar el último canal devuelve `400` con errores por campo y conserva el registro. El frontend revalida ambos controles durante la escritura y antes de guardar.
+
+La lectura añade `contactEmail` y `contactPhone` como cadenas o `null`. El `contact` histórico continúa siendo de consulta y no se acepta en solicitudes nuevas. Cuando solo existe un texto anterior que representa inequívocamente un correo o teléfono, se precarga ese canal sin modificar la base. Los textos ambiguos permanecen visibles como Contacto anterior y requieren completar un canal válido al editar. Al guardar campos modernos se conserva el texto anterior, y no se usa como reemplazo de una selección explícita actual.
+
+Los detalles muestran ambos canales y sus enlaces correspondientes. Excel incorpora columnas separadas y conserva una columna de contacto anterior en su formato 2.
+
 ## Ciclo de vida
 
-- Crear guarda un **Borrador** con título y tipo. El título admite 3–150 caracteres; la descripción, hasta 20000; cada lista admite 50 elementos de hasta 1000 caracteres.
+- Crear guarda un **Borrador** con título, tipo y al menos un medio de contacto válido. El título admite 3–150 caracteres; la descripción, hasta 20000; cada lista admite 50 elementos de hasta 1000 caracteres.
 - Publicar requiere descripción de al menos 20 caracteres, organización y categoría activas, departamento y municipio. Un empleo requiere jornada o contrato; horas sociales requiere su cantidad; una práctica requiere duración. La fecha de cierre, si existe, debe ser futura.
 - La jornada o contrato, la modalidad y el tipo de oportunidad son conceptos diferentes. El salario se expresa en USD con hasta dos decimales y rango coherente; solo se acepta para empleos.
 - Departamento y municipio se guardan juntos. Las listas enviadas reemplazan su contenido; las omitidas se conservan. Las actualizaciones publicadas vuelven a comprobar los requisitos antes de confirmar la transacción.
 - Cerrar retira una vacante del portal. Puede volver a publicarse después de validar sus datos y fecha.
-- Archivar es lógico, idempotente y definitivo. No elimina postulaciones, inscripciones, revisiones ni documentos; las vacantes archivadas no se editan. Se consultan con el filtro administrativo de archivadas.
+- Archivar es lógico e idempotente. No elimina postulaciones, inscripciones, revisiones ni documentos; las vacantes archivadas no se editan. Se consultan con el filtro administrativo de archivadas y se pueden recuperar como Borrador o Cerrada mediante Desarchivar.
 - El portal muestra únicamente publicaciones vigentes, sin archivo, con organización y categoría activas. Tanto la lista como el detalle verifican esta condición. La fecha de cierre representa el final del día indicado en UTC.
 - Los cambios y su auditoría se confirman en una transacción serializable con reintentos por conflictos. Las ediciones de `Jobs` agregan una revisión de título y descripción.
 
@@ -47,6 +59,7 @@ En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:producti
 | `PATCH /api/admin/opportunities/:key` | Editar — `opportunities.update` |
 | `PATCH /api/admin/opportunities/:key/status` | `{ "status": "OPEN" \| "CLOSED" }` — `opportunities.status.update` |
 | `DELETE /api/admin/opportunities/:key` | Archivar — `opportunities.archive` |
+| `POST /api/admin/opportunities/:key/unarchive` | Recuperar sin publicar — `opportunities.archive` |
 | `GET /api/admin/categories` | Listado — `categories.read` |
 | `POST /api/admin/categories` | Crear — `categories.create` |
 | `PATCH /api/admin/categories/:id` | Editar/activar/desactivar — `categories.update` |

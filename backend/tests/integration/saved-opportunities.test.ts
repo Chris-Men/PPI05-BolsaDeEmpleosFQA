@@ -34,7 +34,7 @@ const json = async <T>(response: Response, status = 200): Promise<T> => { assert
 /** Builds a published fixture through the same administrative API used by the application. */
 const published = async (kind: OpportunityType = 'EMPLOYMENT'): Promise<Opportunity> => {
   const value = await json<Opportunity>(await request('POST', '/admin/opportunities', admin, {
-    kind, title: runId + '-' + randomUUID(), description: 'Vacante completa para comprobar la persistencia de los guardados.',
+    kind, contactEmail: 'contacto@example.test', title: runId + '-' + randomUUID(), description: 'Vacante completa para comprobar la persistencia de los guardados.',
     organizationId, categoryId, department: runId, municipality: 'Municipio',
     ...(kind === 'EMPLOYMENT' ? { employmentTypeId } : {}),
     ...(kind === 'SOCIAL_HOURS' ? { socialHours: 120 } : {}),

@@ -90,7 +90,7 @@ Se utiliza exclusivamente `SystemSettings.settingKey = site.configuration`. Su `
 {
   "version": 1,
   "configuration": {
-    "contacto": { "correo": "proyectos@fundaqa.org", "telefono": "+503 7623 4832", "whatsapp": "", "direccion": "San Salvador, El Salvador" },
+    "contacto": { "correo": "proyectos@fundaqa.org", "correoSoporte": "proyectos@fundaqa.org", "telefono": "+503 7623-4832", "whatsapp": "", "direccion": "San Salvador, El Salvador" },
     "inicio": { "titulo": "Trabaja donde tu historia importa.", "subtitulo": "Texto de portada", "descripcion": "" },
     "institucional": { "mision": "Texto de misión", "vision": "Texto de visión" },
     "redes": { "facebook": "", "instagram": "", "linkedin": "", "youtube": "" }
@@ -109,7 +109,7 @@ Los textos iniciales completos están en `backend/src/constants/site-settings.co
 
 Todas las respuestas usan `Cache-Control: no-store`. Las escrituras comprueban origen y cabecera de mutación, sesión, rol y permiso. Guardado/restauración, incremento de versión y auditoría se confirman en una única transacción serializable. Una versión desactualizada o un conflicto concurrente devuelve `409`; la interfaz conserva las ediciones locales y ofrece recargar, advirtiendo que se descartarán. Los errores de validación (`400`) incluyen rutas por campo; un fallo de DB no produce confirmación ni una actualización pública ficticia.
 
-El título es obligatorio (180 caracteres). Los límites restantes son: correo 255, teléfono/WhatsApp 30 y entre siete y quince dígitos, dirección/subtítulo 500, descripción de Home 2000, misión/visión 4000 y enlaces 2048. Los enlaces sociales requieren HTTPS y no admiten credenciales. Todo se trata como texto plano y React lo escapa. Los grupos y campos desconocidos se rechazan; Información de la plataforma, Publicaciones y descripción institucional no forman parte del contrato editable.
+El título es obligatorio (180 caracteres). Los límites restantes son: correo y correo de soporte 255, teléfono/WhatsApp 30 y ocho dígitos locales con prefijo +503, dirección/subtítulo 500, descripción de Home 2000, misión/visión 4000 y enlaces 2048. Los enlaces sociales requieren HTTPS y no admiten credenciales. Todo se trata como texto plano y React lo escapa. Los grupos y campos desconocidos se rechazan; Información de la plataforma, Publicaciones y descripción institucional no forman parte del contrato editable. El correo de soporte se utiliza en Ayuda; los documentos anteriores heredan inicialmente el correo general. Consulta [compatibilidad y validación de formularios](FORM_CORRECTIONS.md).
 
 Home consume título, subtítulo y descripción; Nosotros consume misión y visión; el pie de Home y la sección de ayuda comparten contacto y redes. Los valores opcionales vacíos ocultan sus contenidos o enlaces. WhatsApp genera un enlace `wa.me` únicamente cuando está configurado. No hay aprobación de vacantes, pausa de postulaciones ni avisos administrativos derivados de configuración.
 

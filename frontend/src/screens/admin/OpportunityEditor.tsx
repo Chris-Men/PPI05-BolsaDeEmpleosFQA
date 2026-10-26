@@ -1,4 +1,8 @@
-import { useRef, useState } from 'react';
+import { closingDay, isNumericEdit, validateOpportunityValues } from '../../utils/opportunityValidation';
+import { focusFirstInvalid } from '../../utils/candidateValidation';
+import { siteToday } from '../../utils/statisticsDates';
+import { PhoneInput } from '../../components/PhoneInput';
+import { useId, useRef, useState } from 'react';
 import { ApiError } from '../../services/api';
 import { createOpportunity, setOpportunityStatus, updateOpportunity } from '../../services/opportunityService';
 import { KIND_LABELS, type Opportunity, type OpportunityCatalogs, type OpportunityInput, type OpportunityKind } from '../../types/opportunity';
@@ -12,17 +16,17 @@ import { VacancySuccessAlert } from '../../components/admin/VacancySuccessAlert'
 interface OpportunityEditorProps { opportunity: Opportunity | null; catalogs: OpportunityCatalogs; onSaved: () => void; onCancel: () => void }
 /** Form strings retain incomplete drafts, while API mutations have explicit numeric references. */
 type FormValues = Record<keyof OpportunityInput, string>;
-type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'money';
+type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'money' | 'email' | 'tel';
 
-const REQUIRED_MESSAGE = 'Este campo es obligatorio.';
+
 
 /** Maps stored data to controlled inputs without example values. */
 const initialValues = (value: Opportunity | null): FormValues => ({
   title: value?.title ?? '', description: value?.description ?? '', organizationId: String(value?.organizationId ?? ''), categoryId: String(value?.categoryId ?? ''),
   department: value?.department ?? '', municipality: value?.municipality ?? '', modality: value?.modality ?? 'ON_SITE',
   employmentTypeId: String(value?.employmentTypeId ?? ''), experienceLevelId: String(value?.experienceLevelId ?? ''), salaryMin: String(value?.salaryMin ?? ''), salaryMax: String(value?.salaryMax ?? ''),
-  slots: String(value?.slots ?? ''), socialHours: String(value?.socialHours ?? ''), duration: value?.duration ?? '', contact: value?.contact ?? '',
-  requirements: value?.requirements.join('\n') ?? '', responsibilities: value?.responsibilities.join('\n') ?? '', benefits: value?.benefits.join('\n') ?? '', expiresAt: value?.expiresAt?.slice(0, 10) ?? '',
+  slots: String(value?.slots ?? ''), socialHours: String(value?.socialHours ?? ''), duration: value?.duration ?? '', contactEmail: value?.contactEmail ?? '', contactPhone: value?.contactPhone ?? '',
+  requirements: value?.requirements.join('\n') ?? '', responsibilities: value?.responsibilities.join('\n') ?? '', benefits: value?.benefits.join('\n') ?? '', expiresAt: closingDay(value?.expiresAt),
 });
 /** Empty optional numeric values clear the field rather than becoming zero. */
 const numberValue = (value: string): number | null => value === '' ? null : Number(value);
@@ -34,6 +38,7 @@ const zoneOf = (department: string, zones: LocationZone[]): string =>
 /** All four types share one editor; a saved vacancy retains its original discriminator. */
 export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCancel }: OpportunityEditorProps) {
   const { session } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null); const fieldId = useId();
   const [kind, setKind] = useState<OpportunityKind>(opportunity?.kind ?? 'EMPLOYMENT');
   const [values, setValues] = useState(() => initialValues(opportunity));
   const [zone, setZone] = useState(() => zoneOf(opportunity?.department ?? '', catalogs.locationZones));
@@ -49,60 +54,37 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
 
   /** Campos obligatorios (marcados con *). Dependen del tipo de vacante. */
   const requiredNames: Array<keyof FormValues> = [
-    'title', 'description', 'organizationId', 'categoryId', 'department', 'municipality', 'slots', 'contact',
+    'title', 'description', 'organizationId', 'categoryId', 'department', 'municipality', 'slots',
     ...(kind === 'EMPLOYMENT' ? (['employmentTypeId'] as const) : []),
     ...(kind !== 'VOLUNTEER' ? (['experienceLevelId'] as const) : []),
     ...(kind === 'SOCIAL_HOURS' ? (['socialHours'] as const) : []),
     ...(kind === 'INTERNSHIP' ? (['duration'] as const) : []),
   ];
   const isRequired = (name: keyof FormValues) => requiredNames.includes(name);
-  const update = (name: keyof FormValues, value: string) => setValues((current) => ({ ...current, [name]: value }));
+  /** Validates the changed field and its dependents against the new value. */
+  const update = (name: keyof FormValues, value: string): void => {
+    if (['salaryMin', 'salaryMax', 'slots', 'socialHours'].includes(name) && !isNumericEdit(value, name.startsWith('salary'))) {
+      setErrors(current => ({ ...current, [name]: name.startsWith('salary') ? 'Usa números y hasta dos decimales; no se admiten signos ni letras.' : 'Usa únicamente dígitos enteros positivos.' })); return;
+    }
+    const next = { ...values, [name]: value, ...(name === 'department' && value !== values.department ? { municipality: '' } : {}) };
+    const found = validateOpportunityValues(next, kind, requiredNames, true);
+    const related = [name, ...(name.startsWith('contact') ? ['contactEmail', 'contactPhone'] : []), ...(name.startsWith('salary') ? ['salaryMax'] : []), ...(name === 'department' ? ['municipality'] : [])];
+    setValues(next); setErrors(current => ({ ...current, ...Object.fromEntries(related.map(field => [field, found[field] ?? ''])) }));
+  };
 
   /** Etiqueta y asterisco en un solo elemento para que queden en la misma línea. */
   const labelText = (label: string, required: boolean) => <span className="field-label">
     {label}{required && <span className="required-mark" aria-hidden="true"> *</span>}
   </span>;
 
-  /** El título basta para un borrador; para publicar (o editar una vacante abierta) se exigen todos los *. */
+  /** Drafts retain incomplete publication fields, but always require at least one valid contact. */
 
-  const validate = (strict: boolean): Record<string, string> => {
-    const found: Record<string, string> = {};
-
-    if (!values.title.trim()) {
-      found.title = REQUIRED_MESSAGE;
-    }
-
-    if (strict) {
-      for (const name of requiredNames) {
-        if (!values[name].trim()) {
-          found[name] = REQUIRED_MESSAGE;
-        }
-      }
-    }
-
-    // Los cupos deben ser un entero positivo.
-    if (values.slots.trim() !== '') {
-      const slots = Number(values.slots);
-
-      if (!/^[1-9]\d*$/.test(values.slots) || !Number.isSafeInteger(slots)) {
-        found.slots = 'La cantidad de cupos debe ser un número entero mayor que cero.';
-      }
-    }
-
-    const min = numberValue(values.salaryMin);
-    const max = numberValue(values.salaryMax);
-
-    if (kind === 'EMPLOYMENT' && min !== null && max !== null && max < min) {
-      found.salaryMax = 'El salario máximo no puede ser menor que el mínimo.';
-    }
-
-    return found;
-  };
+  const validate = (strict: boolean): Record<string, string> => validateOpportunityValues(values, kind, requiredNames, strict);
 
   /** One accessible field renderer displays server validation beside its input. */
   const field = (name: keyof FormValues, label: string, type: FieldType = 'text', options?: Array<{ id: number; name: string }>) => {
     const required = isRequired(name);
-    const common = { 'aria-label': label, 'aria-required': required, 'aria-invalid': Boolean(errors[name]), disabled: busy, value: values[name] };
+    const common = { id: fieldId + name, name, 'aria-describedby': errors[name] ? fieldId + name + '-error' : undefined, onBlur: () => update(name, values[name]), 'aria-label': label, 'aria-required': required, 'aria-invalid': Boolean(errors[name]), disabled: busy, value: values[name] };
     const isMoney = type === 'money';
     return <label key={name}>
       {labelText(label, required)}
@@ -110,14 +92,14 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
         <option value="">Seleccionar</option>
         {values[name] && !options.some((option) => String(option.id) === values[name]) && <option value={values[name]}>Selección anterior (inactiva)</option>}
         {options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-      </select> : type === 'textarea' ? <textarea {...common} onChange={(event) => update(name, event.target.value)} />
+      </select> : type === 'tel' ? <PhoneInput {...common} onValueChange={value => update(name, value)} /> : type === 'textarea' ? <textarea {...common} onChange={(event) => update(name, event.target.value)} />
         : isMoney ? <span className="money-input">
           <span className="money-symbol" aria-hidden="true">$</span>
-          <input {...common} type="number" inputMode="decimal" step="0.01" min="0" placeholder="0.00" onChange={(event) => update(name, event.target.value)} />
+          <input {...common} type="text" inputMode="decimal" placeholder="0.00" onChange={(event) => update(name, event.target.value)} />
         </span>
-          : <input {...common} type={type} step={type === 'number' ? '1' : undefined} min={type === 'number' ? '1' : undefined}
-            maxLength={name === 'title' ? 150 : name === 'description' ? 20000 : undefined} onChange={(event) => update(name, event.target.value)} />}
-      {errors[name] && <span className="vacancy-error">{errors[name]}</span>}
+          : <input {...common} type={type === 'number' ? 'text' : type} inputMode={type === 'number' ? 'numeric' : undefined} min={type === 'date' ? siteToday() : undefined}
+            maxLength={name === 'title' ? 150 : name === 'contactEmail' ? 255 : name === 'description' ? 20000 : undefined} autoComplete={type === 'email' ? 'email' : undefined} onChange={(event) => update(name, event.target.value)} />}
+      {errors[name] && <span id={fieldId + name + '-error'} className="vacancy-error" role="alert">{errors[name]}</span>}
     </label>;
   };
 
@@ -126,46 +108,48 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   const zoneField = <label key="zone">
     <span className="field-label">Zona</span>
     <select aria-label="Zona" disabled={busy} value={zone}
-      onChange={(event) => { setZone(event.target.value); setValues((current) => ({ ...current, department: '', municipality: '' })); }}>
+      onChange={(event) => { setZone(event.target.value); setValues((current) => ({ ...current, department: '', municipality: '' })); setErrors(current => ({ ...current, department: '', municipality: '' })); }}>
       <option value="">Seleccionar</option>
       {catalogs.locationZones.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
     </select>
   </label>;
   const departmentField = <label key="department">
     {labelText('Departamento', true)}
-    <select aria-label="Departamento" aria-required aria-invalid={Boolean(errors.department)} disabled={busy || (!zone && !values.department)} value={values.department}
-      onChange={(event) => setValues((current) => ({ ...current, department: event.target.value, municipality: '' }))}>
+    <select name="department" aria-label="Departamento" aria-required aria-invalid={Boolean(errors.department)} aria-describedby={errors.department ? fieldId + '-department-error' : undefined} disabled={busy || (!zone && !values.department)} value={values.department}
+      onBlur={() => update('department', values.department)}
+      onChange={(event) => update('department', event.target.value)}>
       <option value="">{zone || values.department ? 'Seleccionar' : 'Primero elige una zona'}</option>
       {values.department && !zoneDepartments.some((item) => item.name === values.department) && <option value={values.department}>{values.department} (anterior)</option>}
       {zoneDepartments.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
     </select>
-    {errors.department && <span className="vacancy-error">{errors.department}</span>}
+    {errors.department && <span id={fieldId + '-department-error'} className="vacancy-error" role="alert">{errors.department}</span>}
   </label>;
 
   /** Municipio depende del departamento elegido. */
   const municipalities = municipalitiesOf(values.department, catalogs.locationZones);
   const municipalityField = <label key="municipality">
     {labelText('Municipio', true)}
-    <select aria-label="Municipio" aria-required aria-invalid={Boolean(errors.municipality)} disabled={busy || !values.department} value={values.municipality}
+    <select name="municipality" aria-label="Municipio" aria-required aria-invalid={Boolean(errors.municipality)} aria-describedby={errors.municipality ? fieldId + '-municipality-error' : undefined} disabled={busy || !values.department} value={values.municipality}
+      onBlur={() => update('municipality', values.municipality)}
       onChange={(event) => update('municipality', event.target.value)}>
       <option value="">{values.department ? 'Seleccionar' : 'Primero elige un departamento'}</option>
       {values.municipality && !municipalities.includes(values.municipality) && <option value={values.municipality}>{values.municipality} (anterior)</option>}
       {municipalities.map((name) => <option key={name} value={name}>{name}</option>)}
     </select>
-    {errors.municipality && <span className="vacancy-error">{errors.municipality}</span>}
+    {errors.municipality && <span id={fieldId + '-municipality-error'} className="vacancy-error" role="alert">{errors.municipality}</span>}
   </label>;
 
   /** Retains a newly saved identity if publication fails so retries cannot create duplicates. */
   const save = async (publish: boolean): Promise<void> => {
     if (lock.current || !canSave) return;
     const found = validate(publish || opportunity?.status === 'OPEN');
-    if (Object.keys(found).length > 0) { setErrors(found); setError('Revisa los campos marcados.'); return; }
+    if (Object.keys(found).length > 0) { setErrors(found); setError('Revisa los campos marcados.'); focusFirstInvalid(formRef.current); return; }
     lock.current = true; setBusy(true); setErrors({}); setError('');
     const lines = (value: string) => value.split('\n').map((line) => line.trim()).filter(Boolean);
     const payload: OpportunityInput = {
       title: values.title, description: values.description, organizationId: numberValue(values.organizationId), categoryId: numberValue(values.categoryId),
       department: values.department || null, municipality: values.municipality || null, modality: values.modality as Opportunity['modality'],
-      slots: numberValue(values.slots), contact: values.contact || null, expiresAt: values.expiresAt || null,
+      slots: numberValue(values.slots), contactEmail: values.contactEmail.trim() || null, contactPhone: values.contactPhone || null, expiresAt: values.expiresAt || null,
       requirements: lines(values.requirements), responsibilities: lines(values.responsibilities), benefits: lines(values.benefits),
       ...(kind === 'EMPLOYMENT' ? { salaryMin: numberValue(values.salaryMin), salaryMax: numberValue(values.salaryMax), employmentTypeId: numberValue(values.employmentTypeId) } : {}),
       ...(kind !== 'VOLUNTEER' ? { experienceLevelId: numberValue(values.experienceLevelId) } : {}),
@@ -188,7 +172,7 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
     } finally { lock.current = false; setBusy(false); }
   };
 
-  return <form className="vacancy-editor" noValidate onSubmit={(event) => { event.preventDefault(); void save(false); }}>
+  return <form ref={formRef} className="vacancy-editor" noValidate onSubmit={(event) => { event.preventDefault(); void save(false); }}>
     <h2>{opportunity || created ? 'Editar vacante' : 'Nueva vacante'}</h2>
     {created && !opportunity && !success && <p role="status">El borrador está guardado. Puedes completar los campos y volver a publicar.</p>}
     {error && <p role="alert">{error}</p>}
@@ -197,7 +181,11 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
       {field('title', 'Título')}{field('organizationId', 'Organización', 'text', catalogs.organizations)}{field('categoryId', 'Categoría', 'text', catalogs.categories)}
       <div className="location-group">{zoneField}{departmentField}{municipalityField}</div>
       <label>{labelText('Modalidad', true)}<select aria-label="Modalidad" value={values.modality} disabled={busy} onChange={(event) => update('modality', event.target.value)}><option value="ON_SITE">Presencial</option><option value="REMOTE">Remoto</option><option value="HYBRID">Híbrido</option></select></label>
-      {field('expiresAt', 'Fecha de cierre', 'date')}{field('slots', 'Cantidad de cupos', 'number')}{field('contact', 'Contacto')}
+      {field('expiresAt', 'Fecha de cierre', 'date')}{field('slots', 'Cantidad de cupos', 'number')}
+      <fieldset className="vacancy-contact-group full"><legend>Contacto de la vacante *</legend><p>Completa al menos uno: correo electrónico o teléfono de contacto.</p>
+        {opportunity?.contact && !opportunity.contactEmail && !opportunity.contactPhone && <p>Contacto anterior: {opportunity.contact}</p>}
+        <div className="vacancy-fields">{field('contactEmail', 'Correo de contacto', 'email')}{field('contactPhone', 'Teléfono de contacto', 'tel')}</div>
+      </fieldset>
       {kind === 'EMPLOYMENT' && <>{field('employmentTypeId', 'Jornada o contrato', 'text', catalogs.employmentTypes)}{field('salaryMin', 'Salario mínimo mensual (USD)', 'money')}{field('salaryMax', 'Salario máximo mensual (USD)', 'money')}</>}
       {kind !== 'VOLUNTEER' && field('experienceLevelId', 'Experiencia requerida', 'text', catalogs.experienceLevels)}
       {kind === 'SOCIAL_HOURS' && field('socialHours', 'Horas sociales', 'number')}
@@ -205,7 +193,7 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
       <div className="full">{field('description', 'Descripción', 'textarea')}</div>
       {field('responsibilities', 'Responsabilidades (una por línea)', 'textarea')}{field('requirements', 'Requisitos (uno por línea)', 'textarea')}{field('benefits', 'Beneficios (uno por línea)', 'textarea')}
     </div>
-    <p className="required-note"><span className="required-mark" aria-hidden="true">*</span> Los campos con asterisco son obligatorios para publicar. Para guardar un borrador solo necesitas el título.</p>
+    <p className="required-note"><span className="required-mark" aria-hidden="true">*</span> Los campos con asterisco son obligatorios para publicar. Para guardar un borrador necesitas el título y al menos un medio de contacto válido.</p>
     <footer className="vacancy-actions"><button type="button" disabled={busy} onClick={onCancel}>Cancelar</button>
       {canSave && <button type="submit" disabled={busy || Boolean(success)}>{busy ? 'Guardando…' : opportunity?.status === 'OPEN' ? 'Guardar cambios' : 'Guardar borrador'}</button>}
       {canSave && canManageVacancies(session, 'opportunities.status.update') && opportunity?.status !== 'OPEN' && <button type="button" disabled={busy || Boolean(success)} onClick={() => void save(true)}>Guardar y publicar</button>}

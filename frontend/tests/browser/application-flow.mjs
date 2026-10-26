@@ -68,7 +68,7 @@ try {
       assert.equal(await evaluate(`Array.from(document.querySelector('select[name=municipality]').options).some(item=>item.value==='San Salvador Centro')`),false);
       await fill('select[name=department]','San Salvador');await fill('select[name=municipality]','San Salvador Centro');await fill('select[name=educationLevel]','Posgrado');
       await click('Guardar perfil');await wait(`document.querySelector('.candidate-editor [role=status]')?.textContent.includes('Perfil actualizado')`,'perfil persistente');
-      assert.equal(await evaluate(`document.querySelector('input[name=phone]').value`),'71234567');
+      assert.equal(await evaluate(`document.querySelector('input[name=phone]').value`),'+503 7123-4567');
       await screenshot('perfil-personal-desktop');
       await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
       await click('Editar perfil');assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`),true);

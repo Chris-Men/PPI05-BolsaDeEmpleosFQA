@@ -27,7 +27,7 @@ const read = async (database: Prisma.TransactionClient = prisma) => {
 };
 
 /** Public projection contains only the four explicitly editable content groups. */
-export const getPublicSiteSettings = async (): Promise<SiteConfiguration> => siteConfigurationSchema.parse((await read()).configuration);
+export const getPublicSiteSettings = async (): Promise<SiteConfiguration> => (await read()).configuration;
 
 /** Administrators may inspect settings; candidates cannot inspect administrative metadata. */
 export const getAdminSiteSettings = async (actor: AccessContext) => {

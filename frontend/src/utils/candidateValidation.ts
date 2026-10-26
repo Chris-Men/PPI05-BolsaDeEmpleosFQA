@@ -2,6 +2,7 @@ import type { ApplicationData } from '../types/application';
 import type { CandidateCatalogs, CandidateProfileData, ProfileUpdate } from '../types/profile';
 import { municipalitiesOf } from './elSalvadorLocations';
 import { siteToday } from './statisticsDates';
+import { phoneDigits } from './phone';
 
 /** Personal fields share labels, bounds and validation across both candidate editors. */
 export const PERSONAL_LABELS = {
@@ -27,8 +28,7 @@ export const latestBirthDate = (now = new Date()): string => {
 };
 /** Only recognized local numbers are normalized; invalid edits remain visible for correction. */
 export const normalizeCandidatePhone = (value: string): string => {
-  const compact = value.trim().replace(/[\s-]/g, '');
-  return /^(?:\+503)?\d{8}$/.test(compact) ? compact.replace(/^\+503/, '') : value.trim();
+  return phoneDigits(value) ?? value.trim();
 };
 
 /** Optional profile fields and required submission fields use identical content rules. */

@@ -36,6 +36,7 @@ adminOpportunityRouter.post('/', grant(PERMISSIONS.OPPORTUNITY_CREATE), protectS
 adminOpportunityRouter.patch('/:key', grant(PERMISSIONS.OPPORTUNITY_UPDATE), protectSessionMutation, validateBody(updateOpportunitySchema), controller.updateOpportunity);
 adminOpportunityRouter.patch('/:key/status', grant(PERMISSIONS.OPPORTUNITY_STATUS_UPDATE), protectSessionMutation, validateBody(opportunityStatusSchema), controller.statusOpportunity);
 adminOpportunityRouter.delete('/:key', grant(PERMISSIONS.OPPORTUNITY_ARCHIVE), protectSessionMutation, controller.archiveOpportunity);
+adminOpportunityRouter.post('/:key/unarchive', grant(PERMISSIONS.OPPORTUNITY_ARCHIVE), protectSessionMutation, controller.unarchiveOpportunity);
 /** Categories preserve the shared hierarchy used by all four opportunity types. */
 export const adminCategoryRouter = Router();
 adminCategoryRouter.use(authenticate);

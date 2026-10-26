@@ -407,6 +407,9 @@ model Jobs {
   socialHours       Int?              @map("social_hours")
   duration          String?           @db.VarChar(120)
   contact           String?           @db.VarChar(255)
+  /// Separate optional channels; vacancy writes require at least one valid channel.
+  contactEmail      String?           @map("contact_email") @db.VarChar(255)
+  contactPhone      String?           @map("contact_phone") @db.VarChar(30)
   requirements      String[]          @default([])
   responsibilities  String[]          @default([])
   benefits          String[]          @default([])
@@ -626,6 +629,9 @@ model VolunteerOpportunities {
   modality               WorkModality             @default(ON_SITE)
   slots                  Int?
   contact                String?                  @db.VarChar(255)
+  /// The original free-text contact remains available for historical records.
+  contactEmail           String?                  @map("contact_email") @db.VarChar(255)
+  contactPhone           String?                  @map("contact_phone") @db.VarChar(30)
   requirements           String[]                 @default([])
   responsibilities       String[]                 @default([])
   benefits               String[]                 @default([])

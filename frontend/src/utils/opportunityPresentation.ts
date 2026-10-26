@@ -1,5 +1,6 @@
 import type { Job, StudentSpot, VolunteerSpot } from '../types/models';
 import type { Opportunity } from '../types/opportunity';
+import { formatPhone } from './phone';
 /** Location labels retain both persisted geographic fields. */
 const location = (value: Opportunity): string => [value.municipality, value.department].filter(Boolean).join(', ');
 /** Numeric USD ranges have no invented salary when the organization omitted it. */
@@ -21,10 +22,14 @@ export const opportunityToJob = (value: Opportunity): Job => ({
 /** Volunteer capacity is displayed as configured slots, without pretending to track availability. */
 export const opportunityToVolunteer = (value: Opportunity): VolunteerSpot => ({
   id: value.id, opportunityKey: value.key, title: value.title, org: value.organization?.name ?? '', location: location(value), area: value.category?.name ?? '',
-  slots: value.slots, desc: value.description, orgInfo: value.organization?.description ?? '', contact: value.contact ?? '',
+  slots: value.slots, desc: value.description, orgInfo: value.organization?.description ?? '', contact: opportunityContactLabel(value),
 });
 /** Social hours and internships retain their own required information. */
 export const opportunityToStudent = (value: Opportunity): StudentSpot => ({
   id: value.id, opportunityKey: value.key, title: value.title, org: value.organization?.name ?? '', location: location(value), area: value.category?.name ?? '',
-  tipo: value.kind === 'SOCIAL_HOURS' ? 'social' : 'practica', desc: value.description, horas: value.socialHours ?? undefined, duracion: value.duration ?? undefined, contact: value.contact ?? '',
+  tipo: value.kind === 'SOCIAL_HOURS' ? 'social' : 'practica', desc: value.description, horas: value.socialHours ?? undefined, duracion: value.duration ?? undefined, contact: opportunityContactLabel(value),
 });
+
+/** Legacy presentation adapters retain both channels without dropping historical text. */
+export const opportunityContactLabel = (value: Pick<Opportunity, 'contactEmail' | 'contactPhone' | 'contact'>): string =>
+  [value.contactEmail, value.contactPhone ? formatPhone(value.contactPhone) : null].filter(Boolean).join(' · ') || value.contact || '';

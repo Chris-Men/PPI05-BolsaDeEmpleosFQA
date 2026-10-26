@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { fieldErrors } from '../../validation/fields';
 import { DatabaseBackup, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useModalDialog } from '../../hooks/useModalDialog';
@@ -18,15 +20,16 @@ interface BackupConfirmationProps { kind: 'BACKUP' | 'RESTORE'; latest: BackupSu
 function BackupConfirmation({ kind, latest, busy, error, onClose, onConfirm }: BackupConfirmationProps) {
   const dialog = useModalDialog(); const [password, setPassword] = useState(''); const [confirmation, setConfirmation] = useState('');
   const restore = kind === 'RESTORE';
-  const submit = (event: FormEvent): void => { event.preventDefault(); onConfirm(password, confirmation); };
+  const live = useLiveValidation({ password, confirmation }, values => restore ? fieldErrors({ password: !values.password ? 'Ingresa tu contraseña actual.' : new TextEncoder().encode(values.password).length > 72 ? 'Máximo 72 bytes UTF-8.' : '', confirmation: values.confirmation === 'RESTAURAR' ? '' : 'Escribe RESTAURAR exactamente para confirmar.' }) : {});
+  const submit = (event: FormEvent<HTMLFormElement>): void => { event.preventDefault(); if (live.check(event.currentTarget)) onConfirm(password, confirmation); };
   return <dialog ref={dialog} className="detail-dialog backup-dialog" aria-labelledby="backup-dialog-title" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
     <header className="detail-dialog-header"><span className="detail-dialog-icon"><DatabaseBackup size={22} /></span><div><h2 id="backup-dialog-title">{restore ? 'Restaurar último respaldo' : 'Crear respaldo ahora'}</h2><p>Base de datos y CV privados</p></div>
       <button type="button" className="detail-dialog-close" disabled={busy} aria-label="Cerrar confirmación" onClick={onClose}><X size={20} /></button></header>
-    <form onSubmit={submit}><div className="detail-dialog-body">
+    <form noValidate onChangeCapture={live.watch} onSubmit={submit}><div className="detail-dialog-body">
       {latest && <p>Respaldo disponible: <strong>{date(latest.createdAt)}</strong>, hora de El Salvador.</p>}
       <p>{restore ? 'Se descartarán los cambios posteriores al respaldo. Las cuentas, contraseñas y documentos volverán a ese estado. Se cerrarán todas las sesiones.' : 'Se respaldarán todos los datos y CV actuales. El nuevo respaldo sustituirá al anterior cuando termine correctamente.'}</p>
-      {restore && <><label htmlFor="backup-password">Contraseña actual</label><input id="backup-password" type="password" autoComplete="current-password" required value={password} disabled={busy} onChange={event => setPassword(event.target.value)} />
-        <label htmlFor="backup-confirmation">Escribe RESTAURAR para confirmar</label><input id="backup-confirmation" autoComplete="off" required value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} /></>}
+      {restore && <><label htmlFor="backup-password">Contraseña actual</label><input {...live.bind('password')} id="backup-password" type="password" autoComplete="current-password" required value={password} disabled={busy} onChange={event => setPassword(event.target.value)} />{live.error('password')}
+        <label htmlFor="backup-confirmation">Escribe RESTAURAR para confirmar</label><input {...live.bind('confirmation')} id="backup-confirmation" autoComplete="off" required value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} />{live.error('confirmation')}</>}
       {error && <p role="alert" className="backup-error">{error}</p>}
     </div><footer className="detail-dialog-footer"><button type="button" disabled={busy} onClick={onClose}>Cancelar</button><button type="submit" className={restore ? 'backup-danger' : 'primary-button'} disabled={busy || (restore && (!password || confirmation !== 'RESTAURAR'))}>{busy ? 'Iniciando…' : restore ? 'Confirmar restauración' : 'Crear respaldo'}</button></footer></form>
   </dialog>;

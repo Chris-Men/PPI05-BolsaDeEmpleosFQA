@@ -12,8 +12,8 @@ const application = { personal, experience: { lastRole: '', lastOrg: '', skills:
 test('nombres admiten Unicode y separadores y teléfonos se normalizan sin aceptar otros países', () => {
   assert.equal(candidateNameSchema.parse('  Ana   María '), 'Ana María');
   for (const value of ['Ana1', '<Ana>', '---', '🙂', 'x'.repeat(101)]) assert.equal(candidateNameSchema.safeParse(value).success, false);
-  for (const value of ['71234567', '+503 7123-4567', ' 7123 4567 ']) assert.equal(candidatePhoneSchema.parse(value), '71234567');
-  for (const value of ['123', '+1 71234567', 'abcdefgh', '50371234567', '123456789']) assert.equal(candidatePhoneSchema.safeParse(value).success, false);
+  for (const value of ['71234567', '+503 7123-4567', '50371234567', ' 7123 4567 ']) assert.equal(candidatePhoneSchema.parse(value), '71234567');
+  for (const value of ['123', '+1 71234567', 'abcdefgh', '503712345678', '123456789']) assert.equal(candidatePhoneSchema.safeParse(value).success, false);
 });
 
 test('el límite de 16 años usa el día de El Salvador y valida días bisiestos', () => {

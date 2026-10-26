@@ -54,7 +54,9 @@ describe('exportación XLSX persistente y privada', () => {
     for (const status of [ORGANIZATION_STATUS_NAMES.ACTIVE, ORGANIZATION_STATUS_NAMES.INACTIVE]) organizationIds.push((await prisma.organizations.create({ data: { name: run + '-' + status, organizationStatuses: { connect: { name: status } } } })).id);
     const state = await prisma.jobStatuses.findUniqueOrThrow({ where: { name: 'Cerrada' } });
     for (const [index, kind] of (['EMPLOYMENT', 'SOCIAL_HOURS', 'INTERNSHIP', 'EMPLOYMENT'] as const).entries()) jobIds.push((await prisma.jobs.create({ data: { title: 'Oferta Excel ' + index, slug: run + '-job-' + index, kind, description: 'Datos de prueba.', organizationId: organizationIds[0], statusId: state.id, publishedAt: new Date(index === 3 ? '2020-01-01T12:00:00Z' : '2030-01-02T06:00:00Z'), archivedAt: index === 0 ? new Date() : null } })).id);
-    const volunteer = await prisma.volunteerOpportunities.create({ data: { title: 'Voluntariado Excel', slug: run + '-vol', description: 'Prueba.', organizations: { connect: { id: organizationIds[0]! } }, volunteerStatuses: { connect: { name: 'Cerrada' } }, publishedAt: new Date('2030-01-03T05:59:59.999Z') } }); volunteerIds.push(volunteer.id);
+    await prisma.jobs.update({ where: { id: jobIds[0]! }, data: { contactEmail: 'vacante@example.test', contactPhone: '71234567' } });
+    await prisma.jobs.update({ where: { id: jobIds[1]! }, data: { contact: 'Preguntar por el equipo anterior.' } });
+    const volunteer = await prisma.volunteerOpportunities.create({ data: { title: 'Voluntariado Excel', slug: run + '-vol', description: 'Prueba.', contactPhone: '79876543', organizations: { connect: { id: organizationIds[0]! } }, volunteerStatuses: { connect: { name: 'Cerrada' } }, publishedAt: new Date('2030-01-03T05:59:59.999Z') } }); volunteerIds.push(volunteer.id);
     const registration = await prisma.volunteerRegistrations.create({ data: { userId: candidate.id, volunteerOpportunityId: volunteer.id } });
     await prisma.volunteerRegistrations.create({ data: { userId: missing, volunteerOpportunityId: volunteer.id } });
     const statuses = await prisma.applicationStatuses.findMany(); const statusId = (name: string) => statuses.find(row => row.name === name)!.id;
@@ -98,6 +100,11 @@ describe('exportación XLSX persistente y privada', () => {
     const response = await request('GET', '/' + ready.id + '/file', admin); assert.equal(response.status, 200); assert.ok(response.headers.get('content-type')?.includes('spreadsheetml'));
     const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(await response.arrayBuffer());
     assert.deepEqual(workbook.worksheets.map(sheet => sheet.name), ['Usuarios', 'Oportunidades', 'Postulaciones', 'Organizaciones', 'Diccionario']);
+    const opportunities = workbook.getWorksheet('Oportunidades')!;
+    const contact = findRow(opportunities, 'Clave oportunidad', 'job-' + jobIds[0]);
+    assert.equal(value(opportunities, contact, 'Correo de contacto'), 'vacante@example.test'); assert.equal(value(opportunities, contact, 'Teléfono de contacto'), '71234567');
+    assert.equal(value(opportunities, findRow(opportunities, 'Clave oportunidad', 'job-' + jobIds[1]), 'Contacto anterior'), 'Preguntar por el equipo anterior.');
+    assert.equal(value(opportunities, findRow(opportunities, 'Clave oportunidad', 'volunteer-' + volunteerIds[0]), 'Teléfono de contacto'), '79876543');
     const users = workbook.getWorksheet('Usuarios')!; const row = findRow(users, 'ID candidato', candidate.id);
     assert.equal(value(users, row, 'Teléfono'), '01234567'); assert.equal(value(users, row, 'Resumen profesional'), '=SUM(1,2)');
     assert.equal(value(users, row, 'Nivel educativo'), 'Valor histórico'); assert.equal(value(users, row, 'Sexo'), 'UNDISCLOSED');

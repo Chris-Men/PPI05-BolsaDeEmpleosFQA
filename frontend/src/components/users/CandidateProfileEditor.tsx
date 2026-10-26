@@ -61,16 +61,21 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
       focusFirstInvalid(formRef.current);
     }
   };
-  /** Updates a history entry while retaining the rest of the draft. */
-  const changeWork = (index: number, patch: Partial<WorkExperience>): void => setDraft({ ...data,
+  /** Validates the next edited snapshot without changing untouched historical fields. */
+  const editData = (next: CandidateProfileData, skills = skillsText): void => {
+    setDraft(next);
+    setFields(validateProfileChanges(baseline, { ...next, skills: skills.split(',').map(value => value.trim()).filter(Boolean) }, state.catalogs));
+  };
+  /** Revalidates date ordering as either side of a history entry changes. */
+  const changeWork = (index: number, patch: Partial<WorkExperience>): void => editData({ ...data,
     workExperiences: data.workExperiences.map((item, position) => position === index ? { ...item, ...patch } : item) });
   /** Updates one educational entry using the same date and null conventions as the API. */
-  const changeEducation = (index: number, patch: Partial<Education>): void => setDraft({ ...data,
+  const changeEducation = (index: number, patch: Partial<Education>): void => editData({ ...data,
     educations: data.educations.map((item, position) => position === index ? { ...item, ...patch } : item) });
   /** Changing departments clears only their dependent municipality; sex remains a typed choice. */
   const changePersonal = (field: PersonalField, value: string): void => {
-    if (field === 'sex') setDraft({ ...data, sex: state.catalogs?.sexes.find(item => item.value === value)?.value ?? null });
-    else setDraft({ ...data, [field]: value, ...(field === 'department' ? { municipality: null } : {}) });
+    if (field === 'sex') editData({ ...data, sex: state.catalogs?.sexes.find(item => item.value === value)?.value ?? null });
+    else editData({ ...data, [field]: value, ...(field === 'department' ? { municipality: null } : {}) });
   };
   return <section className="profile-card candidate-editor">
     <div className="candidate-editor-heading"><h2>Mi perfil profesional</h2>
@@ -88,7 +93,7 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
       <div className="candidate-editor-field"><label htmlFor={summaryId}>Descripción profesional</label>
         <textarea id={summaryId} value={data.professionalSummary ?? ''} maxLength={5000} readOnly={!editing} disabled={state.busy}
           aria-invalid={Boolean(fields.professionalSummary)} aria-describedby={fields.professionalSummary ? summaryId + '-error' : undefined}
-          onChange={(event) => setDraft({ ...data, professionalSummary: event.target.value })} />
+          onChange={(event) => editData({ ...data, professionalSummary: event.target.value })} />
         {fields.professionalSummary && <small id={summaryId + '-error'} role="alert">{fields.professionalSummary}</small>}
       </div>
       <h3>Experiencia laboral</h3>
@@ -102,10 +107,10 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
             type={field.endsWith('Date') ? 'date' : 'text'} required={field !== 'endDate' && field !== 'description'}
             maxLength={field === 'companyName' ? 150 : field === 'position' ? 100 : 5000}
             onChange={(value) => changeWork(index, { [field]: field === 'endDate' || field === 'description' ? value || null : value })} />)}
-        </div>{editing && <button type="button" disabled={state.busy} onClick={() => setDraft({ ...data,
+        </div>{editing && <button type="button" disabled={state.busy} onClick={() => editData({ ...data,
           workExperiences: data.workExperiences.filter((_item, position) => position !== index) })}>Eliminar experiencia {index + 1}</button>}
       </fieldset>)}
-      {editing && <button type="button" disabled={state.busy || data.workExperiences.length >= 50} onClick={() => setDraft({ ...data,
+      {editing && <button type="button" disabled={state.busy || data.workExperiences.length >= 50} onClick={() => editData({ ...data,
         workExperiences: [...data.workExperiences, { companyName: '', position: '', description: null, startDate: '', endDate: null }] })}>Añadir experiencia</button>}
       <h3>Educación</h3>
       {fields.educations && <p role="alert">{fields.educations}</p>}
@@ -116,15 +121,15 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
           value={item[field]} disabled={state.busy} readOnly={!editing} error={fields[`educations.${index}.${field}`]}
           type={field.endsWith('Date') ? 'date' : 'text'} required={field !== 'endDate'} maxLength={150}
           onChange={(value) => changeEducation(index, { [field]: field === 'endDate' ? value || null : value })} />)}</div>
-        {editing && <button type="button" disabled={state.busy} onClick={() => setDraft({ ...data,
+        {editing && <button type="button" disabled={state.busy} onClick={() => editData({ ...data,
           educations: data.educations.filter((_item, position) => position !== index) })}>Eliminar estudio {index + 1}</button>}
       </fieldset>)}
-      {editing && <button type="button" disabled={state.busy || data.educations.length >= 50} onClick={() => setDraft({ ...data,
+      {editing && <button type="button" disabled={state.busy || data.educations.length >= 50} onClick={() => editData({ ...data,
         educations: [...data.educations, { institution: '', degree: '', startDate: '', endDate: null }] })}>Añadir estudio</button>}
       <div className="candidate-editor-field"><label htmlFor={skillsId}>Habilidades (separadas por comas)</label>
         <input id={skillsId} value={editing ? skillsText : data.skills.join(', ')} readOnly={!editing} disabled={state.busy}
           aria-invalid={Object.keys(fields).some(field => field.startsWith('skills'))} aria-describedby={Object.keys(fields).some(field => field.startsWith('skills')) ? skillsId + '-error' : undefined}
-          onChange={(event) => setSkillsText(event.target.value)} />
+          onChange={(event) => { const value = event.target.value; setSkillsText(value); editData(data, value); }} />
         <div id={skillsId + '-error'}>{Object.entries(fields).filter(([field]) => field.startsWith('skills')).map(([field, message]) => <small role="alert" key={field}>{message}</small>)}</div>
       </div>
       {editing && <div className="candidate-editor-actions">

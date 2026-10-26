@@ -39,6 +39,8 @@ export const updateOpportunity = endpoint((request) => opportunities.updateOppor
 export const statusOpportunity = endpoint((request) => opportunities.changeOpportunityStatus(opportunityKeySchema.parse(request.params.key), (request.body as { status: 'OPEN' | 'CLOSED' }).status, actorFor(request)));
 /** Delete is explicitly a logical archive to protect historical records. */
 export const archiveOpportunity = endpoint((request) => opportunities.changeOpportunityStatus(opportunityKeySchema.parse(request.params.key), 'ARCHIVED', actorFor(request)));
+/** Lifecycle recovery is authorized and audited inside the service. */
+export const unarchiveOpportunity = endpoint(request => opportunities.unarchiveOpportunity(opportunityKeySchema.parse(request.params.key), actorFor(request)));
 /** Selectable dictionaries contain no candidate data. */
 export const catalogs = endpoint(() => opportunityCatalogs());
 /** Homepage metrics always represent the complete public catalog and registered candidates. */

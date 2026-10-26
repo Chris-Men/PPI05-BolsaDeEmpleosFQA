@@ -26,16 +26,22 @@ export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExi
   const selected=form.resumeId===document?.id?document:form.resumeId===candidateState.resume?.id?candidateState.resume:form.resumeId===draft.resume?.id?draft.resume:null;
   /** One selection path keeps uploaded and existing profile documents in the same autosaved draft. */
   const selectResume=(file:ResumeMetadata|null):void=>{setDocument(file);form.chooseResume(file?.id??null);form.setFields({...form.fields,resumeId:''});};
+  /** Immediate errors do not prevent incomplete values from being autosaved. */
+  const editFields=(next:ApplicationData,paths:string[]):void=>{
+    const found=validateApplicationFields(next,candidateState.catalogs,form.step,form.resumeId,required);
+    form.edit(next);
+    form.setFields({...form.fields,...Object.fromEntries(paths.map(path=>[path,found[path]??'']))});
+  };
   const experience=(field:keyof ApplicationData['experience'],label:string,maxLength:number,textarea=false) => <div className={'ff '+(textarea?'full':'')} key={field}>
     <label htmlFor={fieldId+'-'+field}>{label}</label>
     {textarea?<textarea id={fieldId+'-'+field} name={'experience.'+field} maxLength={maxLength} value={form.data.experience[field]}
       aria-invalid={Boolean(form.fields['experience.'+field])} aria-describedby={form.fields['experience.'+field]?fieldId+'-'+field+'-error':undefined}
       onBlur={()=>form.setFields({...form.fields,['experience.'+field]:validateApplicationFields(form.data,candidateState.catalogs,2,form.resumeId,required)['experience.'+field]??''})}
-      onChange={event=>form.edit({...form.data,experience:{...form.data.experience,[field]:event.target.value}})}/>
+      onChange={event=>editFields({...form.data,experience:{...form.data.experience,[field]:event.target.value}},['experience.'+field])}/>
       :<input id={fieldId+'-'+field} name={'experience.'+field} maxLength={maxLength} value={form.data.experience[field]}
         aria-invalid={Boolean(form.fields['experience.'+field])} aria-describedby={form.fields['experience.'+field]?fieldId+'-'+field+'-error':undefined}
         onBlur={()=>form.setFields({...form.fields,['experience.'+field]:validateApplicationFields(form.data,candidateState.catalogs,2,form.resumeId,required)['experience.'+field]??''})}
-        onChange={event=>form.edit({...form.data,experience:{...form.data.experience,[field]:event.target.value}})}/>}
+        onChange={event=>editFields({...form.data,experience:{...form.data.experience,[field]:event.target.value}},['experience.'+field])}/>}
     {form.fields['experience.'+field]&&<p id={fieldId+'-'+field+'-error'} className="application-field-error" role="alert">{form.fields['experience.'+field]}</p>}
   </div>;
   const next=():void=>{
@@ -63,7 +69,7 @@ export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExi
         <div className="ff"><label htmlFor={fieldId+'-email'}>Correo de la cuenta</label><input id={fieldId+'-email'} type="email" value={session?.user.email??draft.professionalProfile?.email??''} readOnly/></div>
         <CandidatePersonalFields values={form.data.personal} catalogs={candidateState.catalogs} required disabled={form.submitting} className="ff" prefix="personal."
           errors={Object.fromEntries(Object.entries(form.fields).filter(([key])=>key.startsWith('personal.')).map(([key,value])=>[key.slice(9),value]))}
-          onChange={(field,value)=>{form.edit({...form.data,personal:{...form.data.personal,[field]:value,...(field==='department'?{municipality:''}:{})}});form.setFields({...form.fields,['personal.'+field]:'',...(field==='department'?{'personal.municipality':''}:{})});}}
+          onChange={(field,value)=>editFields({...form.data,personal:{...form.data.personal,[field]:value,...(field==='department'?{municipality:''}:{})}},['personal.'+field,...(field==='department'?['personal.municipality']:[])])}
           onBlur={field=>form.setFields({...form.fields,['personal.'+field]:validateApplicationFields(form.data,candidateState.catalogs,1,form.resumeId,required)['personal.'+field]??''})} />
       </div></div>}
       {form.step===2&&<div className="form-page"><div className="fp-hd"><h3>Experiencia y motivación</h3><p>La experiencia previa es opcional.</p></div><div className="fg2">

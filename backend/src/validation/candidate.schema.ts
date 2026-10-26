@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { EDUCATION_LEVELS, LOCATION_ZONES, SEX_VALUES, municipalitiesOf } from '../constants/candidate-catalogs.constants.js';
 import { requiredText } from './common.schema.js';
+import { localPhoneDigits } from '../utils/local-phone.js';
 
 /** Normalizes presentation spaces without changing a candidate's spelling. */
 export const candidateNameSchema = requiredText('nombre').trim().transform(value => value.replace(/\s+/g, ' '))
@@ -10,9 +11,8 @@ export const candidateNameSchema = requiredText('nombre').trim().transform(value
 
 /** Local phone inputs accept presentation separators and an optional country prefix. */
 export const candidatePhoneSchema = requiredText('teléfono').trim().max(30, 'Máximo 30 caracteres.')
-  .transform(value => value.replace(/[\s-]/g, ''))
-  .refine(value => /^(?:\+503)?\d{8}$/.test(value), 'Ingresa un teléfono de ocho dígitos; puedes usar +503.')
-  .transform(value => value.replace(/^\+503/, ''));
+  .refine(value => localPhoneDigits(value) !== null, 'Ingresa un teléfono de ocho dígitos con prefijo +503.')
+  .transform(value => localPhoneDigits(value)!);
 
 /** Round-trip validation rejects impossible calendar dates, including leap-day overflow. */
 export const calendarDateSchema = requiredText('fecha').regex(/^\d{4}-\d{2}-\d{2}$/, 'Ingresa una fecha válida.')

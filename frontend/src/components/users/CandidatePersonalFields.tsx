@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { PhoneInput } from '../PhoneInput';
 import type { CandidateCatalogs } from '../../types/profile';
 import { municipalitiesOf } from '../../utils/elSalvadorLocations';
 import { latestBirthDate, PERSONAL_LABELS, PERSONAL_LIMITS, type FieldErrors, type PersonalField, type PersonalValues } from '../../utils/candidateValidation';
@@ -35,7 +36,7 @@ export function CandidatePersonalFields({ values, catalogs, errors, disabled, re
         {value && !known && <option value={value}>{value} (anterior)</option>}
         {field === 'department' ? catalogs?.locationZones.map(zone => <optgroup label={zone.name} key={zone.name}>{zone.departments.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}</optgroup>)
           : options.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
-      </select> : <input {...common} type={field === 'birthDate' ? 'date' : field === 'phone' ? 'tel' : 'text'} max={field === 'birthDate' ? latestBirthDate() : undefined}
+      </select> : field === 'phone' ? <PhoneInput {...common} disabled={disabled} readOnly={readOnly} onValueChange={value => onChange(field, value)} /> : <input {...common} type={field === 'birthDate' ? 'date' : 'text'} max={field === 'birthDate' ? latestBirthDate() : undefined}
         maxLength={PERSONAL_LIMITS[field]} disabled={disabled} readOnly={readOnly} onChange={event => onChange(field, event.target.value)} />}
       {error && <small id={fieldId + '-error'} className="application-field-error" role="alert">{error}</small>}
     </div>;

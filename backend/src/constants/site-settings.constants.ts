@@ -1,6 +1,6 @@
 /** Existing public copy seeds a single configuration without altering the initial design. */
 export const DEFAULT_SITE_SETTINGS = {
-  contacto: { correo: 'proyectos@fundaqa.org', telefono: '+503 7623 4832', whatsapp: '', direccion: 'San Salvador, El Salvador' },
+  contacto: { correo: 'proyectos@fundaqa.org', correoSoporte: 'rosse.flores@fundaqa.org', telefono: '+503 7623-4832', whatsapp: '', direccion: 'San Salvador, El Salvador' },
   inicio: {
     titulo: 'Trabaja donde tu historia importa.',
     subtitulo: 'Conectamos profesionales comprometidos con organizaciones que generan impacto real en comunidades de El Salvador y Centroamérica.',

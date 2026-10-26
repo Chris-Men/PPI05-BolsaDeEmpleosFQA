@@ -1,0 +1,13 @@
+/* Shared field feedback fits narrow dialogs and remains adjacent to its control. */
+.field-validation-error {
+  display: block;
+  width: 100%;
+  margin-top: .35rem;
+  color: #a12828;
+  font-size: .82rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {
+  border-color: #a12828;
+}

@@ -10,6 +10,8 @@ export interface Opportunity {
   modality: 'ON_SITE' | 'REMOTE' | 'HYBRID'; salaryMin: number | null; salaryMax: number | null;
   employmentTypeId: number | null; employmentType: string | null; experienceLevelId: number | null; experienceLevel: string | null;
   slots: number | null; socialHours: number | null; duration: string | null; contact: string | null;
+  /** Recognized separate channels; contact retains the original historical free text. */
+  contactEmail: string | null; contactPhone: string | null;
   requirements: string[]; responsibilities: string[]; benefits: string[];
   status: 'DRAFT' | 'OPEN' | 'CLOSED' | 'ARCHIVED' | 'UNKNOWN'; createdAt: string | null;
   publishedAt: string | null; expiresAt: string | null; archivedAt: string | null;
@@ -19,7 +21,7 @@ export interface OpportunityInput {
   title: string; description?: string; organizationId?: number | null; categoryId?: number | null;
   department?: string | null; municipality?: string | null; modality?: Opportunity['modality'];
   employmentTypeId?: number | null; experienceLevelId?: number | null; salaryMin?: number | null; salaryMax?: number | null;
-  slots?: number | null; socialHours?: number | null; duration?: string | null; contact?: string | null;
+  slots?: number | null; socialHours?: number | null; duration?: string | null; contactEmail?: string | null; contactPhone?: string | null;
   requirements?: string[]; responsibilities?: string[]; benefits?: string[]; expiresAt?: string | null;
 }
 /** Server pagination response. */

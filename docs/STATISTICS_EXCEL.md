@@ -7,12 +7,14 @@ La vista Estadísticas permite **Exportar Excel** además del reporte PDF. El li
 | Hoja | Población y contenido |
 | --- | --- |
 | Usuarios | Todos los candidatos activos, no eliminados y cuyo único rol es Candidato, aunque nunca hayan postulado. ID, perfil actual, correo, teléfono, nacimiento, edad al extraer, sexo original, ubicación, educación, profesión, resumen, registro y disponibilidad de CV. No incluye trayectorias, archivos o credenciales. |
-| Oportunidades | Empleo, voluntariado, horas sociales y prácticas con primera publicación dentro del período. Incluye cerradas y archivadas. Clave, título, tipo, organización, categoría actual, modalidad, ubicación, cupos, salario, horas/duración y fechas/estado actual. |
+| Oportunidades | Empleo, voluntariado, horas sociales y prácticas con primera publicación dentro del período. Incluye cerradas y archivadas. Clave, título, tipo, organización, categoría actual, modalidad, ubicación, cupos, salario, horas/duración, correo y teléfono de contacto separados, contacto anterior y fechas/estado actual. |
 | Postulaciones | Todos los intentos recibidos en el período, incluso retirados, de candidatos fuera del padrón activo y sobre vacantes anteriores. Una fila por intento, con referencia, ID de candidato, pertenencia al padrón, oportunidad, tipo, organización, categoría actual, envío, estado actual y disponibilidad de CV. Nunca incluye datos personales ni snapshots de candidatos fuera del padrón. |
 | Organizaciones | Todas las organizaciones, activas e inactivas, tengan o no actividad reciente. ID, nombre, correo, descripción, estado, registro y contadores. |
 | Diccionario | Versión del formato, rango, zona horaria, fecha de extracción UTC, fecha de referencia salvadoreña, poblaciones, cantidades exportadas y definiciones de columnas. |
 
 Las relaciones usan IDs estables y claves `job-ID` / `volunteer-ID`, evitando colisiones entre tablas. Una postulación puede referirse a una oportunidad anterior que no aparezca en Oportunidades; por eso incluye su título, tipo y organización. Una fila de Postulaciones cuyo candidato esté fuera del padrón activo mantiene su ID, pero no necesita una fila correspondiente en Usuarios.
+
+El formato actual es **2** y se registra en Diccionario. Las nuevas columnas de contacto exportan los valores almacenados, con teléfonos como texto de ocho dígitos locales. Contacto anterior conserva el texto original; los datos históricos no se reinterpretan ni se sobrescriben en el XLSX.
 
 Usuarios, Oportunidades y Organizaciones incluyen contadores separados del período y acumulados: intentos totales y por cada uno de los cuatro tipos, oportunidades distintas, voluntariados distintos y seleccionadas según el **estado actual**. Oportunidades y Organizaciones incluyen candidatos distintos. Organizaciones añade publicaciones totales y por tipo. Intentos repetidos se cuentan individualmente; entidades distintas se cuentan una sola vez. Inscripciones sin postulación enviada y borradores no cuentan.
 

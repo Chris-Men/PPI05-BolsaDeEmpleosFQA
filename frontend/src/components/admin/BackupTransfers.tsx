@@ -5,22 +5,24 @@ import { exportBackup, importBackup } from '../../services/backupService';
 import { backupOperationStore } from '../../services/backupOperationStore';
 import type { BackupSummary } from '../../types/backup';
 import { downloadFile } from '../../utils/downloadFile';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
 
 interface ImportConfirmationProps { file: File; latest: BackupSummary | null; busy: boolean; error: string; onClose: () => void; onConfirm: (confirmation: string) => void }
 
 /** Explicit import consent replaces only the available backup, leaving the live database intact. */
 function ImportConfirmation({ file, latest, busy, error, onClose, onConfirm }: ImportConfirmationProps) {
   const dialog = useModalDialog(); const [confirmation, setConfirmation] = useState('');
-  const submit = (event: FormEvent): void => { event.preventDefault(); onConfirm(confirmation); };
+  const live = useLiveValidation({ confirmation }, (value): Record<string, string> => value.confirmation === 'IMPORTAR' ? {} : { confirmation: 'Escribe IMPORTAR exactamente para confirmar.' });
+  const submit = (event: FormEvent<HTMLFormElement>): void => { event.preventDefault(); if (live.check(event.currentTarget)) onConfirm(confirmation); };
   return <dialog ref={dialog} className="detail-dialog backup-dialog" aria-labelledby="import-backup-title" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
     <header className="detail-dialog-header"><span className="detail-dialog-icon"><Upload size={22} /></span><div><h2 id="import-backup-title">Importar respaldo</h2><p>Archivo cifrado de DB y CV</p></div>
       <button type="button" className="detail-dialog-close" aria-label="Cerrar importación" disabled={busy} onClick={onClose}><X size={20} /></button></header>
-    <form onSubmit={submit}><div className="detail-dialog-body">
+    <form noValidate onChangeCapture={live.watch} onSubmit={submit}><div className="detail-dialog-body">
       <p>Archivo seleccionado: <strong className="backup-filename">{file.name}</strong></p>
       <p>Se comprobarán su integridad, la clave de cifrado y la compatibilidad con la aplicación.</p>
       {latest && <p>Si la validación termina correctamente, sustituirá el respaldo disponible del <strong>{new Intl.DateTimeFormat('es-SV', { timeZone: 'America/El_Salvador', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(latest.createdAt))}</strong>.</p>}
       <p>La importación conserva los datos actuales. Para aplicar este respaldo, después deberás usar «Restaurar último respaldo».</p>
-      <label htmlFor="import-backup-confirmation">Escribe IMPORTAR para confirmar</label><input id="import-backup-confirmation" autoComplete="off" value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} required />
+      <label htmlFor="import-backup-confirmation">Escribe IMPORTAR para confirmar</label><input {...live.bind('confirmation')} id="import-backup-confirmation" autoComplete="off" value={confirmation} disabled={busy} onChange={event => setConfirmation(event.target.value)} required />{live.error('confirmation')}
       {error && <p className="backup-error" role="alert">{error}</p>}
     </div><footer className="detail-dialog-footer"><button type="button" disabled={busy} onClick={onClose}>Cancelar</button><button type="submit" className="primary-button" disabled={busy || confirmation !== 'IMPORTAR'}>{busy ? 'Cargando respaldo…' : 'Confirmar importación'}</button></footer></form>
   </dialog>;
