@@ -187,6 +187,74 @@ describe('estadísticas completas y configuración persistente', () => {
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     }
   });
+  it('desglosa categorías actuales sin duplicar padres, incluye inactivas, sin categoría y publicaciones anteriores', async () => {
+    const before = await statistics(); const categories: number[] = []; const jobs: number[] = []; const applications: number[] = [];
+    const state = await prisma.jobStatuses.findUniqueOrThrow({ where: { name: 'Cerrada' } });
+    const withdrawn = await prisma.applicationStatuses.findUniqueOrThrow({ where: { name: 'Retirada' } });
+    try {
+      for (let index = 0; index < 13; index++) {
+        const category = await prisma.jobCategories.create({ data: { name: runId + '-category-' + index, slug: runId + '-category-' + index,
+          isActive: index !== 1, ...(index === 1 ? { parentId: categories[0]! } : {}) } });
+        categories.push(category.id);
+      }
+      for (let index = 0; index < 14; index++) {
+        const job = await prisma.jobs.create({ data: { title: 'Categoría fixture ' + index, slug: runId + '-category-job-' + index,
+          description: 'Prueba de categoría actual.', organizationId, statusId: state.id, categoryId: categories[index] ?? null,
+          archivedAt: new Date(), publishedAt: new Date(index === 1 ? '2020-01-01T12:00:00Z' : '2030-01-02T12:00:00Z') } });
+        jobs.push(job.id);
+        if (index === 1 || index === 13) applications.push((await prisma.applications.create({ data: { userId: actor('CANDIDATE').id,
+          jobId: job.id, statusId: withdrawn.id, referenceNumber: randomUUID(), createdAt: new Date('2030-01-02T12:00:00Z') } })).id);
+      }
+      const result = await statistics();
+      assert.ok(result.byCategory.length > 10);
+      assert.equal(result.byCategory.find(row => row.categoryId === categories[0])?.publishedOpportunities, 1);
+      assert.deepEqual(result.byCategory.find(row => row.categoryId === categories[1]), {
+        categoryId: categories[1], name: runId + '-category-1', publishedOpportunities: 0, applications: 1,
+      });
+      assert.deepEqual(result.byCategory.find(row => row.categoryId === null), { categoryId: null, name: 'Sin categoría', publishedOpportunities: 1, applications: 1 });
+      assert.deepEqual(result.byCategory.find(row => row.categoryId === categoryId), { categoryId, name: runId, publishedOpportunities: 107, applications: 4 });
+      assert.equal(result.byCategory.reduce((sum, row) => sum + row.publishedOpportunities, 0), result.publishedOpportunities);
+      assert.equal(result.byCategory.reduce((sum, row) => sum + row.applications, 0), result.applications);
+      assert.equal(result.byCategory[0]?.categoryId, categoryId);
+      await prisma.jobs.update({ where: { id: jobs[1]! }, data: { categoryId: categories[0]! } });
+      const reassigned = await statistics();
+      assert.ok(!reassigned.byCategory.some(row => row.categoryId === categories[1]));
+      assert.equal(reassigned.byCategory.find(row => row.categoryId === categories[0])?.applications, 1);
+      assert.deepEqual(result.demographics, before.demographics);
+    } finally {
+      await prisma.applications.deleteMany({ where: { id: { in: applications } } });
+      await prisma.jobs.deleteMany({ where: { id: { in: jobs } } });
+      await prisma.jobCategories.deleteMany({ where: { id: { in: categories.slice(1) } } });
+      await prisma.jobCategories.deleteMany({ where: { id: categories[0] } });
+    }
+  });
+  it('la demografía cuenta el padrón una vez, incluye perfiles faltantes y excluye cuentas administrativas o inactivas', async () => {
+    const before = (await statistics()).demographics; const ids: number[] = [];
+    const password = await prisma.user.findUniqueOrThrow({ where: { id: actor('CANDIDATE').id }, select: { passwordHash: true } });
+    const count = (data: Statistics['demographics'], key: 'byAge' | 'bySex' | 'byEducationLevel' | 'byDepartment', bucket: string) => data[key].find(row => row.key === bucket)?.count ?? 0;
+    try {
+      for (const [index, variant] of ['known', 'legacy', 'missing', 'disabled', 'deleted', 'admin'].entries()) {
+        const user = await prisma.user.create({ data: { email: runId + '-demographic-' + variant + '@example.test', passwordHash: password.passwordHash,
+          status: { connect: { name: variant === 'disabled' ? 'Deshabilitado' : 'Activo' } }, deletedAt: variant === 'deleted' ? new Date() : null,
+          userRoles: { create: [ROLE_NAMES.CANDIDATE, ...(variant === 'admin' ? [ROLE_NAMES.ADMINISTRATOR] : [])].map(name => ({ roles: { connect: { name } } })) },
+          ...(variant === 'missing' ? {} : { profile: { create: { firstName: 'Prueba', lastName: 'Demografía', birthDate: new Date(index === 1 ? '2015-01-01' : '2000-01-01'),
+            sex: index === 1 ? null : 'UNDISCLOSED', educationLevel: index === 1 ? 'Educación anterior' : 'Técnico', department: index === 1 ? 'Ubicación anterior' : 'San Salvador' } } }) } });
+        ids.push(user.id);
+      }
+      const result = await statistics(); const data = result.demographics;
+      assert.equal(data.totalCandidates, before.totalCandidates + 3); assert.equal(data.totalCandidates, result.users.total);
+      assert.equal(count(data, 'bySex', 'UNDISCLOSED'), count(before, 'bySex', 'UNDISCLOSED') + 1);
+      assert.equal(count(data, 'bySex', 'UNKNOWN'), count(before, 'bySex', 'UNKNOWN') + 2);
+      assert.equal(count(data, 'byAge', 'UNDER_16'), count(before, 'byAge', 'UNDER_16') + 1);
+      assert.equal(count(data, 'byEducationLevel', 'OTHER'), count(before, 'byEducationLevel', 'OTHER') + 1);
+      assert.equal(count(data, 'byDepartment', 'OTHER'), count(before, 'byDepartment', 'OTHER') + 1);
+      assert.equal(count(data, 'byDepartment', 'UNKNOWN'), count(before, 'byDepartment', 'UNKNOWN') + 1);
+      for (const key of ['byAge', 'bySex', 'byEducationLevel', 'byDepartment'] as const) assert.equal(data[key].reduce((sum, row) => sum + row.count, 0), data.totalCandidates);
+      const empty = await statistics('?from=2099-01-01&to=2099-01-02');
+      assert.equal(empty.byCategory.length, 0); assert.deepEqual(empty.demographics, data);
+      assert.ok(!JSON.stringify(data).includes('@example.test'));
+    } finally { await prisma.user.deleteMany({ where: { id: { in: ids } } }); }
+  });
   it('guarda el contenido completo y su auditoría, y el seed conserva las personalizaciones', async () => {
     const before = await document(); const configuration = structuredClone(DEFAULT_SITE_SETTINGS); configuration.inicio.titulo = 'Contenido persistente ' + runId;
     const response = await request('PUT', '/admin/site-settings', actor(), { version: before.version, configuration });

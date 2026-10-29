@@ -3,6 +3,9 @@ import { ApiError } from '../../services/api';
 import { createOrganization, updateOrganization } from '../../services/organizationService';
 import type { ManagedOrganization } from '../../types/organization';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { emailError, textError, fieldErrors } from '../../validation/fields';
+import { focusFirstInvalid } from '../../utils/candidateValidation';
 
 interface OrganizationDialogProps {
   mode: 'create' | 'view' | 'edit';
@@ -20,6 +23,7 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
   const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const viewing = mode === 'view';
+  const live = useLiveValidation(form, values => fieldErrors({ name: textError(values.name, 2, 150), email: emailError(values.email, false), description: values.description.trim().length > 5000 ? 'Máximo 5000 caracteres.' : '' }));
 
   // Click/tap outside behaves like "Cancelar"/"Cerrar"; blocked while saving.
   useBackdropClose(dialogRef, onClose, busy);
@@ -34,6 +38,7 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
   const save = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (submitting.current || viewing) return;
+    if (!live.check(event.currentTarget)) return;
     if (form.name.trim().length < 2) { setFields({ name: 'Ingresa un nombre de al menos 2 caracteres.' }); return; }
     submitting.current = true; setBusy(true); setError(''); setFields({});
     const input = { name: form.name.trim(), email: form.email.trim() || null, description: form.description.trim() || null };
@@ -44,6 +49,7 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No fue posible guardar la organización.');
       if (failure instanceof ApiError) setFields(Object.fromEntries(failure.validationErrors.map((field) => [field.field, field.message])));
+      focusFirstInvalid(dialogRef.current);
     } finally { submitting.current = false; setBusy(false); }
   };
 
@@ -52,16 +58,17 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
     <h2 id="organization-title" className="organization-dialog-title">
       {viewing ? 'Detalle de organización' : organization ? 'Editar organización' : 'Nueva organización'}
     </h2>
-    <form onSubmit={(event) => void save(event)} aria-busy={busy} noValidate>
+    <form onChangeCapture={live.watch} onSubmit={(event) => void save(event)} aria-busy={busy} noValidate>
       {error && <p className="organization-dialog-error" role="alert">{error}</p>}
       {(['name', 'email', 'description'] as const).map((field) => <div className="organization-dialog-field" key={field}>
         <label htmlFor={'organization-' + field}>{field === 'name' ? 'Nombre' : field === 'email' ? 'Correo (opcional)' : 'Descripción (opcional)'}</label>
-        {field === 'description' ? <textarea id={'organization-' + field} value={form[field]} maxLength={5000} readOnly={viewing} disabled={busy}
-          onChange={(event) => setForm({ ...form, [field]: event.target.value })} />
-          : <input id={'organization-' + field} type={field === 'email' ? 'email' : 'text'} value={form[field]} required={field === 'name'}
-            maxLength={field === 'name' ? 150 : 255} readOnly={viewing} disabled={busy} aria-invalid={Boolean(fields[field])}
-            onChange={(event) => setForm({ ...form, [field]: event.target.value })} autoFocus={field === 'name' && !viewing} />}
-        {fields[field] && <small role="alert">{fields[field]}</small>}
+        {field === 'description' ? <textarea {...live.bind(field)} {...(fields[field] ? { 'aria-invalid': true, 'aria-describedby': 'organization-' + field + '-error' } : {})} id={'organization-' + field} value={form[field]} maxLength={5000} readOnly={viewing} disabled={busy}
+          onChange={(event) => { const value = event.target.value; setForm({ ...form, [field]: value }); setFields(current => ({ ...current, [field]: '' })); }} />
+          : <input {...live.bind(field)} {...(fields[field] ? { 'aria-invalid': true, 'aria-describedby': 'organization-' + field + '-error' } : {})} id={'organization-' + field} type={field === 'email' ? 'email' : 'text'} value={form[field]} required={field === 'name'}
+            maxLength={field === 'name' ? 150 : 255} readOnly={viewing} disabled={busy}
+            onChange={(event) => { const value = event.target.value; setForm({ ...form, [field]: value }); setFields(current => ({ ...current, [field]: '' })); }} autoFocus={field === 'name' && !viewing} />}
+        {fields[field] && <small id={'organization-' + field + '-error'} role="alert">{fields[field]}</small>}
+        {live.error(field)}
       </div>)}
       {organization && <p className="organization-dialog-meta">
         Estado: {organization.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}

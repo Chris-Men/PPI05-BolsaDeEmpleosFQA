@@ -1,6 +1,6 @@
 /** Only publicly editable content remains in the site configuration contract. */
 export interface SiteConfiguration {
-  contacto: { correo: string; telefono: string; whatsapp: string; direccion: string };
+  contacto: { correo: string; correoSoporte: string; telefono: string; whatsapp: string; direccion: string };
   inicio: { titulo: string; subtitulo: string; descripcion: string };
   institucional: { mision: string; vision: string };
   redes: { facebook: string; instagram: string; linkedin: string; youtube: string };
@@ -8,7 +8,7 @@ export interface SiteConfiguration {
 
 /** Safe initial copy matches the backend seed; refresh failures never blank the public website. */
 export const initialSiteConfiguration: SiteConfiguration = {
-  contacto: { correo: 'proyectos@fundaqa.org', telefono: '+503 7623 4832', whatsapp: '', direccion: 'San Salvador, El Salvador' },
+  contacto: { correo: 'proyectos@fundaqa.org', correoSoporte: 'proyectos@fundaqa.org', telefono: '+503 7623-4832', whatsapp: '', direccion: 'San Salvador, El Salvador' },
   inicio: {
     titulo: 'Trabaja donde tu historia importa.',
     subtitulo: 'Conectamos profesionales comprometidos con organizaciones que generan impacto real en comunidades de El Salvador y Centroamérica.',

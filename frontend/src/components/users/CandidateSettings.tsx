@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { getNewPasswordValidationError } from '../../validation/register';
 import { SessionControls } from '../auth/SessionControls';
 import { DeleteOwnAccount } from './DeleteOwnAccount';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { fieldErrors, passwordErrors } from '../../validation/fields';
 import '../../styles/users/profileSettings.css';
 
 type PasswordField = 'currentPassword' | 'newPassword' | 'confirmation';
@@ -18,11 +20,16 @@ export function CandidateSettings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const live = useLiveValidation(passwords, values => {
+    const next = passwordErrors(values.newPassword, values.confirmation);
+    return fieldErrors({ currentPassword: !values.currentPassword ? 'Ingresa tu contraseña actual.' : new TextEncoder().encode(values.currentPassword).length > 72 ? 'Máximo 72 bytes UTF-8.' : '', newPassword: next.password, confirmation: next.confirmation });
+  });
 
   /** Sends only the current and replacement credentials; confirmation stays in the browser. */
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (busy) return;
+    if (!live.check(event.currentTarget)) return;
     if (!passwords.currentPassword) {
       setError('Ingresa tu contraseña actual.');
       return;
@@ -35,6 +42,7 @@ export function CandidateSettings() {
     try {
       await changePassword({ currentPassword: passwords.currentPassword, newPassword: passwords.newPassword });
       setPasswords({ currentPassword: '', newPassword: '', confirmation: '' });
+      live.reset();
       setVisible({ currentPassword: false, newPassword: false, confirmation: false });
       setSuccess('Contraseña actualizada. Las demás sesiones se cerraron.');
     } catch (failure: unknown) {
@@ -50,7 +58,7 @@ export function CandidateSettings() {
       <label htmlFor={`profile-settings-${name}`}>{label}</label>
       <div className="profile-settings-input-wrap">
         <LockKeyhole size={18} aria-hidden="true" />
-        <input id={`profile-settings-${name}`} type={visible[name] ? 'text' : 'password'}
+        <input {...live.bind(name)} id={`profile-settings-${name}`} type={visible[name] ? 'text' : 'password'}
           autoComplete={autocomplete} value={passwords[name]} disabled={busy} required
           onChange={(event) => {
             setPasswords((current) => ({ ...current, [name]: event.target.value }));
@@ -61,6 +69,7 @@ export function CandidateSettings() {
           {visible[name] ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
+      {live.error(name)}
     </div>
   );
 
@@ -79,7 +88,7 @@ export function CandidateSettings() {
           <p>Usa tu contraseña actual para confirmar el cambio.</p>
         </div>
       </div>
-      <form onSubmit={(event) => void submit(event)}>
+      <form noValidate onChangeCapture={live.watch} onSubmit={(event) => void submit(event)}>
         {passwordField('currentPassword', 'Contraseña actual', 'current-password')}
         {passwordField('newPassword', 'Nueva contraseña', 'new-password')}
         {passwordField('confirmation', 'Confirmar nueva contraseña', 'new-password')}

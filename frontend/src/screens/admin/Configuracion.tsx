@@ -7,6 +7,11 @@ import { getAdminSiteSettings, resetSiteSettings, saveSiteSettings, type SiteSet
 import { canReadSiteSettings, canUpdateSiteSettings } from '../../utils/siteManagement';
 import { ConfigurationConfirmDialog } from '../../components/admin/ConfigurationConfirmDialog';
 import { ConfigurationSuccessAlert } from '../../components/admin/ConfigurationSuccessAlert';
+import { PhoneInput } from '../../components/PhoneInput';
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { validateSiteSettings } from '../../validation/siteSettings';
+import { initialSiteConfiguration } from '../../config/siteConfiguration';
+import { formatPhone } from '../../utils/phone';
 import '../../styles/admin/configuracion.css';
 
 interface SettingsField { key: string; label: string; type?: 'email' | 'tel' | 'url' | 'textarea'; limit: number }
@@ -16,7 +21,7 @@ interface SettingsSection { key: keyof SiteConfiguration; label: string; descrip
 const sections: SettingsSection[] = [
   {
     key: 'contacto', label: 'Información de contacto', description: 'Contacto compartido en las páginas públicas', fields: [
-      { key: 'correo', label: 'Correo electrónico', type: 'email', limit: 255 }, { key: 'telefono', label: 'Teléfono', type: 'tel', limit: 30 },
+      { key: 'correo', label: 'Correo electrónico', type: 'email', limit: 255 }, { key: 'correoSoporte', label: 'Correo de soporte', type: 'email', limit: 255 }, { key: 'telefono', label: 'Teléfono', type: 'tel', limit: 30 },
       { key: 'whatsapp', label: 'WhatsApp', type: 'tel', limit: 30 }, { key: 'direccion', label: 'Dirección', limit: 500 },
     ]
   },
@@ -44,6 +49,7 @@ export default function Configuracion() {
   const allowed = canReadSiteSettings(session); const editable = canUpdateSiteSettings(session); const userId = session?.userId ?? 0;
   const [document, setDocument] = useState<SiteSettingsDocument | null>(null);
   const [draft, setDraft] = useState<SiteConfiguration | null>(null);
+  const live = useLiveValidation(draft ?? initialSiteConfiguration, validateSiteSettings);
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false);
   const [error, setError] = useState(''); const [fields, setFields] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
@@ -83,6 +89,7 @@ export default function Configuracion() {
 
       setDocument(value);
       setDraft(value.configuration);
+      live.reset();
       setConflict(false);
       setConfirmReset(false);
       setConfirmDiscard(false);
@@ -140,6 +147,7 @@ export default function Configuracion() {
 
   const save = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
+    if (!live.check(event.currentTarget)) return;
 
     // Si no hay cambios, no guardar ni mostrar la alerta.
     if (!dirty) {
@@ -151,7 +159,7 @@ export default function Configuracion() {
   /** Drops local edits and returns to the last saved snapshot. */
   const discard = (): void => {
     if (!document) return;
-    setDraft(document.configuration); setError(''); setFields({}); setNotice(''); setConfirmReset(false); setConfirmDiscard(false);
+    setDraft(document.configuration); live.reset(); setError(''); setFields({}); setNotice(''); setConfirmReset(false); setConfirmDiscard(false);
   };
   if (!allowed) return <p role="alert">No tienes permiso para consultar la configuración.</p>;
   if (loading) return <p role="status">Cargando configuración…</p>;
@@ -161,16 +169,21 @@ export default function Configuracion() {
     {!editable && <p className="configuration-notice">Solo Super Admin puede modificar estos valores. Vista de consulta.</p>}
     {error && !confirmReset && <div role="alert" className="configuration-error">{error} {conflict && <p>Recargar descartará las ediciones locales y mostrará la última versión guardada.</p>}<button type="button" disabled={busy} onClick={() => setRevision(value => value + 1)}>{conflict ? 'Recargar configuración' : 'Reintentar carga'}</button></div>}
     {notice && <p role="status" className="configuration-notice">{notice}</p>}
-    {draft && document && <form className="settings-grid" onSubmit={save} noValidate>
+    {draft && document && <form className="settings-grid" onChangeCapture={live.watch} onSubmit={save} noValidate>
       {sections.map(section => <div className="settings-card" key={section.key}><div className="form-section-title"><h3>{section.label}</h3><span>{section.description}</span></div>
         {section.fields.map(field => {
           const value = (draft[section.key] as Record<string, string>)[field.key];
-          const fieldError = fields[section.key + '.' + field.key]; const id = 'site-' + section.key + '-' + field.key;
-          const props = {
-            id, value, maxLength: field.limit, disabled: busy, readOnly: !editable, 'aria-invalid': Boolean(fieldError), 'aria-describedby': fieldError ? id + '-error' : undefined,
-            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setDraft(current => current ? { ...current, [section.key]: { ...current[section.key], [field.key]: event.target.value } } : current); setNotice(''); }
+          const path = section.key + '.' + field.key;
+          const fieldError = live.errors[path] || fields[path]; const id = 'site-' + section.key + '-' + field.key;
+          const change = (value: string): void => {
+            setDraft(current => current ? { ...current, [section.key]: { ...current[section.key], [field.key]: value } } : current);
+            setFields(current => ({ ...current, [path]: '' })); setNotice('');
           };
-          return <div className="form-group" key={field.key}><label htmlFor={id}>{field.label}</label>{field.type === 'textarea' ? <textarea {...props} rows={4} /> : <input {...props} type={field.type ?? 'text'} />}{fieldError && <p id={id + '-error'} className="configuration-field-error" role="alert">{fieldError}</p>}</div>;
+          const props = {
+            ...live.bind(path), id, value, maxLength: field.limit, disabled: busy, readOnly: !editable, 'aria-invalid': Boolean(fieldError), 'aria-describedby': fieldError ? id + '-error' : undefined,
+            onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => change(event.target.value)
+          };
+          return <div className="form-group" key={field.key}><label htmlFor={id}>{field.label}</label>{field.type === 'textarea' ? <textarea {...props} rows={4} /> : field.type === 'tel' ? <PhoneInput {...props} onValueChange={value => change(formatPhone(value))} /> : <input {...props} type={field.type ?? 'text'} />}{fieldError && <p id={id + '-error'} className="configuration-field-error" role="alert">{fieldError}</p>}</div>;
         })}
       </div>)}
       {editable && <div className="form-actions"><button type="submit" className="primary-button" disabled={busy || conflict}>{busy ? 'Guardando…' : 'Guardar cambios'}</button>

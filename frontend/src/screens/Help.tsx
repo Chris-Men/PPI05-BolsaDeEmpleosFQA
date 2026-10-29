@@ -519,8 +519,8 @@ export default function Help({ navigateTo }: HelpProps) {
           </div>
 
           <div className="help-contact-grid">
-            {contacto.correo && <a
-              href={'mailto:' + contacto.correo}
+            {contacto.correoSoporte && <a
+              href={'mailto:' + contacto.correoSoporte}
               className="help-contact-card"
             >
               <span className="help-contact-icon">
@@ -528,7 +528,7 @@ export default function Help({ navigateTo }: HelpProps) {
               </span>
               <span className="help-contact-copy">
                 <span>Correo electrónico</span>
-                <strong>{contacto.correo}</strong>
+                <strong>{contacto.correoSoporte}</strong>
                 <small>Escríbenos tu consulta</small>
               </span>
               <ArrowRight

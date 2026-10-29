@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getProfile, getResume, updateProfile, uploadResume, deleteResume } from '../services/profileService';
+import { getCandidateCatalogs, getProfile, getResume, updateProfile, uploadResume, deleteResume } from '../services/profileService';
 import { sessionStore } from '../services/sessionStore';
-import type { CandidateProfileData, ProfileUpdate, ResumeMetadata } from '../types/profile';
+import type { CandidateCatalogs, CandidateProfileData, ProfileUpdate, ResumeMetadata } from '../types/profile';
 
 /** Shared account-scoped state for the profile editor and application document step. */
 export interface CandidateProfileState {
   profile: CandidateProfileData | null; resume: ResumeMetadata | null;
+  catalogs: CandidateCatalogs | null; catalogsLoading: boolean; catalogsError: string;
+  reloadCatalogs: () => Promise<void>;
   loading: boolean; resumeLoading: boolean; busy: boolean;
   error: string; resumeError: string;
   reload: () => Promise<void>; reloadResume: () => Promise<void>;
@@ -15,6 +17,9 @@ export interface CandidateProfileState {
 
 /** One instance lives in the account-keyed application shell; late responses cannot leak across accounts. */
 export function useCandidateProfile(enabled: boolean): CandidateProfileState {
+  const [catalogs, setCatalogs] = useState<CandidateCatalogs | null>(null);
+  const [catalogsLoading, setCatalogsLoading] = useState(enabled);
+  const [catalogsError, setCatalogsError] = useState('');
   const [profile, setProfile] = useState<CandidateProfileData | null>(null);
   const [resume, setResume] = useState<ResumeMetadata | null>(null);
   const [loading, setLoading] = useState(enabled);
@@ -25,6 +30,15 @@ export function useCandidateProfile(enabled: boolean): CandidateProfileState {
   const mounted = useRef(true);
   const mutation = useRef(false);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+
+  /** Catalog failures can be retried without discarding profile edits or document state. */
+  const reloadCatalogs = useCallback(async (): Promise<void> => {
+    if (!enabled) return;
+    setCatalogsLoading(true); setCatalogsError('');
+    try { const result = await getCandidateCatalogs(); if (mounted.current) setCatalogs(result); }
+    catch (failure: unknown) { if (mounted.current) setCatalogsError(failure instanceof Error ? failure.message : 'No fue posible cargar las opciones.'); }
+    finally { if (mounted.current) setCatalogsLoading(false); }
+  }, [enabled]);
 
   /** Loads independent profile data so unavailable storage does not block editing. */
   const reload = useCallback(async (): Promise<void> => {
@@ -42,7 +56,7 @@ export function useCandidateProfile(enabled: boolean): CandidateProfileState {
     catch (failure: unknown) { if (mounted.current) setResumeError(failure instanceof Error ? failure.message : 'No fue posible cargar tu CV.'); }
     finally { if (mounted.current) setResumeLoading(false); }
   }, [enabled]);
-  useEffect(() => { void reload(); void reloadResume(); }, [reload, reloadResume]);
+  useEffect(() => { void reload(); void reloadResume(); void reloadCatalogs(); }, [reload, reloadResume, reloadCatalogs]);
 
   /** Serializes user mutations, preserving existing data until a successful response. */
   const mutate = async <T,>(operation: () => Promise<T>): Promise<T> => {
@@ -51,7 +65,7 @@ export function useCandidateProfile(enabled: boolean): CandidateProfileState {
     try { return await operation(); }
     finally { mutation.current = false; if (mounted.current) setBusy(false); }
   };
-  return { profile, resume, loading, resumeLoading, busy, error, resumeError, reload, reloadResume,
+  return { profile, resume, catalogs, catalogsLoading, catalogsError, reloadCatalogs, loading, resumeLoading, busy, error, resumeError, reload, reloadResume,
     save: (payload) => mutate(async () => {
       const result = await updateProfile(payload);
       if (mounted.current) { setProfile(result); sessionStore.updateCandidateName(result.firstName, result.lastName); }

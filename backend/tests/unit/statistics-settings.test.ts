@@ -20,5 +20,5 @@ test('configuración rechaza campos retirados, enlaces inseguros y valores exces
   assert.equal(siteConfigurationSchema.safeParse({ ...DEFAULT_SITE_SETTINGS, contacto: { ...DEFAULT_SITE_SETTINGS.contacto, telefono: 'incorrecto' } }).success, false);
   assert.equal(siteConfigurationSchema.safeParse({ ...DEFAULT_SITE_SETTINGS, inicio: { ...DEFAULT_SITE_SETTINGS.inicio, titulo: '', descripcion: 'x'.repeat(2001) } }).success, false);
   assert.equal(saveSiteSettingsSchema.safeParse({ version: -1, configuration: DEFAULT_SITE_SETTINGS }).success, false);
-  assert.ok(siteConfigurationSchema.safeParse({ ...DEFAULT_SITE_SETTINGS, contacto: { correo: '', telefono: '', direccion: '', whatsapp: '' } }).success);
+  assert.ok(siteConfigurationSchema.safeParse({ ...DEFAULT_SITE_SETTINGS, contacto: { correo: '', correoSoporte: '', telefono: '', direccion: '', whatsapp: '' } }).success);
 });

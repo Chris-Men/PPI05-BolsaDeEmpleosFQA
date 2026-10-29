@@ -29,6 +29,8 @@ export const updateOpportunity = (key: string, input: OpportunityInput) => apiRe
 export const setOpportunityStatus = (key: string, status: 'OPEN' | 'CLOSED') => apiRequest<Opportunity>('/admin/opportunities/' + encodeURIComponent(key) + '/status', { method: 'PATCH', authenticated: true, body: JSON.stringify({ status }) });
 /** Archiving preserves historical applications and registrations. */
 export const archiveOpportunity = (key: string) => apiRequest<Opportunity>('/admin/opportunities/' + encodeURIComponent(key), { method: 'DELETE', authenticated: true });
+/** Recovery keeps the original publication date and returns a non-public status. */
+export const unarchiveOpportunity = (key: string) => apiRequest<Opportunity>('/admin/opportunities/' + encodeURIComponent(key) + '/unarchive', { method: 'POST', authenticated: true });
 /** Administrative category search, availability filter and pagination. */
 export const listCategories = (filters: { page?: number; pageSize?: number; search?: string; state?: 'ACTIVE' | 'INACTIVE' } = {}) => apiRequest<Page<Category>>('/admin/categories' + queryString(filters), { authenticated: true });
 /** Category mutations share one typed payload; names and slugs are validated on the server. */

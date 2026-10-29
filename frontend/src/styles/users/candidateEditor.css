@@ -316,7 +316,9 @@
   background: #f6f9f2;
 }
 
-.application-form .ff input[aria-invalid='true'] {
+.application-form .ff input[aria-invalid='true'],
+.application-form .ff select[aria-invalid='true'],
+.application-form .ff textarea[aria-invalid='true'] {
   border-color: #d9534f;
 }
 

@@ -1,3 +1,5 @@
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { textError, fieldErrors as compactErrors } from '../../validation/fields';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
@@ -21,6 +23,7 @@ function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
   const [parents, setParents] = useState<CatalogItem[]>([]);
   const [parentError, setParentError] = useState('');
   const [revision, setRevision] = useState(0);
+  const live = useLiveValidation(form, values => compactErrors({ name: textError(values.name, 2, 100) || (!/[\p{L}\p{N}]/u.test(values.name) ? 'El nombre debe contener letras o números.' : ''), description: (values.description?.trim().length ?? 0) > 1000 ? 'Máximo 1000 caracteres.' : '', parentId: category && values.parentId === category.id ? 'Selecciona otra categoría padre.' : '' }));
 
   /** Tocar fuera equivale a Cancelar (salvo mientras se guarda). */
   useBackdropClose(modal, onCancel, busy);
@@ -35,8 +38,8 @@ function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
 
   return <dialog ref={modal} className="vacancy-dialog vacancy-form-dialog" data-tone="safe" aria-labelledby="category-title"
     onCancel={(event) => { event.preventDefault(); if (!lock.current) onCancel(); }}>
-    <form onSubmit={(event) => {
-      event.preventDefault(); if (lock.current) return; lock.current = true; setBusy(true); setError(''); setFieldErrors({});
+    <form noValidate onChangeCapture={live.watch} onSubmit={(event) => {
+      event.preventDefault(); if (lock.current || !live.check(event.currentTarget)) return; lock.current = true; setBusy(true); setError(''); setFieldErrors({});
       void saveCategory(category?.id ?? null, form).then(onSaved).catch((failure: unknown) => {
         setError(failure instanceof Error ? failure.message : 'No fue posible guardar la categoría.');
         if (failure instanceof ApiError) setFieldErrors(Object.fromEntries(failure.validationErrors.map((item) => [item.field, item.message])));
@@ -46,10 +49,10 @@ function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
       {error && <p role="alert">{error}</p>}
       {parentError && <p role="alert">{parentError} <button type="button" onClick={() => setRevision(revision + 1)}>Reintentar</button></p>}
       <div className="vacancy-fields">
-        <label>Nombre *<input autoFocus required minLength={2} maxLength={100} disabled={busy} aria-invalid={Boolean(fieldErrors.name)} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />{fieldErrors.name && <span className="vacancy-error">{fieldErrors.name}</span>}</label>
-        <label>Categoría padre (opcional)<select disabled={busy} value={form.parentId ?? ''} onChange={(event) => setForm({ ...form, parentId: event.target.value ? Number(event.target.value) : null })}><option value="">Sin categoría padre</option>{form.parentId && !parents.some((item) => item.id === form.parentId) && <option value={form.parentId}>Categoría padre anterior (inactiva)</option>}{parents.filter((item) => item.id !== category?.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{fieldErrors.parentId && <span className="vacancy-error">{fieldErrors.parentId}</span>}</label>
-        <label className="full">Descripción<textarea maxLength={1000} disabled={busy} value={form.description ?? ''} onChange={(event) => setForm({ ...form, description: event.target.value })} />{fieldErrors.description && <span className="vacancy-error">{fieldErrors.description}</span>}</label>
-        <label>Estado<select disabled={busy} value={form.isActive ? 'ACTIVE' : 'INACTIVE'} onChange={(event) => setForm({ ...form, isActive: event.target.value === 'ACTIVE' })}><option value="ACTIVE">Activa</option><option value="INACTIVE">Inactiva</option></select></label>
+        <label>Nombre *<input {...live.bind('name')} autoFocus required minLength={2} maxLength={100} disabled={busy} aria-invalid={Boolean(fieldErrors.name || live.errors.name)} value={form.name} onChange={(event) => { setFieldErrors({}); setForm({ ...form, name: event.target.value }); }} />{live.error('name')}{fieldErrors.name && <span className="vacancy-error">{fieldErrors.name}</span>}</label>
+        <label>Categoría padre (opcional)<select {...live.bind('parentId')} disabled={busy} value={form.parentId ?? ''} onChange={(event) => { setFieldErrors({}); setForm({ ...form, parentId: event.target.value ? Number(event.target.value) : null }); }}><option value="">Sin categoría padre</option>{form.parentId && !parents.some((item) => item.id === form.parentId) && <option value={form.parentId}>Categoría padre anterior (inactiva)</option>}{parents.filter((item) => item.id !== category?.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{live.error('parentId')}{fieldErrors.parentId && <span className="vacancy-error">{fieldErrors.parentId}</span>}</label>
+        <label className="full">Descripción<textarea {...live.bind('description')} maxLength={1000} disabled={busy} value={form.description ?? ''} onChange={(event) => { setFieldErrors({}); setForm({ ...form, description: event.target.value }); }} />{live.error('description')}{fieldErrors.description && <span className="vacancy-error">{fieldErrors.description}</span>}</label>
+        <label>Estado<select disabled={busy} value={form.isActive ? 'ACTIVE' : 'INACTIVE'} onChange={(event) => { setFieldErrors({}); setForm({ ...form, isActive: event.target.value === 'ACTIVE' }); }}><option value="ACTIVE">Activa</option><option value="INACTIVE">Inactiva</option></select></label>
       </div>
       <div className="vacancy-actions">
         <button type="button" data-role="cancel" disabled={busy} onClick={onCancel}>Cancelar</button>

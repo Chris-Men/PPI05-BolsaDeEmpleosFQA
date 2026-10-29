@@ -28,14 +28,14 @@ const request=(method:string,path:string,actor?:RegistrationResponse,body?:unkno
 const expectJson=async<T>(response:Response,status=200):Promise<T>=>{const value=await response.json() as T;assert.equal(response.status,status,JSON.stringify(value));return value;};
 /** Each opportunity is isolated and published using the same administrative API as the UI. */
 const published=async(kind:OpportunityType='SOCIAL_HOURS',slots=3):Promise<Opportunity>=>{
-  const vacancy=await expectJson<Opportunity>(await request('POST','/admin/opportunities',admin,{kind,title:runId+' '+kind+' '+randomUUID(),description:'Una oportunidad completa de prueba para colaborar con la comunidad.',organizationId,categoryId,department:runId,municipality:'Municipio',modality:'REMOTE',slots,employmentTypeId:kind==='EMPLOYMENT'?employmentTypeId:undefined,socialHours:kind==='SOCIAL_HOURS'?80:undefined,duration:kind==='INTERNSHIP'?'3 meses':undefined,expiresAt:'2099-12-31'}),201);
+  const vacancy=await expectJson<Opportunity>(await request('POST','/admin/opportunities',admin,{kind,contactEmail:'contacto@example.test',title:runId+' '+kind+' '+randomUUID(),description:'Una oportunidad completa de prueba para colaborar con la comunidad.',organizationId,categoryId,department:runId,municipality:'Municipio',modality:'REMOTE',slots,employmentTypeId:kind==='EMPLOYMENT'?employmentTypeId:undefined,socialHours:kind==='SOCIAL_HOURS'?80:undefined,duration:kind==='INTERNSHIP'?'3 meses':undefined,expiresAt:'2099-12-31'}),201);
   return expectJson<Opportunity>(await request('PATCH','/admin/opportunities/'+vacancy.key+'/status',admin,{status:'OPEN'}));
 };
 /** Multipart upload tests the existing PDF validation before an immutable draft reference is selected. */
 const upload=async(actor=candidate,content=pdf):Promise<ResumeMetadata>=>{const body=new FormData();body.append('file',new Blob([content],{type:'application/pdf'}),'cv.pdf');return expectJson<ResumeMetadata>(await fetch(api.baseUrl+'/api/profile/me/resume',{method:'PUT',headers:{Authorization:'Bearer '+actor.accessToken,'X-FQA-Request':'1'},body}));};
 const draft=async(vacancy:Opportunity,actor=candidate):Promise<ApplicationDraft>=>expectJson<ApplicationDraft>(await request('POST','/application-drafts',actor,{opportunityKey:vacancy.key}),201);
 /** Incomplete drafts remain valid; final fixture fills only required application fields. */
-const complete=async(value:ApplicationDraft,actor=candidate,resumeId:number|null=value.resume?.id??null):Promise<ApplicationDraft>=>expectJson<ApplicationDraft>(await request('PATCH','/application-drafts/'+value.id,actor,{version:value.version,currentStep:4,resumeId,data:{...value.data,personal:{...value.data.personal,phone:'70000000',firstName:'Nombre enviado'},experience:{...value.data.experience,motivation:'Deseo participar y contribuir.'}}}));
+const complete=async(value:ApplicationDraft,actor=candidate,resumeId:number|null=value.resume?.id??null):Promise<ApplicationDraft>=>expectJson<ApplicationDraft>(await request('PATCH','/application-drafts/'+value.id,actor,{version:value.version,currentStep:4,resumeId,data:{...value.data,personal:{...value.data.personal,phone:'70000000',firstName:'Nombre enviado',birthDate:'2000-02-29',sex:'UNDISCLOSED',department:'San Salvador',municipality:'San Salvador Centro',educationLevel:'Universitario'},experience:{...value.data.experience,motivation:'Deseo participar y contribuir.'}}}));
 const submit=async(value:ApplicationDraft,actor=candidate):Promise<Application>=>expectJson<Application>(await request('POST','/applications',actor,{draftId:value.id,version:value.version}),201);
 const decide=async(value:Application,status:'IN_REVIEW'|'SELECTED'|'REJECTED',reason?:string):Promise<Application>=>expectJson<Application>(await request('PATCH','/admin/applications/'+value.id+'/status',admin,{version:value.version,status,reason}));
 
@@ -45,6 +45,7 @@ describe('PB-238: postulaciones, borradores y decisiones persistentes',()=>{
     api=await startTestServer(createApp());
     const register=async(label:string)=>{const value=await expectJson<RegistrationResponse>(await request('POST','/auth/register',undefined,{fullName:'Candidato Original',email:runId+'-'+label+'@example.test',password}),201);userIds.push(value.userId);emails.push(value.user.email);return value;};
     candidate=await register('candidate');other=await register('other');
+    await expectJson(await request('PATCH','/profile/me',candidate,{birthDate:'2001-01-01',sex:'FEMALE',department:'San Salvador',municipality:'San Salvador Centro',educationLevel:'Bachillerato'}));
     const source=await prisma.user.findUniqueOrThrow({where:{id:candidate.userId}});
     const administrator=await prisma.user.create({data:{email:runId+'-admin@example.test',passwordHash:source.passwordHash,status:{connect:{name:'Activo'}},userRoles:{create:{roles:{connect:{name:ROLE_NAMES.ADMINISTRATOR}}}}}});
     userIds.push(administrator.id);emails.push(administrator.email);admin=await expectJson<RegistrationResponse>(await request('POST','/auth/login',undefined,{email:administrator.email,password}));
@@ -66,7 +67,7 @@ describe('PB-238: postulaciones, borradores y decisiones persistentes',()=>{
   });
   it('completa candidato → administrador → candidato para los cuatro tipos, con CV obligatorio u opcional',async()=>{
     for(const kind of OPPORTUNITY_KINDS){
-      const vacancy=await published(kind);let value=await complete(await draft(vacancy),candidate,null);
+      const vacancy=await published(kind);const initial=await draft(vacancy);assert.equal(initial.data.personal.birthDate,'2001-01-01');assert.equal(initial.data.personal.sex,'FEMALE');let value=await complete(initial,candidate,null);
       if(kind==='EMPLOYMENT'||kind==='INTERNSHIP'){
         assert.equal((await request('POST','/applications',candidate,{draftId:value.id,version:value.version})).status,400);
         const file=await upload();value=await complete(value,candidate,file.id);
@@ -76,6 +77,8 @@ describe('PB-238: postulaciones, borradores y decisiones persistentes',()=>{
       assert.equal((await request('GET','/applications/'+application.id,other)).status,404);
       assert.equal((await request('GET','/application-drafts/'+value.id,candidate)).status,404);
       assert.equal((await expectJson<{firstName:string}>(await request('GET','/profile/me',candidate))).firstName,'Candidato');
+      assert.equal((await expectJson<{birthDate:string}>(await request('GET','/profile/me',candidate))).birthDate,'2001-01-01');
+      assert.equal(application.data?.personal.birthDate,'2000-02-29');assert.equal(application.data?.personal.sex,'UNDISCLOSED');
       const row=await prisma.applications.findUniqueOrThrow({where:{id:application.id}});assert.notEqual(row.jobId===null,row.volunteerRegistrationId===null);
       if(application.resume){for(const route of ['/applications/','/admin/applications/']){const response=await request('GET',route+application.id+'/resume/download',route.startsWith('/admin')?admin:candidate);assert.equal(response.status,200);assert.match(response.headers.get('content-disposition')??'',/attachment/);assert.deepEqual(Buffer.from(await response.arrayBuffer()),pdf);}}
       const reviewing=await decide(application,'IN_REVIEW','Estamos revisando tus datos.');assert.equal(reviewing.history.length,2);
@@ -188,5 +191,21 @@ describe('PB-238: postulaciones, borradores y decisiones persistentes',()=>{
     await prisma.user.update({where:{id:candidate.userId},data:{email:changed}});
     try { const saved=await submit(value);assert.equal(saved.candidateEmail,changed);assert.equal((await prisma.emailOutbox.findUniqueOrThrow({where:{eventKey:'application:'+saved.id+':submitted'}})).recipientEmail,changed); }
     finally {await prisma.user.update({where:{id:candidate.userId},data:{email:candidate.user.email}});}
+  });
+  it('lee borradores y envíos anteriores sin campos nuevos y vuelve a validar al postular',async()=>{
+    const value=await draft(await published('VOLUNTEER'));
+    const {birthDate:_birthDate,sex:_sex,...oldPersonal}=value.data.personal;void _birthDate;void _sex;
+    const oldData={...value.data,personal:{...oldPersonal,phone:'7',municipality:'Municipio anterior',educationLevel:'Maestría'}};
+    await prisma.applicationDrafts.update({where:{id:value.id},data:{data:oldData}});
+    const legacy=await expectJson<ApplicationDraft>(await request('GET','/application-drafts/'+value.id,candidate));
+    assert.equal(legacy.data.personal.birthDate,'');assert.equal(legacy.data.personal.sex,'');assert.equal(legacy.data.personal.municipality,'Municipio anterior');
+    assert.equal((await request('POST','/applications',candidate,{draftId:legacy.id,version:legacy.version})).status,400);
+    const completed=await complete(legacy,candidate,null);const sent=await submit(completed);
+    const {birthDate:_sentBirthDate,sex:_sentSex,...sentPersonal}=sent.data!.personal;void _sentBirthDate;void _sentSex;
+    const oldSubmitted={...sent.data!,personal:{...sentPersonal,educationLevel:'Maestría'}};
+    await prisma.applications.update({where:{id:sent.id},data:{submittedData:oldSubmitted}});
+    const historical=await expectJson<Application>(await request('GET','/applications/'+sent.id,candidate));
+    assert.equal(historical.legacy,false);assert.equal(historical.data?.personal.birthDate,'');assert.equal(historical.data?.personal.sex,'');assert.equal(historical.data?.personal.educationLevel,'Maestría');
+    assert.deepEqual((await prisma.applications.findUniqueOrThrow({where:{id:sent.id}})).submittedData,oldSubmitted);
   });
 });

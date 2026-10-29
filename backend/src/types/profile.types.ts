@@ -10,8 +10,10 @@ export interface ResumeMetadata {
 }
 
 /** Candidate-owned profile data, including relational professional history. */
-export interface CandidateProfile extends Required<Omit<UpdateProfileDTO, 'workExperiences' | 'educations'>> {
+export interface CandidateProfile extends Required<Omit<UpdateProfileDTO, 'workExperiences' | 'educations' | 'educationLevel'>> {
   email: string;
+  /** Historical free-text values remain readable until explicitly replaced. */
+  educationLevel: string | null;
   workExperiences: NonNullable<UpdateProfileDTO['workExperiences']>;
   educations: NonNullable<UpdateProfileDTO['educations']>;
 }

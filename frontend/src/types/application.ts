@@ -5,7 +5,7 @@ export type ApplicationStatus = 'PENDING'|'IN_REVIEW'|'SELECTED'|'REJECTED'|'WIT
 export const APPLICATION_LABELS: Record<ApplicationStatus,string> = { PENDING:'Pendiente', IN_REVIEW:'En revisión', SELECTED:'Seleccionada', REJECTED:'Rechazada', WITHDRAWN:'Retirada', UNKNOWN:'Estado histórico' };
 /** Only application-specific editable fields are sent to draft updates. */
 export interface ApplicationData {
-  personal: { firstName:string;lastName:string;phone:string;department:string;municipality:string;profession:string;educationLevel:string };
+  personal: { firstName:string;lastName:string;phone:string;birthDate:string;sex:string;department:string;municipality:string;profession:string;educationLevel:string };
   experience: { lastRole:string;lastOrg:string;skills:string;motivation:string };
 }
 export interface ApplicationHistory { id:number; oldStatus:ApplicationStatus|null; status:ApplicationStatus;reason:string|null;createdAt:string|null;changedBy:number }
@@ -25,4 +25,4 @@ export interface NotificationPage extends Page<CandidateNotification> { unreadCo
 /** Summary cards select a compact profile view; student applications include both student kinds. */
 export type CandidateSummarySection = 'applications' | 'employment' | 'volunteering' | 'students' | 'saved';
 /** Blank draft shape is replaced by server prefill before editing begins. */
-export const emptyApplicationData = (): ApplicationData => ({ personal:{firstName:'',lastName:'',phone:'',department:'',municipality:'',profession:'',educationLevel:''}, experience:{lastRole:'',lastOrg:'',skills:'',motivation:''} });
+export const emptyApplicationData = (): ApplicationData => ({ personal:{firstName:'',lastName:'',phone:'',birthDate:'',sex:'',department:'',municipality:'',profession:'',educationLevel:''}, experience:{lastRole:'',lastOrg:'',skills:'',motivation:''} });

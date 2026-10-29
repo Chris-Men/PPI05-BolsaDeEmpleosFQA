@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma.js';
 import { OPPORTUNITY_STATUS_NAMES } from '../constants/opportunity.constants.js';
 import { ORGANIZATION_STATUS_NAMES } from '../constants/organization.constants.js';
 import { publicCategories } from './category.service.js';
+import { LOCATION_ZONES } from '../constants/candidate-catalogs.constants.js';
 
 /** Idempotently seeds only lifecycle, contract and experience catalogs, without example vacancies. */
 export const seedOpportunityCatalogs = async (database: PrismaClient): Promise<void> => {
@@ -25,5 +26,5 @@ export const opportunityCatalogs = async () => {
     prisma.employmentTypes.findMany({ select: { id: true, name: true }, orderBy: { id: 'asc' } }),
     prisma.experienceLevels.findMany({ select: { id: true, name: true }, orderBy: { id: 'asc' } }),
   ]);
-  return { categories, organizations, employmentTypes, experienceLevels };
+  return { categories, organizations, employmentTypes, experienceLevels, locationZones: LOCATION_ZONES };
 };

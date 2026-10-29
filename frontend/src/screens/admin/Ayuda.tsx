@@ -1,4 +1,9 @@
+import { useSiteSettings } from '../../hooks/useSiteSettings';
+
+/** Administrative help shares the configured support destination with candidate help. */
 function Ayuda() {
+    const { configuration } = useSiteSettings();
+    const email = configuration.contacto.correoSoporte;
     return (
         <div className="table-box">
             <div className="table-header">
@@ -11,7 +16,7 @@ function Ayuda() {
             </div>
 
             <div className="empty">
-                Esta sección estará disponible próximamente.
+                {email ? <p>Para recibir ayuda, escríbenos a <a href={'mailto:' + email}>{email}</a>.</p> : <p>Consulta con el equipo administrador para recibir ayuda.</p>}
             </div>
         </div>
     );

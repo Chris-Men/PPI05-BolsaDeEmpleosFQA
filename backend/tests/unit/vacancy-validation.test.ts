@@ -9,10 +9,10 @@ import { AppError } from '../../src/utils/app-error.js';
 
 test('vacantes admite borradores de los cuatro tipos y protege campos internos', () => {
   for (const kind of ['EMPLOYMENT', 'VOLUNTEER', 'SOCIAL_HOURS', 'INTERNSHIP']) {
-    assert.equal(createOpportunitySchema.safeParse({ title: ' Nueva vacante ', kind }).success, true);
+    assert.equal(createOpportunitySchema.safeParse({ title: ' Nueva vacante ', contactEmail: 'contacto@example.test', kind }).success, true);
   }
   for (const extra of [{ id: 1 }, { slug: 'sustituida' }, { statusId: 1 }, { status: 'OPEN' }, { createdAt: '2026-01-01' }, { applications: [] }]) {
-    assert.equal(createOpportunitySchema.safeParse({ title: 'Título', kind: 'EMPLOYMENT', ...extra }).success, false);
+    assert.equal(createOpportunitySchema.safeParse({ title: 'Título', kind: 'EMPLOYMENT', contactEmail: 'contacto@example.test', ...extra }).success, false);
   }
   assert.equal(updateOpportunitySchema.safeParse({ kind: 'VOLUNTEER' }).success, false);
   assert.equal(updateOpportunitySchema.safeParse({}).success, false);

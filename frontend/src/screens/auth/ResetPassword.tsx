@@ -1,3 +1,5 @@
+import { useLiveValidation } from '../../hooks/useLiveValidation';
+import { passwordErrors, fieldErrors } from '../../validation/fields';
 import {
     useEffect,
     useRef,
@@ -31,6 +33,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const submitting = useRef(false);
+    const live = useLiveValidation({ password, confirmation }, values => fieldErrors(passwordErrors(values.password, values.confirmation)));
 
     // =====================================================
     // NIVEL DE SEGURIDAD DE CONTRASEÑA
@@ -100,7 +103,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
     ): Promise<void> => {
         event.preventDefault();
 
-        if (submitting.current) return;
+        if (submitting.current || !live.check(event.currentTarget)) return;
 
         setError('');
         setSuccess('');
@@ -233,6 +236,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                         {!success && (
                             <form
                                 className="login-form"
+                                onChangeCapture={live.watch}
                                 onSubmit={submit}
                                 noValidate
                                 aria-busy={loading}
@@ -249,7 +253,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             aria-hidden="true"
                                         />
 
-                                        <input
+                                        <input {...live.bind('password')}
                                             id="reset-password"
                                             name="password"
                                             type={visiblePassword ? 'text' : 'password'}
@@ -260,9 +264,6 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             }
                                             required
                                             disabled={loading}
-                                            aria-describedby={
-                                                error ? 'reset-password-error' : undefined
-                                            }
                                         />
 
                                         <button
@@ -286,6 +287,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             )}
                                         </button>
                                     </div>
+{live.error('password')}
 
                                     {password && (
                                         <div className="password-strength">
@@ -365,7 +367,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             aria-hidden="true"
                                         />
 
-                                        <input
+                                        <input {...live.bind('confirmation')}
                                             id="reset-password-confirmation"
                                             name="confirmation"
                                             type={
@@ -378,9 +380,6 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             }
                                             required
                                             disabled={loading}
-                                            aria-describedby={
-                                                error ? 'reset-password-error' : undefined
-                                            }
                                         />
 
                                         <button
@@ -404,6 +403,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
                                             )}
                                         </button>
                                     </div>
+{live.error('confirmation')}
                                 </div>
 
                                 <button

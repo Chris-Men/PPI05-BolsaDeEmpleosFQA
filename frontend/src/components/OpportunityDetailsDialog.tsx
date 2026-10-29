@@ -3,6 +3,8 @@ import { BriefcaseBusiness, X } from 'lucide-react';
 import { useModalDialog } from '../hooks/useModalDialog';
 import { KIND_LABELS, STATUS_LABELS, type Opportunity } from '../types/opportunity';
 import { opportunitySalary } from '../utils/opportunityPresentation';
+import { formatPhone } from '../utils/phone';
+import { telephoneHref } from '../utils/siteLinks';
 import { useBackdropClose } from '../hooks/useBackdropClose';
 import '../styles/components/detailDialog.css';
 /** The caller supplies a fresh, authorized detail response. */
@@ -39,7 +41,9 @@ export function OpportunityDetailsDialog({ opportunity, onClose, returnFocus }: 
           {opportunity.socialHours != null && <div><dt>Horas sociales</dt><dd>{opportunity.socialHours}</dd></div>}
           {opportunity.duration && <div><dt>Duración</dt><dd>{opportunity.duration}</dd></div>}
           {opportunity.slots != null && <div><dt>Cupos</dt><dd>{opportunity.slots}</dd></div>}
-          {opportunity.contact && <div><dt>Contacto</dt><dd>{opportunity.contact}</dd></div>}
+          {opportunity.contactEmail && <div><dt>Correo de contacto</dt><dd><a href={'mailto:' + opportunity.contactEmail}>{opportunity.contactEmail}</a></dd></div>}
+          {opportunity.contactPhone && <div><dt>Teléfono de contacto</dt><dd><a href={telephoneHref(formatPhone(opportunity.contactPhone))}>{formatPhone(opportunity.contactPhone)}</a></dd></div>}
+          {opportunity.contact && !opportunity.contactEmail && !opportunity.contactPhone && <div><dt>Contacto anterior</dt><dd>{opportunity.contact}</dd></div>}
           {opportunity.expiresAt && <div><dt>Fecha de cierre</dt><dd>{new Date(opportunity.expiresAt).toLocaleDateString('es-SV', { timeZone: 'UTC' })}</dd></div>}
         </dl>
       </section>

@@ -9,7 +9,7 @@ const restore = (): TrackedOperation | null => {
     if (!value || typeof value !== 'object' || !('userId' in value) || !Number.isInteger(value.userId) || !('ticket' in value)) return null;
     const ticket = value.ticket as Partial<BackupOperationTicket>;
     if (!ticket.operation || !/^[0-9a-f-]{36}$/.test(ticket.operation.id) || !/^[a-f0-9]{64}$/.test(ticket.monitorToken ?? '') ||
-      !['BACKUP', 'RESTORE'].includes(ticket.operation.kind) || !Number.isFinite(Date.parse(ticket.operation.startedAt)) ||
+      !['BACKUP', 'RESTORE', 'IMPORT'].includes(ticket.operation.kind) || !Number.isFinite(Date.parse(ticket.operation.startedAt)) ||
       Date.now() - Date.parse(ticket.operation.startedAt) > 24 * 60 * 60_000) return null;
     return { userId: Number(value.userId), ticket: ticket as BackupOperationTicket, error: '' };
   } catch { return null; }

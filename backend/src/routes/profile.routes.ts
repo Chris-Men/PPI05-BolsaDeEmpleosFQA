@@ -19,6 +19,7 @@ const authorize = (permission: PermissionCode): RequestHandler => (request, _res
 /** All resources are selected by the session owner; no account or file ID is accepted. */
 export const profileRouter = Router();
 profileRouter.use(authenticate);
+profileRouter.get('/catalogs', authorize(PERMISSIONS.PROFILE_READ_OWN), controller.catalogs);
 profileRouter.get('/me', authorize(PERMISSIONS.PROFILE_READ_OWN), controller.get);
 profileRouter.patch('/me', authorize(PERMISSIONS.PROFILE_UPDATE_OWN), protectSessionMutation,
   validateBody(updateProfileSchema), controller.update);

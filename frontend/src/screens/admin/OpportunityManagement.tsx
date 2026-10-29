@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { archiveOpportunity, getManagedOpportunity, getOpportunityCatalogs, listManagedOpportunities, setOpportunityStatus } from '../../services/opportunityService';
+import { archiveOpportunity, unarchiveOpportunity, getManagedOpportunity, getOpportunityCatalogs, listManagedOpportunities, setOpportunityStatus } from '../../services/opportunityService';
 import { KIND_LABELS, STATUS_LABELS, type Opportunity, type OpportunityCatalogs, type OpportunityFilters, type Page } from '../../types/opportunity';
 import { canManageVacancies } from '../../utils/vacancyManagement';
 import { VacancyActionDialog } from '../../components/admin/VacancyActionDialog';
@@ -23,7 +23,7 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
   const [page, setPage] = useState<Page<Opportunity>>({ items: [], total: 0, page: 1, pageSize: 20 });
   const [catalogs, setCatalogs] = useState<OpportunityCatalogs | null>(null);
   const [editor, setEditor] = useState<{ opportunity: Opportunity | null } | null>(startCreating ? { opportunity: null } : null);
-  const [action, setAction] = useState<{ opportunity: Opportunity; type: 'OPEN' | 'CLOSED' | 'ARCHIVED' } | null>(null);
+  const [action, setAction] = useState<{ opportunity: Opportunity; type: 'OPEN' | 'CLOSED' | 'ARCHIVED' | 'UNARCHIVE' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -80,12 +80,13 @@ export default function OpportunityManagement({ startCreating = false, onBack, o
             {!value.archivedAt && canManageVacancies(session, 'opportunities.update') && <button type="button" data-action="edit" disabled={loading} onClick={() => void open(value, true)}>Editar</button>}
             {!value.archivedAt && canManageVacancies(session, 'opportunities.status.update') && <button type="button" data-action={value.status === 'OPEN' ? 'close' : 'publish'} onClick={() => setAction({ opportunity: value, type: value.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}>{value.status === 'OPEN' ? 'Cerrar' : 'Publicar'}</button>}
             {!value.archivedAt && canManageVacancies(session, 'opportunities.archive') && <button type="button" data-action="archive" onClick={() => setAction({ opportunity: value, type: 'ARCHIVED' })}>Archivar</button>}
+            {(value.archivedAt || value.status === 'ARCHIVED') && canManageVacancies(session, 'opportunities.archive') && <button type="button" data-action="unarchive" onClick={() => setAction({ opportunity: value, type: 'UNARCHIVE' })}>Desarchivar</button>}
           </div></td></tr>)}
       </tbody></table></div>
       <div className="vacancy-pagination"><span>{page.total} vacantes · Página {filters.page}</span><button type="button" disabled={loading || (filters.page ?? 1) <= 1} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}>Anterior</button><button type="button" disabled={loading || (filters.page ?? 1) * 20 >= page.total} onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}>Siguiente</button></div>
     </>}
-    {action && <VacancyActionDialog danger={action.type !== 'OPEN'} title={action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
-      if (action.type === 'ARCHIVED') await archiveOpportunity(action.opportunity.key); else await setOpportunityStatus(action.opportunity.key, action.type);
+    {action && <VacancyActionDialog danger={action.type === 'ARCHIVED' || action.type === 'CLOSED'} title={action.type === 'UNARCHIVE' ? 'Desarchivar vacante' : action.type === 'ARCHIVED' ? 'Archivar vacante' : action.type === 'CLOSED' ? 'Cerrar vacante' : 'Publicar vacante'} description={`${action.opportunity.title}. ${action.type === 'UNARCHIVE' ? `Se recuperará como ${action.opportunity.publishedAt ? 'Cerrada' : 'Borrador'} para revisarla antes de publicarla.` : action.type === 'ARCHIVED' ? 'Se conservarán sus relaciones históricas.' : 'Se actualizará su disponibilidad en el portal.'}`} onCancel={() => setAction(null)} onConfirm={async () => {
+      if (action.type === 'UNARCHIVE') await unarchiveOpportunity(action.opportunity.key); else if (action.type === 'ARCHIVED') await archiveOpportunity(action.opportunity.key); else await setOpportunityStatus(action.opportunity.key, action.type);
       setAction(null); setMessage('Estado de la vacante actualizado.'); setRevision(revision + 1); onChanged?.();
     }} />}
     {viewing && <OpportunityDetailsDialog opportunity={viewing} onClose={() => setViewing(null)} returnFocus={detailOpener.current} />}

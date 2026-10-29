@@ -58,7 +58,7 @@ const applicationKey = (row: ApplicationRow): string => {
 const draftKey = (row: DraftRow): string => row.jobId ? 'job-' + row.jobId : 'volunteer-' + row.volunteerOpportunityId;
 /** Snapshot values were created by the server; legacy records explicitly have no submitted snapshot. */
 const profileSnapshot = (value: Prisma.JsonValue | null): CandidateProfile | null => value && typeof value === 'object' && !Array.isArray(value) && 'firstName' in value
-  ? value as unknown as CandidateProfile : null;
+  ? { birthDate: null, sex: null, ...value } as unknown as CandidateProfile : null;
 const statusCatalog = async (database: Prisma.TransactionClient) => new Map((await database.applicationStatuses.findMany()).map(row => [row.id, row.name]));
 const mapApplication = async (row: ApplicationRow, database: Prisma.TransactionClient, catalog: Map<number, string>) => {
   const key = applicationKey(row);
@@ -117,6 +117,7 @@ export const createDraft = async (key: string, actor: AccessContext): Promise<Ap
     const document = await database.userProfile.findUniqueOrThrow({ where: { userId: actor.userId }, select: { resumeFileId: true } });
     const experience = profile.workExperiences[0];
     const data = { personal: { firstName: profile.firstName, lastName: profile.lastName, phone: profile.phone ?? '',
+      birthDate: profile.birthDate ?? '', sex: profile.sex ?? '',
       department: profile.department ?? '', municipality: profile.municipality ?? '', profession: profile.profession ?? '', educationLevel: profile.educationLevel ?? '' },
       experience: { lastRole: experience?.position ?? '', lastOrg: experience?.companyName ?? '', skills: profile.skills.join(', '), motivation: '' } };
     const row = await database.applicationDrafts.create({ data: { userId: actor.userId, ...(job ? { jobId: id } : { volunteerOpportunityId: id }),
