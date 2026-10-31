@@ -241,7 +241,7 @@ export default function Nosotros() {
       </p>
     </div>
 
-    <figure className="intro-founder">
+    {/* <figure className="intro-founder">
       <img
         src={fundadorImg}
         alt="Fundador de la Fundación Quintanilla Amaya"
@@ -249,11 +249,11 @@ export default function Nosotros() {
         decoding="async"
       />
       <figcaption className="intro-founder-caption">
-    <strong>Joel Quintanilla Amaya</strong>
-    <br></br>
-    <span>Fundador</span>
-  </figcaption>
-    </figure>
+        <strong>Joel Quintanilla Amaya</strong>
+          <br></br>
+        <span>Fundador</span>
+      </figcaption>
+    </figure> */}
   </div>
 </section>
 

@@ -18,7 +18,7 @@ import { backupScheduledSlot, nextBackupAt } from './backup-schedule.service.js'
 import { BackupStorage, isMissing, writePrivateJson } from './backup-storage.service.js';
 import { readBackupPackage, writeBackupPackage } from './backup-package.service.js';
 
-/** A single backend coordinator is supported by the development Compose deployment. */
+/** Each Compose deployment supports one backend coordinator for its private volumes. */
 export interface BackupConfiguration {
   enabled: boolean; environment: string; directory?: string; encryptionKey?: string; resumeDirectory?: string;
 }
@@ -57,7 +57,7 @@ export class BackupCoordinator {
   }
   private async initializeOnce(): Promise<void> {
     const config = this.configuration;
-    if (!config.enabled || config.environment === 'production') { this.reason = 'Los respaldos no están habilitados en este entorno. La configuración de producción está pendiente.'; return; }
+    if (!config.enabled) { this.reason = 'Los respaldos no están habilitados en este entorno.'; return; }
     if (config.environment === 'test' && !this.postgres.isTestDatabase) { this.reason = 'Las pruebas de respaldo requieren una DB independiente terminada en _test.'; return; }
     if (!config.directory || !config.resumeDirectory || !/^[a-fA-F0-9]{64}$/.test(config.encryptionKey ?? '')) {
       this.reason = 'Configura el directorio privado, el almacenamiento de CV y la clave de cifrado de respaldos.'; return;
@@ -416,7 +416,7 @@ export class BackupCoordinator {
   /** Starts only in the application entrypoint, never as a router import side effect. */
   async start(): Promise<void> {
     await this.initialize();
-    if (!this.configuration.enabled || this.configuration.environment === 'production') return;
+    if (!this.configuration.enabled) return;
     void this.tick(); this.timer = setInterval(() => { void this.tick(); }, 30_000); this.timer.unref();
   }
   /** Stops native tools and releases the single-process owner after its journal is settled. */

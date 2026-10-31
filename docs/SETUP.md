@@ -310,12 +310,14 @@ La producción usa `docker-compose.yml`, imágenes publicadas en GHCR y Caddy pa
 Ejemplo de `.env` de producción:
 
 ```dotenv
+COMPOSE_PROJECT_NAME=fqa-empleos-production
 NODE_ENV=production
 PORT=3000
 CORS_ORIGIN=https://empleos.example.com
 JWT_SECRET=REEMPLAZAR_POR_UN_SECRETO_DISTINTO_Y_ALEATORIO
 DATABASE_URL=postgresql://fqa_prod:REEMPLAZAR_PASSWORD@postgres:5432/fqa_empleos?schema=public
 MAIL_OUTBOX_KEY=REEMPLAZAR_POR_64_CARACTERES_HEXADECIMALES
+BACKUP_ENCRYPTION_KEY=REEMPLAZAR_POR_OTRA_CLAVE_DE_64_CARACTERES_HEXADECIMALES
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -336,11 +338,18 @@ Caddy recibe el tráfico público y aplica TLS automáticamente para `DOMAIN`. L
 
 La imagen final del backend contiene un ejecutor compilado para el seed. Esto permite preparar los estados, roles y permisos sin incluir `tsx` ni el código TypeScript fuente en la imagen de producción.
 
+Producción utiliza los volúmenes `postgres_data`, `resume_data`, `backup_data` y `statistics_export_data`. Los tres últimos pertenecen exclusivamente al backend; Caddy y el frontend no leen CV ni respaldos. `RESUME_STORAGE_DRIVER=filesystem`, los directorios privados y `BACKUPS_ENABLED=true` se configuran en Compose. La imagen final incorpora las herramientas PostgreSQL 17 requeridas para respaldo y restauración.
+
+Mantén `COMPOSE_PROJECT_NAME=fqa-empleos-production` en el `.env` exclusivo del servidor durante toda la vida de la instalación. Docker añade ese prefijo a los volúmenes para separarlos de desarrollo. Cambiar el nombre crearía otra instalación con volúmenes diferentes. Los comandos de actualización y el workflow conservan los volúmenes existentes.
+
 ### Primera instalación en producción
+
+Antes de iniciar, completa el `.env` del servidor con secretos propios. Genera `BACKUP_ENCRYPTION_KEY` una sola vez, con 32 bytes aleatorios expresados en hexadecimal; por ejemplo, `openssl rand -hex 32` en el VPS. Copia el resultado únicamente al `.env` privado y conserva otra copia segura de la clave. Debe ser diferente de las claves de desarrollo, JWT y correo; no se regenera al actualizar. Compose exige la variable y el backend valida su formato y los directorios antes de arrancar.
 
 ```bash
 cd /opt/fqa-empleos
 docker login ghcr.io
+docker compose -f docker-compose.yml config --quiet
 docker compose -f docker-compose.yml pull
 docker compose -f docker-compose.yml up -d --wait postgres
 docker compose -f docker-compose.yml run --rm backend npx prisma migrate deploy
@@ -350,6 +359,18 @@ docker compose -f docker-compose.yml ps
 ```
 
 La comprobación final debe abrir `https://DOMINIO/` y `https://DOMINIO/api/health`.
+
+Verifica también que un candidato pueda subir y descargar un PDF. Con un Super Admin activo, consulta **Respaldos**, espera el respaldo inicial o crea uno manual y comprueba su fecha y resultado. Se ejecuta diariamente a las 02:00 de El Salvador y se conserva una generación cifrada con DB y CV. El seed prepara catálogos; no crea cuentas ni contraseñas. Un respaldo tomado antes de disponer de un Super Admin activo no permite restauración desde la aplicación: crea uno nuevo después de preparar esa cuenta.
+
+Antes de usar datos reales, verifica la restauración con datos de prueba: confirma contraseña y `RESTAURAR`, espera el resultado y vuelve a iniciar sesión. Restaurar invalida las sesiones y exige que las migraciones coincidan. La [guía de respaldos](BACKUPS.md) describe mantenimiento, exportación, importación y recuperación de interrupciones. No ejecutar `down -v` ni eliminar los volúmenes para actualizar o reiniciar. Las copias están en el mismo VPS; una exportación guardada fuera del servidor permite conservar otra copia ante pérdida del disco.
+
+La aceptación local reproducible usa un proyecto Docker temporal y una base terminada en `_test`, sin desplegar en el VPS:
+
+```bash
+node scripts/test-production-storage.mjs --integration
+```
+
+Construye la imagen productiva, ejecuta integración con PostgreSQL separado y verifica CV, respaldo inicial/manual, exportación/importación, recreación del backend y restauración. Elimina exclusivamente sus contenedores y volúmenes temporales. Requiere Docker Desktop o Docker Engine con Compose y acceso a los registros para construir imágenes.
 
 ### Despliegues posteriores
 
@@ -372,7 +393,7 @@ En PowerShell, establece la etiqueta con `$env:IMAGE_TAG = 'SHA_PUBLICADO'` en l
 
 ## Diagnóstico
 
-Los respaldos de desarrollo requieren la clave independiente `BACKUP_ENCRYPTION_KEY`; `scripts/setup-dev.ps1` la genera cuando falta y conserva las existentes. El volumen `backup_data` pertenece exclusivamente al backend. Consulta [respaldos y restauración](BACKUPS.md) antes de operar sobre el último respaldo. Producción permanece deshabilitada.
+Los respaldos requieren la clave independiente `BACKUP_ENCRYPTION_KEY`; en desarrollo, `scripts/setup-dev.ps1` la genera cuando falta y conserva las existentes. En producción se prepara una sola vez en el `.env` del servidor. El volumen `backup_data` pertenece exclusivamente al backend. Consulta [respaldos y restauración](BACKUPS.md) antes de operar sobre el último respaldo. Un healthcheck correcto de la API no sustituye la comprobación del estado y resultado del módulo de respaldos.
 
 ```bash
 docker compose -f docker-compose.dev.yml ps

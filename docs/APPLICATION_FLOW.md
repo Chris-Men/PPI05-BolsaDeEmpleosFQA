@@ -107,7 +107,7 @@ docker compose -f docker-compose.dev.yml exec backend npm run prisma:deploy
 docker compose -f docker-compose.dev.yml exec backend npm run prisma:seed
 ```
 
-No se modificó Compose. Desarrollo reutiliza el volumen privado de PB-214, exclusivo del backend. En producción sigue pendiente configurar explícitamente un proveedor privado; no existe una caída automática a almacenamiento efímero. Sin proveedor, enviar o descargar un CV devuelve **503** y conserva el borrador. Voluntariado y horas sociales pueden enviarse seleccionando **Continuar sin CV**. La futura integración con DigitalOcean Spaces debe implementar `ResumeStorage`.
+Desarrollo y producción utilizan `filesystem` con el volumen privado `resume_data`, exclusivo del backend, y respaldan sus documentos junto con PostgreSQL en `backup_data`. Producción valida su configuración al arrancar. Un fallo de almacenamiento al enviar o descargar un CV devuelve **503** y conserva el borrador. Voluntariado y horas sociales pueden enviarse seleccionando **Continuar sin CV**. Véase [almacenamiento y recuperación](BACKUPS.md).
 
 Tipos, lint, pruebas unitarias y compilación se ejecutan en ambos proyectos. `backend/tests/integration/applications.test.ts` recorre los cuatro tipos, CV obligatorio/opcional, snapshots y documentos históricos, doble envío, versiones, retirada/nuevo intento, cupos concurrentes, cierre/vencimiento/archivo, permisos, filtros, notificaciones, rollback y SMTP/Mailpit. El ejecutor existente usa `TEST_DATABASE_URL`, una carpeta temporal de CV y las dependencias de Docker.
 

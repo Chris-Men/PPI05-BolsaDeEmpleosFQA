@@ -172,7 +172,7 @@ Consulta [gestión y ciclo de vida de usuarios](docs/USER_MANAGEMENT.md) para en
 
 ## Respaldos y restauración
 
-En desarrollo, Super Admin dispone de respaldos diarios de PostgreSQL y CV a las 02:00 de El Salvador, creación manual y restauración del último respaldo. Se conserva una generación cifrada en un volumen persistente. Consulta [configuración, contratos y recuperación](docs/BACKUPS.md). La implementación de producción está pendiente.
+En desarrollo y producción, Super Admin dispone de respaldos diarios de PostgreSQL y CV a las 02:00 de El Salvador, creación manual y restauración del último respaldo. Se conserva una generación cifrada en `backup_data`, separada de los CV en `resume_data` y de PostgreSQL. Producción exige una clave de respaldo propia en el `.env` del servidor. Consulta [configuración, contratos y recuperación](docs/BACKUPS.md) y [primera instalación productiva](docs/SETUP.md#primera-instalación-en-producción).
 
 Estadísticas permite exportar [datos detallados a Excel](docs/STATISTICS_EXCEL.md), con confirmación del período, cola persistente, descarga automática y disponibilidad de 24 horas. El backend requiere `STATISTICS_EXPORT_DIRECTORY`; Docker Compose configura su volumen privado. Aplicar migraciones, regenerar Prisma y sincronizar permisos antes de iniciar la versión actualizada.
 

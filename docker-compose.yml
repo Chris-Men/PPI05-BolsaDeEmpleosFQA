@@ -23,6 +23,8 @@ services:
     image: ghcr.io/${GHCR_OWNER}/fqa-empleos-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     volumes:
+      - resume_data:/app/private/resumes
+      - backup_data:/app/private/backups
       - statistics_export_data:/app/private/statistics-exports
     environment:
       NODE_ENV: production
@@ -38,6 +40,11 @@ services:
       SMTP_FROM: ${SMTP_FROM}
       RESET_PASSWORD_URL: https://${DOMAIN}/reset-password
       MAIL_OUTBOX_KEY: ${MAIL_OUTBOX_KEY}
+      RESUME_STORAGE_DRIVER: filesystem
+      RESUME_STORAGE_DIRECTORY: /app/private/resumes
+      BACKUPS_ENABLED: "true"
+      BACKUP_DIRECTORY: /app/private/backups
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:?Configura una clave de respaldo independiente en el .env del servidor}
       STATISTICS_EXPORT_DIRECTORY: /app/private/statistics-exports
     depends_on:
       postgres:
@@ -64,6 +71,8 @@ services:
       retries: 3
 
 volumes:
+  resume_data:
+  backup_data:
   statistics_export_data:
   caddy_data:
   caddy_config:

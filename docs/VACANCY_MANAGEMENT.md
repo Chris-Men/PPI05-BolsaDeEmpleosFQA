@@ -18,7 +18,7 @@ docker compose -f docker-compose.dev.yml run --rm backend npm run prisma:seed
 docker compose -f docker-compose.dev.yml up -d backend frontend
 ```
 
-En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:production` en el backend de la versión desplegada. Los estados históricos no reconocidos se muestran como «Estado anterior» y permanecen fuera del catálogo público hasta que un administrador revise y publique esos registros. La configuración pendiente de almacenamiento privado de CV de PB-214 sigue siendo independiente.
+En producción, ejecutar `npm run prisma:deploy` y `npm run prisma:seed:production` en el backend de la versión desplegada. Los estados históricos no reconocidos se muestran como «Estado anterior» y permanecen fuera del catálogo público hasta que un administrador revise y publique esos registros. Los CV utilizan el volumen privado `resume_data`; consultar [almacenamiento y respaldos](BACKUPS.md).
 
 ## Correo y teléfono de contacto
 

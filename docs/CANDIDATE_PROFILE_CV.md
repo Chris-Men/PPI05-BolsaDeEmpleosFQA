@@ -107,16 +107,17 @@ opcionales y el enum `Sex`, sin sustituir perfiles existentes. Después de aplic
 los respaldos nuevos incluyen ambos datos; los respaldos anteriores conservan la
 restricción de compatibilidad exacta del historial de migraciones al importar o restaurar.
 
-En producción todavía debe elegirse volumen privado o DigitalOcean Spaces.
-No se configura un proveedor implícito: sin configuración, los endpoints de CV
-devuelven 503 y el resto de la API funciona. Para filesystem deben configurarse
-**ambas** variables en el contenedor y montar un volumen persistente privado en
-ese directorio mediante la configuración de despliegue. `docker-compose.yml`
-no habilita almacenamiento hasta tomar esa decisión.
+En producción, `docker-compose.yml` utiliza también `filesystem`, con el volumen
+`resume_data` en `/app/private/resumes`, exclusivo del backend. La configuración
+de proveedor y directorio es obligatoria al iniciar el backend productivo.
+Los archivos permanecen privados y se descargan mediante la API autenticada;
+Caddy y el frontend no tienen acceso al volumen. Los CV activos e históricos
+se incluyen en el respaldo cifrado guardado en el volumen separado `backup_data`.
 
 `ResumeStorage` define escritura, lectura, eliminación y listado de objetos antiguos.
-Un futuro adaptador Spaces implementará ese contrato y mantendrá el bucket privado;
-el navegador seguirá descargando a través de la API autenticada.
+El despliegue utiliza volúmenes locales y no requiere DigitalOcean Spaces.
+Consultar [primera instalación de producción](SETUP.md#primera-instalación-en-producción)
+para la clave de respaldo y el nombre estable del proyecto Compose.
 
 ## Verificación
 

@@ -1,21 +1,26 @@
 # Respaldos y restauración
 
-El módulo está habilitado únicamente en desarrollo y admite un backend coordinador por volumen. Producción permanece deshabilitada: su proveedor privado y su operación se implementarán por separado.
+El módulo está habilitado en desarrollo y producción mediante volúmenes Docker locales. Cada instalación admite un único backend coordinador por volumen, con la misma programación, cifrado y conservación.
 
-## Configuración local
+## Configuración
 
-La imagen de desarrollo incluye `postgresql17-client`, necesario para utilizar las herramientas oficiales de PostgreSQL 17. No se añaden dependencias npm. El backend utiliza estos valores:
+Las imágenes de desarrollo y producción incluyen `postgresql17-client`, con `pg_dump`, `pg_restore` y `psql` compatibles con PostgreSQL 17. No se añaden dependencias npm. Ambos Compose configuran estos valores:
 
-| Variable | Valor en Compose de desarrollo |
+| Variable | Valor en Compose |
 |---|---|
 | `BACKUPS_ENABLED` | `true` |
 | `BACKUP_DIRECTORY` | `/app/private/backups` |
 | `BACKUP_ENCRYPTION_KEY` | Secreto independiente de 32 bytes, expresado como 64 caracteres hexadecimales |
 | `RESUME_STORAGE_DIRECTORY` | `/app/private/resumes` |
+| `RESUME_STORAGE_DRIVER` | `filesystem` |
 
 `scripts/setup-dev.ps1` genera la clave cuando no existe y conserva una ya configurada. La clave debe mantenerse fuera de Git y conservarse para poder leer el respaldo; no se deriva de JWT ni de la clave de correo. Para ejecución sin Docker también deben estar instalados los clientes PostgreSQL 17.
 
+En producción se genera una clave propia una sola vez y se configura como `BACKUP_ENCRYPTION_KEY` en el `.env` del servidor; el script de desarrollo no prepara ese servidor. Compose exige la variable y el backend rechaza al arrancar una clave que no tenga exactamente 64 caracteres hexadecimales, un directorio de respaldo vacío o un almacenamiento de CV incompleto. Si se ejecuta el backend con `BACKUPS_ENABLED=false`, el módulo permanece deshabilitado y no exige directorio ni clave de respaldo. Véase [primera instalación](SETUP.md#primera-instalación-en-producción).
+
 Compose monta el volumen `backup_data` exclusivamente en el backend, separado de `postgres_data` y `resume_data`. Los tres persisten al recrear el backend. El respaldo no incluye `.env`, secretos de infraestructura ni roles globales del servidor PostgreSQL. El volumen es local al servidor; esta entrega no incorpora almacenamiento externo.
+
+Producción utiliza `COMPOSE_PROJECT_NAME=fqa-empleos-production` para conservar sus volúmenes entre despliegues y separarlos de desarrollo. No cambiar ese nombre ni ejecutar `down -v` sobre una instalación cuyos datos se desean conservar. Un volumen en el mismo VPS no protege frente a la pérdida del servidor; la exportación `.fqabackup` permite conservar una copia fuera del VPS junto con su clave guardada por separado.
 
 ## Programación y conservación
 
@@ -48,7 +53,7 @@ La credencial de seguimiento solo permite consultar una operación, durante un m
 
 El apartado **Exportar e importar**, dentro de Respaldos, permite descargar el respaldo disponible y cargar uno exportado anteriormente. Exportar prepara una copia independiente: no crea otro respaldo ni altera el horario automático. El archivo incluye el dump PostgreSQL y los CV cifrados, junto con el manifiesto autenticado. No incluye el catálogo, diario de operaciones, contraseñas de infraestructura ni la clave de cifrado.
 
-**Conservar por separado `BACKUP_ENCRYPTION_KEY` del servidor de origen es indispensable.** El servidor de destino debe tener esa misma clave configurada; no se permite enviar claves en el formulario. Si difiere, el archivo no podrá importarse. Cambiar la clave de una instalación que ya tiene respaldos requiere un procedimiento operativo; no debe hacerse para probar una importación. Producción conserva la condición de módulo deshabilitado.
+**Conservar por separado `BACKUP_ENCRYPTION_KEY` del servidor de origen es indispensable.** El servidor de destino debe tener esa misma clave configurada; no se permite enviar claves en el formulario. Si difiere, el archivo no podrá importarse. Cambiar la clave de una instalación que ya tiene respaldos requiere un procedimiento operativo; no debe hacerse para probar una importación. Desarrollo y producción aplican las mismas comprobaciones.
 
 El formato versionado `.fqabackup` es propio y no es un ZIP ni un SQL: cabecera `FQA-BACKUP` y byte de versión 1, longitud de manifiesto de cuatro bytes big-endian, manifiesto JSON autenticado y artefactos cifrados concatenados (DB primero y después los CV en el orden del manifiesto). Las longitudes proceden del manifiesto firmado. La importación limita el archivo a **1 GiB**, el manifiesto a 16 MiB, exige un único campo de archivo y no descomprime ni extrae rutas del usuario. El contenido se procesa mediante streams y archivos privados temporales, sin cargar el respaldo completo en memoria del backend. El navegador prepara la descarga como Blob.
 
