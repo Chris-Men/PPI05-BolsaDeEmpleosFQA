@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const envSchema = z.object({
+/** Runtime contract shared with isolated configuration tests. */
+export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   CORS_ORIGIN: z.string().url(),
@@ -29,6 +30,22 @@ const envSchema = z.object({
     context.addIssue({ code: z.ZodIssueCode.custom, message: 'SMTP_USER y SMTP_PASS deben configurarse juntos.' });
   }
   if (values.NODE_ENV === 'test') return;
+  if (values.NODE_ENV === 'production') {
+    if (values.RESUME_STORAGE_DRIVER !== 'filesystem' || !values.RESUME_STORAGE_DIRECTORY?.trim()) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['RESUME_STORAGE_DIRECTORY'],
+        message: 'Configura el almacenamiento privado de CV en producción.' });
+    }
+    if (values.BACKUPS_ENABLED) {
+      if (!values.BACKUP_DIRECTORY?.trim()) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['BACKUP_DIRECTORY'],
+          message: 'Configura el directorio privado de respaldos.' });
+      }
+      if (!/^[a-fA-F0-9]{64}$/.test(values.BACKUP_ENCRYPTION_KEY ?? '')) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['BACKUP_ENCRYPTION_KEY'],
+          message: 'Configura una clave de respaldo de 64 caracteres hexadecimales.' });
+      }
+    }
+  }
   for (const key of ['SMTP_HOST', 'SMTP_FROM', 'RESET_PASSWORD_URL', 'MAIL_OUTBOX_KEY'] as const) {
     if (!values[key]) context.addIssue({
       code: z.ZodIssueCode.custom, path: [key], message: 'Configuración de correo obligatoria.',

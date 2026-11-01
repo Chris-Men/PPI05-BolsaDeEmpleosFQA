@@ -269,7 +269,6 @@ export default function Home({
             onClick={(event) => {
               event.preventDefault();
               navigateTo('collaborators');
-              window.history.pushState({}, '', '/colaboradores');
             }}
           >
             Proyecto realizado en colaboración con estudiantes de la ULS

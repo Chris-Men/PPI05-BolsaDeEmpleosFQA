@@ -3,7 +3,7 @@ import { resolve, join } from 'node:path';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
 
-/** Provider boundary; a future private Spaces adapter must implement the same operations. */
+/** Private filesystem storage boundary shared by development and production volumes. */
 export interface ResumeStorage {
   put(key: string, content: Buffer): Promise<void>;
   get(key: string): Promise<Buffer>;

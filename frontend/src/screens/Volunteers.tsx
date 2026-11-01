@@ -1,3 +1,5 @@
+import { useAuth } from '../hooks/useAuth';
+import { isAdministrator } from '../utils/routes';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { VolunteerSpot } from '../types/models';
 import { OpportunityListingLayout, type OpportunityListingControls } from '../components/OpportunityListingLayout';
@@ -14,6 +16,7 @@ interface VolunteersProps {
 export default function Volunteers({
   listingControls, volunteerSpots, volunteerApps, onView, handleVolunteerApplyClick,
 }: VolunteersProps) {
+  const { session } = useAuth();
   return (
     <div className="screen opportunity-screen">
       <div className="v-hero">
@@ -37,14 +40,14 @@ export default function Volunteers({
               <span>📚 {spot.area}</span>
             </div>
             <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
-            <button 
-              className="btn-vol-apply" 
+            {!isAdministrator(session) && <button
+              className="btn-vol-apply"
               onClick={(e) => { e.stopPropagation(); handleVolunteerApplyClick(spot); }}
               style={{ marginTop: '15px' }}
               disabled={volunteerApps.includes(spot.id)}
             >
               {volunteerApps.includes(spot.id) ? 'Postulado ✓' : 'Postularme'}
-            </button>
+            </button>}
           </div>
         ))}
       </div>

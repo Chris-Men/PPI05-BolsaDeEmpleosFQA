@@ -301,7 +301,7 @@ describe('respaldos completos y restauración privada', () => {
     } finally { await coordinator.stop(); await rm(root, { recursive: true, force: true }); }
   });
 
-  it('recupera un almacenamiento temporalmente inaccesible y mantiene producción deshabilitada', async () => {
+  it('recupera un almacenamiento temporalmente inaccesible', async () => {
     const root = await mkdtemp(join(env.BACKUP_DIRECTORY!, 'availability-test-'));
     const config = { enabled: true, environment: 'test', directory: root, resumeDirectory: env.RESUME_STORAGE_DIRECTORY, encryptionKey: randomBytes(32).toString('hex') };
     const coordinator = new BackupCoordinator(config, new BackupPostgres(prisma, env.DATABASE_URL), new BackupRuntime());
@@ -310,8 +310,46 @@ describe('respaldos completos y restauración privada', () => {
       assert.equal((await coordinator.status(await access())).available, false);
       await rmdir(join(root, 'journal.json'));
       assert.equal((await coordinator.status(await access())).available, true);
-      const production = new BackupCoordinator({ ...config, environment: 'production' }, new BackupPostgres(prisma, env.DATABASE_URL), new BackupRuntime());
-      assert.equal((await production.status(await access())).available, false);
     } finally { await coordinator.stop(); await rm(root, { recursive: true, force: true }); }
+  });
+
+  it('producción programa el respaldo inicial y conserva el volumen al reiniciar sin duplicarlo', async () => {
+    const root = await mkdtemp(join(env.BACKUP_DIRECTORY!, 'production-test-'));
+    const config = { enabled: true, environment: 'production', directory: root,
+      resumeDirectory: env.RESUME_STORAGE_DIRECTORY, encryptionKey: randomBytes(32).toString('hex') };
+    let coordinator = new BackupCoordinator(config, new BackupPostgres(prisma, env.DATABASE_URL), new BackupRuntime());
+    try {
+      await coordinator.start();
+      const deadline = Date.now() + 60_000;
+      let status = await coordinator.status(await access());
+      while ((!status.latest || status.operation?.phase !== 'SUCCEEDED') && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 40));
+        status = await coordinator.status(await access());
+      }
+      assert.equal(status.available, true); assert.ok(status.latest);
+      assert.equal(status.operation?.phase, 'SUCCEEDED');
+      const id = status.latest.id;
+      await coordinator.stop();
+      coordinator = new BackupCoordinator(config, new BackupPostgres(prisma, env.DATABASE_URL), new BackupRuntime());
+      await coordinator.initialize(); await coordinator.tick();
+      assert.equal((await coordinator.status(await access())).latest?.id, id);
+      const journal = JSON.parse(await readFile(join(root, 'journal.json'), 'utf8')) as { operations: unknown[] };
+      assert.equal(journal.operations.length, 1);
+      const ticket = await coordinator.create(await access(), randomUUID());
+      assert.equal((await wait(coordinator, ticket)).phase, 'SUCCEEDED');
+      assert.notEqual((await coordinator.status(await access())).latest?.id, id);
+      assert.equal((await readdir(root)).filter(name => /^[a-f0-9-]{36}$/.test(name)).length, 1);
+    } finally { await coordinator.stop(); await rm(root, { recursive: true, force: true }); }
+  });
+
+  it('producción respeta el interruptor y las pruebas rechazan una base sin sufijo _test', async () => {
+    for (const configuration of [{ enabled: false, environment: 'production' }, { enabled: true, environment: 'test' }]) {
+      const coordinator = new BackupCoordinator(configuration,
+        new BackupPostgres(prisma, 'postgresql://unit_test:unit_test@127.0.0.1:1/not_a_test_database'), new BackupRuntime());
+      try {
+        await coordinator.start();
+        assert.equal((await coordinator.status(await access())).available, false);
+      } finally { await coordinator.stop(); }
+    }
   });
 });

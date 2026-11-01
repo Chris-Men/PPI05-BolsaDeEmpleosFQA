@@ -1,6 +1,8 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { useLiveValidation } from '../../hooks/useLiveValidation';
 import { textError, fieldErrors as compactErrors } from '../../validation/fields';
 import { useEffect, useRef, useState } from 'react';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { useAuth } from '../../hooks/useAuth';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
 import { ApiError } from '../../services/api';
@@ -13,13 +15,16 @@ import '../../styles/admin/vacancies.css';
 /** Category editing belongs to its own modal and preserves the parent management state. */
 interface CategoryEditorProps { category: Category | null; onSaved: () => void; onCancel: () => void }
 /** Modal editor preserves entered values and field errors when a save fails. */
-function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
+function CategoryEditor({ category, onSaved, onCancel: closeEditor }: CategoryEditorProps) {
   const modal = useRef<HTMLDialogElement>(null);
   const lock = useRef(false);
   const [form, setForm] = useState<CategoryInput>({ name: category?.name ?? '', description: category?.description ?? '', parentId: category?.parentId ?? null, isActive: category?.isActive ?? true });
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const baseline = useRef(JSON.stringify(form));
+  const guard = useUnsavedChanges(JSON.stringify(form) !== baseline.current, busy);
+  const onCancel = () => guard.leave(closeEditor);
   const [parents, setParents] = useState<CatalogItem[]>([]);
   const [parentError, setParentError] = useState('');
   const [revision, setRevision] = useState(0);
@@ -40,7 +45,7 @@ function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
     onCancel={(event) => { event.preventDefault(); if (!lock.current) onCancel(); }}>
     <form noValidate onChangeCapture={live.watch} onSubmit={(event) => {
       event.preventDefault(); if (lock.current || !live.check(event.currentTarget)) return; lock.current = true; setBusy(true); setError(''); setFieldErrors({});
-      void saveCategory(category?.id ?? null, form).then(onSaved).catch((failure: unknown) => {
+      void saveCategory(category?.id ?? null, form).then(() => { guard.commit(); onSaved(); }).catch((failure: unknown) => {
         setError(failure instanceof Error ? failure.message : 'No fue posible guardar la categoría.');
         if (failure instanceof ApiError) setFieldErrors(Object.fromEntries(failure.validationErrors.map((item) => [item.field, item.message])));
       }).finally(() => { lock.current = false; setBusy(false); });
@@ -65,7 +70,7 @@ function CategoryEditor({ category, onSaved, onCancel }: CategoryEditorProps) {
 export default function Categorias() {
   const { session } = useAuth();
   const authorized = canManageVacancies(session, 'categories.read');
-  const [filters, setFilters] = useState<{ page: number; pageSize: number; search: string; state?: 'ACTIVE' | 'INACTIVE' }>({ page: 1, pageSize: 20, search: '' });
+  const [filters, setFilters, correctFilters] = useRouteQuery<{ page: number; pageSize: number; search: string; state?: 'ACTIVE' | 'INACTIVE' }>({ page: 1, pageSize: 20, search: '', state:undefined }, {state:{choices:['ACTIVE','INACTIVE']},pageSize:{max:100}});
   const [page, setPage] = useState<Page<Category>>({ items: [], total: 0, page: 1, pageSize: 20 });
   const [editor, setEditor] = useState<{ category: Category | null } | null>(null);
   const [removing, setRemoving] = useState<Category | null>(null);
@@ -78,11 +83,11 @@ export default function Categorias() {
     if (!authorized) return;
     setLoading(true); setError(''); setPage({ items: [], total: 0, page: filters.page, pageSize: 20 });
     const timeout = setTimeout(() => {
-      void listCategories(filters).then((result) => { if (current) { const lastPage = Math.max(1, Math.ceil(result.total / result.pageSize)); if (filters.page > lastPage) setFilters({ ...filters, page: lastPage }); else setPage(result); } })
+      void listCategories(filters).then((result) => { if (current) { const lastPage = Math.max(1, Math.ceil(result.total / result.pageSize)); if (filters.page > lastPage) correctFilters({ ...filters, page: lastPage }); else setPage(result); } })
         .catch((failure: unknown) => { if (current) setError(failure instanceof Error ? failure.message : 'No se pudieron cargar las categorías.'); }).finally(() => { if (current) setLoading(false); });
     }, 250);
     return () => { current = false; clearTimeout(timeout); };
-  }, [filters, revision, authorized, session?.user.id]);
+  }, [filters, revision, authorized, session?.user.id, correctFilters]);
   if (!authorized) return <p role="alert">No tienes permiso para gestionar categorías.</p>;
   return <section className="vacancy-section">
     <div className="vacancy-header"><h1>Categorías</h1>{canManageVacancies(session, 'categories.create') && <button className="primary-button" type="button" onClick={() => setEditor({ category: null })}>+ Nueva categoría</button>}</div>
@@ -93,7 +98,7 @@ export default function Categorias() {
       {canManageVacancies(session, 'categories.update') && <button type="button" data-action="edit" aria-label={'Editar ' + category.name} onClick={() => setEditor({ category })}>Editar</button>}
       {canManageVacancies(session, 'categories.delete') && <button type="button" data-action="delete" aria-label={'Eliminar ' + category.name} onClick={() => setRemoving(category)}>Eliminar</button>}
     </div></td></tr>)}</tbody></table></div>
-    <div className="vacancy-pagination"><span>{page.total} categorías · Página {filters.page}</span><button disabled={loading || filters.page === 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>Anterior</button><button disabled={loading || filters.page * 20 >= page.total} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>Siguiente</button></div>
+    <div className="vacancy-pagination"><span>{page.total} categorías · Página {filters.page}</span><button disabled={loading || filters.page === 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>Anterior</button><button disabled={loading || filters.page * filters.pageSize >= page.total} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>Siguiente</button></div>
     {editor && <CategoryEditor category={editor.category} onCancel={() => setEditor(null)} onSaved={() => { setEditor(null); setMessage('Categoría guardada correctamente.'); setRevision(revision + 1); }} />}
     {removing && <VacancyActionDialog title="Eliminar categoría" description={`¿Eliminar ${removing.name}? Las categorías con vacantes o subcategorías deben desactivarse.`} onCancel={() => setRemoving(null)} onConfirm={async () => { await deleteCategory(removing.id); setRemoving(null); setMessage('Categoría eliminada.'); setRevision(revision + 1); }} />}
   </section>;

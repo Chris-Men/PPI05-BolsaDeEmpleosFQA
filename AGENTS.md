@@ -116,7 +116,7 @@ export function OpportunityCard({ title, modality, location }: OpportunityCardPr
 - Tipos/DTOs compartidos entre capas deben mantenerse consistentes; evitar duplicar interfaces ya definidas.
 - No duplicar lógica entre páginas ni entre services; extraer utilidades compartidas.
 - Toda relación de datos se modela explícitamente en `schema.prisma`; no usar SQL directo salvo necesidad justificada y documentada en el código.
-- Roles del sistema (`Candidato`, `Organización`, `Administrador`) determinan permisos; toda autorización se valida en el backend, nunca solo en el frontend.
+- Roles del sistema (`Candidato`, `Administrador`, `Super Admin`) determinan permisos; toda autorización se valida en el backend, nunca solo en el frontend.
 
 ## 5. Límites
 

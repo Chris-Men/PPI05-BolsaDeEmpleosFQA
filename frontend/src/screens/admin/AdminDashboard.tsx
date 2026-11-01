@@ -1,5 +1,7 @@
 
-import { useState } from 'react';
+import { useNavigation } from '../../hooks/useNavigation';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
+import { adminPaths } from '../../utils/routes';
 
 import type { DashboardStatistics } from '../../types/statistics';
 
@@ -69,14 +71,9 @@ function AdminDashboard({
     // ESTADOS
     // =========================================================
 
-    const [activeMenu, setActiveMenu] =
-        useState<AdminMenuName>('Dashboard');
-
-    const [menuHistory, setMenuHistory] =
-        useState<AdminMenuName[]>([]);
-
-    const [search, setSearch] =
-        useState('');
+    const { route, go, back } = useNavigation();
+    const activeMenu = route.adminMenu ?? 'Dashboard';
+    const [{ search }] = useRouteQuery({ search: '' });
 
 
 
@@ -108,63 +105,10 @@ function AdminDashboard({
     // NAVEGACIÓN
     // =========================================================
 
-    const navegarA = (nombre: AdminMenuName) => {
-
-        if (!nombre) {
-            return;
-        }
-
-        if (nombre === activeMenu) {
-            return;
-        }
-
-        setMenuHistory((historialAnterior) => [
-            ...historialAnterior,
-            activeMenu,
-        ]);
-
-        setActiveMenu(nombre);
-
-        setSearch('');
-    };
-
-
-    const handleMenuClick = (name: AdminMenuName) => {
-        navegarA(name);
-    };
-
-
-    // =========================================================
-    // REGRESAR
-    // =========================================================
-
-    const handleBack = () => {
-
-        if (menuHistory.length === 0) {
-
-            setActiveMenu('Dashboard');
-
-            setSearch('');
-
-            return;
-        }
-
-        const historialAnterior = [
-            ...menuHistory,
-        ];
-
-        const previousScreen =
-            historialAnterior.pop();
-
-        setMenuHistory(historialAnterior);
-
-        setActiveMenu(
-            previousScreen ?? 'Dashboard'
-        );
-
-        setSearch('');
-    };
-
+    /** Sections create real browser history entries. */
+    const navegarA = (name: AdminMenuName) => go(adminPaths[name]);
+    const handleMenuClick = navegarA;
+    const handleBack = () => back('/admin/vacantes');
 
     const renderDashboard = () => {
 

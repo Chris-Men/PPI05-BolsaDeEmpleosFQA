@@ -1,6 +1,7 @@
 import { AccountActionDialog } from '../../components/users/AccountActionDialog';
 import type { CurrentAccess } from '../../types/auth';
 import { useEffect, useState } from 'react';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { useAuth } from '../../hooks/useAuth';
 import { UserFormDialog } from '../../components/admin/UserFormDialog';
 import { changeUserLifecycle, getUsers } from '../../services/adminUserService';
@@ -20,7 +21,7 @@ export default function Users() {
 
 /** Replaces the local-only prototype while retaining its existing table and modal styles. */
 function UserManagement({ access, permissions, isSuperAdmin, creationRoles }: UserManagementProps) {
-  const [filters, setFilters] = useState<UserFilters>({ search: '', role: '', status: '', page: 1, pageSize: 20 });
+  const [filters, setFilters, correctFilters] = useRouteQuery<UserFilters>({ search: '', role: '', status: '', deleted:false, page: 1, pageSize: 20 }, {role:{choices:['',...Object.keys(ROLE_LABELS)]},status:{choices:['','ACTIVE','DISABLED']},pageSize:{max:100}});
   const [data, setData] = useState<UserListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,7 +39,7 @@ function UserManagement({ access, permissions, isSuperAdmin, creationRoles }: Us
         if (!active) return;
         const lastPage = Math.max(1, Math.ceil(result.total / result.pageSize));
         if (filters.page > lastPage) {
-          setFilters((current) => ({ ...current, page: lastPage }));
+          correctFilters({...filters,page:lastPage});
           return;
         }
         setData(result);
@@ -47,7 +48,7 @@ function UserManagement({ access, permissions, isSuperAdmin, creationRoles }: Us
       }).finally(() => { if (active) setLoading(false); });
     }, 250);
     return () => { active = false; window.clearTimeout(timer); controller.abort(); };
-  }, [filters, revision]);
+  }, [filters, revision, correctFilters]);
 
   /** Applies filters atomically with resetting pagination. */
   const filter = (patch: Partial<UserFilters>): void => setFilters((current) => ({ ...current, ...patch, page: 1 }));

@@ -1,3 +1,5 @@
+import { useAuth } from '../hooks/useAuth';
+import { isAdministrator } from '../utils/routes';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type { Job } from '../types/models';
 
@@ -10,6 +12,7 @@ interface JobDetailProps {
 export default function JobDetail({
   selectedJob, onApply,
 }: JobDetailProps) {
+  const { session } = useAuth();
   return (
     <div className="screen">
       <div className="d-hero">
@@ -73,7 +76,7 @@ export default function JobDetail({
               <div className="mrow"><span className="ml">Jornada</span><span className="mv">{selectedJob.type}</span></div>
               <div className="mrow"><span className="ml">Ubicación</span><span className="mv">{selectedJob.location}</span></div>
               <div className="mrow"><span className="ml">Sector</span><span className="mv">{selectedJob.area}</span></div>
-              <button className="ds-apply" onClick={onApply}>Aplicar ahora →</button>
+              {!isAdministrator(session) && <button className="ds-apply" onClick={onApply}>Aplicar ahora →</button>}
             </div>
           </div>
         </div>

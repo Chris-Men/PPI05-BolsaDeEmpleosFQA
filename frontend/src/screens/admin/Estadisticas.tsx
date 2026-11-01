@@ -1,3 +1,4 @@
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAdministrativeStatistics } from '../../hooks/useAdministrativeStatistics';
 import { useOperationalReport } from '../../hooks/useOperationalReport';
@@ -16,9 +17,12 @@ import '../../styles/admin/estadisticas.css';
 
 /** Replaces prototype calculations over paginated rows with one consistent server snapshot. */
 export default function Estadisticas() {
-  const [range, setRange] = useState(() => statisticsPresetRange('30'));
+  const [initialRange] = useState(() => statisticsPresetRange('30'));
+  const [range, setRange, correctRange] = useRouteQuery(initialRange, {from:{type:'date',persistDefault:true},to:{type:'date',persistDefault:true}});
   const [draft, setDraft] = useState(range);
-  const [preset, setPreset] = useState<StatisticsPreset>('30');
+  const [preset, setPreset] = useState<StatisticsPreset>('custom');
+  useEffect(() => { setDraft({from:range.from,to:range.to}); }, [range.from,range.to]);
+  useEffect(() => { if (statisticsRangeError(range)) correctRange(initialRange); }, [range, initialRange, correctRange]);
   const [error, setError] = useState('');
   const result = useAdministrativeStatistics(range);
   const report = useOperationalReport(range);
@@ -36,8 +40,8 @@ export default function Estadisticas() {
   useEffect(() => {
     if (preset !== 'lifetime' || !firstActivityDate) return;
     const next = statisticsPresetRange('lifetime', new Date(), firstActivityDate);
-    if (next.from !== range.from || next.to !== range.to) { setDraft(next); setRange(next); }
-  }, [preset, firstActivityDate, range.from, range.to]);
+    if (next.from !== range.from || next.to !== range.to) { setDraft(next); correctRange(next); }
+  }, [preset, firstActivityDate, range.from, range.to, correctRange]);
   /** Incomplete inputs preserve the last valid applied range. */
   const apply = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault(); const message = statisticsRangeError(draft); setError(message);

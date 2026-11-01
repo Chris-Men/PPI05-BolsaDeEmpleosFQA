@@ -1,4 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
+import { useNavigation } from '../../hooks/useNavigation';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { useAuth } from '../../hooks/useAuth';
 import { canManageOrganizations } from '../../utils/organizationManagement';
 import { getOrganization, getOrganizations } from '../../services/organizationService';
@@ -18,8 +20,9 @@ export default function Organizaciones({ search = '' }: OrganizationProps) {
 }
 
 /** Replaces local mock mutations with the existing API while preserving table and modal styling. */
-function OrganizationManagement({ search = '', permissions }: OrganizationManagementProps) {
-  const [filters, setFilters] = useState<OrganizationFilters>({ search, status: '', page: 1, pageSize: 20 });
+function OrganizationManagement({ permissions }: OrganizationManagementProps) {
+  const { route, location, go, back } = useNavigation();
+  const [filters, setFilters, correctFilters] = useRouteQuery<OrganizationFilters>({ search:'', status:'', page:1, pageSize:20 },{status:{choices:['','ACTIVE','INACTIVE']},pageSize:{max:100}});
   const [data, setData] = useState<OrganizationListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -29,7 +32,6 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
   const [dialog, setDialog] = useState<{ mode: 'create' | 'view' | 'edit'; organization: ManagedOrganization | null } | null>(null);
   const [transition, setTransition] = useState<ManagedOrganization | null>(null);
 
-  useEffect(() => { setFilters((current) => ({ ...current, search, page: 1 })); }, [search]);
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
@@ -38,18 +40,26 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
       void getOrganizations(filters, controller.signal).then((result) => {
         if (!active) return;
         const pages = Math.max(1, Math.ceil(result.total / result.pageSize));
-        if (filters.page > pages) { setFilters((current) => ({ ...current, page: pages })); return; }
+        if (filters.page > pages) { correctFilters({...filters,page:pages}); return; }
         setData(result);
       }).catch((failure: unknown) => {
         if (active) { setData(null); setError(failure instanceof Error ? failure.message : 'No fue posible cargar las organizaciones.'); }
       }).finally(() => { if (active) setLoading(false); });
     }, 250);
     return () => { active = false; window.clearTimeout(timer); controller.abort(); };
-  }, [filters, revision]);
+  }, [filters, revision, correctFilters]);
 
+  useEffect(() => {
+    if (!route.organizationId) { setDialog(value => value?.mode === 'view' ? null : value); return; }
+    let active = true; setError(''); setDialog(null);
+    void getOrganization(route.organizationId).then(organization => { if (active) setDialog({mode:'view',organization}); })
+      .catch((failure: unknown) => { if (active) setError(failure instanceof Error ? failure.message : 'No fue posible consultar la organización.'); });
+    return () => { active = false; };
+  }, [route.organizationId]);
   /** Loads authoritative details before viewing or editing. */
   const open = async (organization: ManagedOrganization, mode: 'view' | 'edit'): Promise<void> => {
     if (busy) return;
+    if (mode === 'view') { go('/admin/organizaciones/' + organization.id + location.search); return; }
     setBusy(true); setError('');
     try { setDialog({ mode, organization: await getOrganization(organization.id) }); }
     catch (failure: unknown) { setError(failure instanceof Error ? failure.message : 'No fue posible consultar la organización.'); }
@@ -99,7 +109,7 @@ function OrganizationManagement({ search = '', permissions }: OrganizationManage
     </nav>
     {transition && <OrganizationStatusDialog organization={transition} onClose={() => setTransition(null)}
       onSaved={() => { setTransition(null); setNotice('Estado actualizado correctamente.'); setRevision((value) => value + 1); }} />}
-    {dialog && <OrganizationDialog mode={dialog.mode} organization={dialog.organization} onClose={() => setDialog(null)}
+    {dialog && <OrganizationDialog mode={dialog.mode} organization={dialog.organization} onClose={() => { if (route.organizationId) back('/admin/organizaciones' + location.search); else setDialog(null); }}
       onSaved={() => { setDialog(null); setNotice('Organización guardada correctamente.'); setRevision((value) => value + 1); }} />}
   </section>;
 }

@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, KeyRound, LockKeyhole, LogOut, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,15 +10,17 @@ import { fieldErrors, passwordErrors } from '../../validation/fields';
 import '../../styles/users/profileSettings.css';
 
 type PasswordField = 'currentPassword' | 'newPassword' | 'confirmation';
+interface CandidateSettingsProps { administrative?: boolean }
 
 /** Candidate account controls grouped in the profile settings section. */
-export function CandidateSettings() {
+export function CandidateSettings({ administrative = false }: CandidateSettingsProps = {}) {
   const { changePassword } = useAuth();
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmation: '' });
   const [visible, setVisible] = useState<Record<PasswordField, boolean>>({
     currentPassword: false, newPassword: false, confirmation: false,
   });
   const [busy, setBusy] = useState(false);
+  useUnsavedChanges(Object.values(passwords).some(Boolean), busy);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const live = useLiveValidation(passwords, values => {
@@ -112,9 +115,9 @@ export function CandidateSettings() {
       <SessionControls showCurrent={false} />
     </section>
 
-    <section className="profile-settings-delete" aria-label="Eliminar cuenta">
+    {!administrative && <section className="profile-settings-delete" aria-label="Eliminar cuenta">
       <span className="profile-settings-delete-icon"><Trash2 size={21} /></span>
       <DeleteOwnAccount />
-    </section>
+    </section>}
   </div>;
 }

@@ -17,6 +17,7 @@ RUN npm run build
 FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache postgresql17-client
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma

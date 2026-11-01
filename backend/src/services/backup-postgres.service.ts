@@ -59,7 +59,7 @@ export class BackupPostgres {
     return createHash('sha256').update(JSON.stringify(applied.map(row => [row.migration_name, row.checksum]))).digest('hex');
   }
 
-  /** PostgreSQL 17 is the supported server and client version for this development adapter. */
+  /** PostgreSQL 17 is the supported server and client version in every deployment. */
   async assertVersion(directory: string): Promise<void> {
     const rows = await this.database.$queryRaw<Array<{ version: number }>>`SELECT current_setting('server_version_num')::integer AS version`;
     if (Math.floor((rows[0]?.version ?? 0) / 10_000) !== 17) throw new AppError(503, 'El respaldo requiere PostgreSQL 17.');

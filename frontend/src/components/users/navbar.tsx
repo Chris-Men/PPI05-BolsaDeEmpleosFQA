@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+import { isAdministrator, isCandidate } from '../../utils/routes';
 import { SessionControls } from '../auth/SessionControls';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,7 +32,7 @@ export default function Navbar({
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { session } = useAuth();
-  const canReadNotifications = session?.roles.includes('CANDIDATE') && session.permissions.includes('notifications.read.own');
+  const canReadNotifications = isCandidate(session) && session?.permissions.includes('notifications.read.own');
   useEffect(() => { setNotificationsOpen(false); }, [screen]);
 
   const handleNavigation = (target: ScreenName) => {
@@ -92,8 +94,9 @@ export default function Navbar({
                     navigateTo('profile');
                   }}
                 >
-                  Ir al perfil
+                  Mi perfil
                 </button>
+                {isAdministrator(session) && <Link className="nav-user-dropdown-item" to="/admin" onClick={() => setUserMenuOpen(false)}>Panel administrativo</Link>}
                 <SessionControls showAll={false} beforeClose={beforeLogout} />
               </div>
             )}

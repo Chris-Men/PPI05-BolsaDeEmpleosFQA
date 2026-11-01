@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../../services/api';
 import type { CandidateProfileState } from '../../hooks/useCandidateProfile';
@@ -36,6 +37,8 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
   const originalProfile = useRef<CandidateProfileData | null>(null);
   const data = draft ?? state.profile;
   const editing = Boolean(draft);
+  const modified = draft && originalProfile.current ? Object.keys(changedProfileFields(originalProfile.current, { ...draft, skills: skillsText.split(',').map(value => value.trim()).filter(Boolean) })).length > 0 : false;
+  const guard = useUnsavedChanges(modified, state.busy);
   if (state.loading) return <section className="profile-card candidate-editor"><p role="status">Cargando tu perfil…</p></section>;
   if (!data) return <section className="profile-card candidate-editor"><p role="alert">{state.error || 'No fue posible cargar tu perfil.'}</p>
     <button type="button" onClick={() => void state.reload()}>Reintentar</button></section>;
@@ -53,7 +56,7 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
     const payload = changedProfileFields(baseline, { ...draft, skills: skillsText.split(',').map(value => value.trim()).filter(Boolean) });
     if (!Object.keys(payload).length) { setDraft(null); setNotice('No hay cambios para guardar.'); return; }
     try {
-      await state.save(payload);
+      await state.save(payload); guard.commit();
       setDraft(null); setNotice('Perfil actualizado correctamente.');
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No fue posible guardar tu perfil.');
@@ -133,7 +136,7 @@ export function CandidateProfileEditor({ state }: CandidateProfileEditorProps) {
         <div id={skillsId + '-error'}>{Object.entries(fields).filter(([field]) => field.startsWith('skills')).map(([field, message]) => <small role="alert" key={field}>{message}</small>)}</div>
       </div>
       {editing && <div className="candidate-editor-actions">
-        <button type="button" disabled={state.busy} onClick={() => { setDraft(null); setError(''); setFields({}); }}>Cancelar edición</button>
+        <button type="button" disabled={state.busy} onClick={() => guard.leave(() => { setDraft(null); setError(''); setFields({}); })}>Cancelar edición</button>
         <button type="submit" className="profile-primary-button" disabled={state.busy}>{state.busy ? 'Guardando…' : 'Guardar perfil'}</button>
       </div>}
     </form>

@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { AssignableRole, ManagedUser, UserFormValues } from '../../types/adminUser';
 import { ApiError } from '../../services/api';
@@ -5,6 +6,7 @@ import { createUser, updateUser } from '../../services/adminUserService';
 import { getAccountIdentityValidationError, getRegistrationValidationError } from '../../validation/register';
 import { buildUserUpdate, ROLE_LABELS } from '../../utils/userManagement';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
+import { useModalDialog } from '../../hooks/useModalDialog';
 import { useLiveValidation } from '../../hooks/useLiveValidation';
 import { emailError, textError, passwordErrors, fieldErrors } from '../../validation/fields';
 
@@ -16,8 +18,8 @@ interface UserFormDialogProps {
 }
 
 /** Native modal keeps focus inside the form and reuses the existing administrative design. */
-export function UserFormDialog({ user, creationRoles, onClose, onSaved }: UserFormDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function UserFormDialog({ user, creationRoles, onClose: closeEditor, onSaved }: UserFormDialogProps) {
+  const dialogRef = useModalDialog();
   const firstInputRef = useRef<HTMLInputElement>(null);
   const submitting = useRef(false);
   const [form, setForm] = useState<UserFormValues>({
@@ -27,14 +29,14 @@ export function UserFormDialog({ user, creationRoles, onClose, onSaved }: UserFo
   });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const baseline = useRef(JSON.stringify(form));
+  const guard = useUnsavedChanges(JSON.stringify(form) !== baseline.current, busy);
+  const onClose = () => guard.leave(closeEditor);
   const live = useLiveValidation(form, values => fieldErrors({ fullName: textError(values.fullName, 2, 150), email: emailError(values.email), ...(!user ? passwordErrors(values.password) : {}), role: !user && !values.role ? 'Selecciona un rol.' : '' }));
   /** Tocar fuera del diálogo equivale a Cancelar (salvo mientras se guarda). */
   useBackdropClose(dialogRef, onClose, busy);
   useEffect(() => {
-    const dialog = dialogRef.current;
-    dialog?.showModal();
     firstInputRef.current?.focus();
-    return () => { dialog?.close(); };
   }, []);
 
   /** Sends only the fields allowed for the chosen operation and prevents duplicate submissions. */
@@ -58,7 +60,7 @@ export function UserFormDialog({ user, creationRoles, onClose, onSaved }: UserFo
         fullName: form.fullName.trim(), email: form.email.trim().toLowerCase(), password: form.password, role: form.role,
       });
       const revoked = Boolean(patch && ('email' in patch || 'role' in patch));
-      onSaved(user
+      guard.commit(); onSaved(user
         ? 'Usuario actualizado correctamente.' + (revoked ? ' Sus sesiones se cerraron; deberá iniciar sesión nuevamente.' : '')
         : 'Usuario creado correctamente.');
     } catch (failure: unknown) {

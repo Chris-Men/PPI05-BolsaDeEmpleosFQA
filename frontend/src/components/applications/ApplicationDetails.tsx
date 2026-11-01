@@ -8,25 +8,28 @@ import { APPLICATION_LABELS } from '../../types/application';
 import { KIND_LABELS } from '../../types/opportunity';
 import { canManageApplications } from '../../utils/applicationManagement';
 import { useBackdropClose } from '../../hooks/useBackdropClose';
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { formatBirthDate, formatSex } from '../../utils/candidateValidation';
 import '../../styles/users/applications.css';
 import '../../styles/components/detailDialog.css';
 
 interface ApplicationDetailsProps { id: number; admin?: boolean; onClose: () => void; onChanged: () => void }
 /** Displays the immutable submitted snapshot and performs versioned, confirmed decisions. */
-export function ApplicationDetails({ id, admin = false, onClose, onChanged }: ApplicationDetailsProps) {
+export function ApplicationDetails({ id, admin = false, onClose: closeDetail, onChanged }: ApplicationDetailsProps) {
   const dialog = useModalDialog(); const { session } = useAuth();
 
   const titleId = useId();
   const [application, setApplication] = useState<Application | null>(null); const [error, setError] = useState('');
   const [action, setAction] = useState<Extract<ApplicationStatus, 'IN_REVIEW' | 'SELECTED' | 'REJECTED' | 'WITHDRAWN'> | null>(null);
   const [reason, setReason] = useState(''); const [busy, setBusy] = useState(false); const [revision, setRevision] = useState(0);
+  const guard = useUnsavedChanges(Boolean(action && reason), busy);
+  const onClose = () => guard.leave(closeDetail);
   useBackdropClose(dialog, onClose, busy);
   useEffect(() => { let current = true; setError(''); void getApplication(id, admin).then(value => { if (current) setApplication(value); }).catch((failure: unknown) => { if (current) setError(failure instanceof Error ? failure.message : 'No se pudo consultar la postulación.'); }); return () => { current = false; }; }, [id, admin, revision]);
   const decide = async () => {
     if (!application || !action || busy) return; setBusy(true); setError(''); try {
       const saved = action === 'WITHDRAWN' ? await withdrawApplication(id, application.version) : await decideApplication(id, application.version, action, reason.trim() || undefined);
-      setApplication(saved); setAction(null); setReason(''); onChanged();
+      guard.commit(); setApplication(saved); setAction(null); setReason(''); onChanged();
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'No se pudo guardar la decisión.'); } finally { setBusy(false); }
   };
   const download = async () => { if (!application?.resume) return; setBusy(true); try { await saveDownloadedResume(downloadApplicationResume(id, admin), application.resume.originalName); } catch (failure) { setError(failure instanceof Error ? failure.message : 'No se pudo descargar el CV.'); } finally { setBusy(false); } };
@@ -50,7 +53,7 @@ export function ApplicationDetails({ id, admin = false, onClose, onChanged }: Ap
         {application.professionalProfile && (application.professionalProfile.professionalSummary || application.professionalProfile.workExperiences.length > 0 || application.professionalProfile.educations.length > 0) && <section className="application-detail-section detail-dialog-section"><h3>Perfil al iniciar el formulario</h3><p>{application.professionalProfile.professionalSummary}</p>{application.professionalProfile.workExperiences.map((item, index) => <p key={index}>{item.position} · {item.companyName} ({item.startDate?.slice(0, 10)} — {item.endDate?.slice(0, 10) || 'Actualidad'})</p>)}{application.professionalProfile.educations.map((item, index) => <p key={index}>{item.degree} · {item.institution} ({item.startDate?.slice(0, 10)} — {item.endDate?.slice(0, 10) || 'Actualidad'})</p>)}</section>}
         <section className="application-detail-section detail-dialog-section"><h3>Documento enviado</h3>{application.resume ? <><p className="application-document-name">{application.resume.originalName}</p>{canDownload && <button type="button" className="application-button secondary" disabled={busy} onClick={() => void download()}>Descargar PDF original</button>}</> : <p>Esta postulación se envió sin CV.</p>}</section>
         <section className="application-detail-section detail-dialog-section"><h3>Historial</h3><ol className="application-history">{application.history.map(item => <li key={item.id}><strong>{APPLICATION_LABELS[item.status]}</strong> · {item.createdAt ? new Date(item.createdAt).toLocaleString('es-SV') : 'Fecha no disponible'}{item.reason && <p className="application-text">{item.reason}</p>}</li>)}</ol></section>
-        {action ? <section className="application-confirm" data-tone={action === 'REJECTED' || action === 'WITHDRAWN' ? 'danger' : 'safe'}><h3>{action === 'WITHDRAWN' ? '¿Retirar esta postulación?' : 'Confirmar: ' + APPLICATION_LABELS[action]}</h3><p>{action === 'WITHDRAWN' ? 'Conservaremos este intento y podrás volver a postular.' : 'La decisión quedará en el historial y será visible para el candidato.'}</p>{admin && <label>Explicación opcional<textarea maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} /></label>}<div className="application-actions"><button type="button" className="application-button secondary" disabled={busy} onClick={() => setAction(null)}>Cancelar</button><button type="button" className="application-button" disabled={busy} onClick={() => void decide()}>{busy ? 'Guardando…' : 'Confirmar'}</button></div></section> : <div className="application-actions">{active && canDecide && <>{application.status === 'PENDING' && <button type="button" className="application-button secondary" onClick={() => setAction('IN_REVIEW')}>Pasar a revisión</button>}<button type="button" className="application-button" onClick={() => setAction('SELECTED')}>Seleccionar</button><button type="button" className="application-button danger" onClick={() => setAction('REJECTED')}>Rechazar</button></>}{active && !admin && session?.permissions.includes('applications.withdraw.own') && <button type="button" className="application-button danger" onClick={() => setAction('WITHDRAWN')}>Retirar postulación</button>}</div>}
+        {action ? <section className="application-confirm" data-tone={action === 'REJECTED' || action === 'WITHDRAWN' ? 'danger' : 'safe'}><h3>{action === 'WITHDRAWN' ? '¿Retirar esta postulación?' : 'Confirmar: ' + APPLICATION_LABELS[action]}</h3><p>{action === 'WITHDRAWN' ? 'Conservaremos este intento y podrás volver a postular.' : 'La decisión quedará en el historial y será visible para el candidato.'}</p>{admin && <label>Explicación opcional<textarea maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} /></label>}<div className="application-actions"><button type="button" className="application-button secondary" disabled={busy} onClick={() => guard.leave(() => { setAction(null); setReason(''); })}>Cancelar</button><button type="button" className="application-button" disabled={busy} onClick={() => void decide()}>{busy ? 'Guardando…' : 'Confirmar'}</button></div></section> : <div className="application-actions">{active && canDecide && <>{application.status === 'PENDING' && <button type="button" className="application-button secondary" onClick={() => setAction('IN_REVIEW')}>Pasar a revisión</button>}<button type="button" className="application-button" onClick={() => setAction('SELECTED')}>Seleccionar</button><button type="button" className="application-button danger" onClick={() => setAction('REJECTED')}>Rechazar</button></>}{active && !admin && session?.permissions.includes('applications.withdraw.own') && <button type="button" className="application-button danger" onClick={() => setAction('WITHDRAWN')}>Retirar postulación</button>}</div>}
       </>}
     </div>
   </dialog>;

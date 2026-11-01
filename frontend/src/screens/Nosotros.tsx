@@ -33,7 +33,6 @@ import {
 
 import nosotrosDesktop from "../components/imagenes/img/nosotros.png";
 import nosotrosResponsive from "../components/imagenes/img/nosotros renponsiv.png";
-import fundadorImg from "../components/imagenes/img/Fundador.png";
 import "../styles/users/nosotros.css";
 import { useSiteSettings } from '../hooks/useSiteSettings';
 
@@ -241,7 +240,7 @@ export default function Nosotros() {
       </p>
     </div>
 
-    <figure className="intro-founder">
+    {/* <figure className="intro-founder">
       <img
         src={fundadorImg}
         alt="Fundador de la Fundación Quintanilla Amaya"
@@ -249,11 +248,11 @@ export default function Nosotros() {
         decoding="async"
       />
       <figcaption className="intro-founder-caption">
-    <strong>Joel Quintanilla Amaya</strong>
-    <br></br>
-    <span>Fundador</span>
-  </figcaption>
-    </figure>
+        <strong>Joel Quintanilla Amaya</strong>
+          <br></br>
+        <span>Fundador</span>
+      </figcaption>
+    </figure> */}
   </div>
 </section>
 

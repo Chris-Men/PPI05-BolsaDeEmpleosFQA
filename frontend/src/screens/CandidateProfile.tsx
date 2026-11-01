@@ -1,4 +1,7 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
+import { useNavigation } from '../hooks/useNavigation';
+import { useRouteQuery } from '../hooks/useRouteQuery';
+import { profilePaths, type ProfileSection } from '../utils/routes';
 import { useApplications, useNotifications } from '../hooks/useApplications';
 import { ApplicationList } from '../components/applications/ApplicationList';
 import { CandidateNotifications } from '../components/applications/CandidateNotifications';
@@ -50,7 +53,7 @@ interface CandidateProfileProps {
 
   candidateState: CandidateProfileState;
 
-  notificationsRequest: number;
+
 }
 
 /** Summary card metadata keeps the selected card, counter and panel heading consistent. */
@@ -61,9 +64,6 @@ interface ProfileSummaryOption {
   count: number | string;
   icon: LucideIcon;
 }
-
-/** Sidebar destinations keep personal editing separate from the candidate overview. */
-type ProfileSection = 'overview' | 'personal' | 'settings' | 'applications' | 'notifications';
 
 /** Renders the candidate overview, personal editor, and account settings. */
 export default function CandidateProfile({
@@ -77,20 +77,20 @@ export default function CandidateProfile({
 
   candidateState,
 
-  notificationsRequest,
+
 }: CandidateProfileProps) {
 
   /* =========================================================
      ESTADOS
   ========================================================= */
 
-  const [activeTab, setActiveTab] = useState<CandidateSummarySection>('saved');
+  const { route, go } = useNavigation();
+  const [{ summary: activeTab }, setSummary] = useRouteQuery<{ summary: CandidateSummarySection }>({ summary: 'saved' }, { summary: { choices: ['saved', 'applications', 'employment', 'volunteering', 'students'] } });
+  const setActiveTab = (summary: CandidateSummarySection) => setSummary({ summary });
+  const activeSection = route.profileSection ?? 'overview';
+  const setActiveSection = (section: ProfileSection) => go(profilePaths[section]);
   const summaryPanelId = useId();
   const summaryTitleId = useId();
-  const initialApplication = Number(new URLSearchParams(window.location.search).get('postulacion')) || undefined;
-  const [activeSection, setActiveSection] = useState<ProfileSection>(notificationsRequest > 0 ? 'notifications' : initialApplication ? 'applications' : 'overview');
-  // Repeated header navigation must also work while another profile section is open.
-  useEffect(() => { if (notificationsRequest > 0) setActiveSection('notifications'); }, [notificationsRequest]);
   const notifications = useNotifications();
   const savedState = useSavedOpportunityState();
   const all = useApplications({ pageSize:1 });
@@ -121,12 +121,7 @@ export default function CandidateProfile({
   const selection = summaryOptions.find(option => option.section === activeTab)!;
   const SummaryIcon = selection.icon;
   /** Opens the complete list instead of reopening an earlier notification's deep-linked detail. */
-  const viewApplications = (): void => {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('postulacion');
-    window.history.replaceState(null, '', url);
-    setActiveSection('applications');
-  };
+  const viewApplications = (): void => setActiveSection('applications');
 
 
   /* =========================================================
@@ -402,7 +397,7 @@ export default function CandidateProfile({
               <CandidateProfileEditor state={candidateState} />
             </>
           ) : activeSection === 'applications' ? (
-            <ApplicationList onResume={onResume} onChanged={changed} initialId={initialApplication} />
+            <ApplicationList onResume={onResume} onChanged={changed} />
           ) : activeSection === 'notifications' ? (
             <CandidateNotifications onChanged={notifications.reload} />
           ) : (

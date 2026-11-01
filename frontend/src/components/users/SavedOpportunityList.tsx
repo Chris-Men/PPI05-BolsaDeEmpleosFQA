@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { Star } from 'lucide-react';
 import { useSavedOpportunityState } from '../../hooks/useSavedOpportunities';
 import { listSavedOpportunities } from '../../services/savedOpportunityService';
@@ -12,7 +13,8 @@ interface SavedOpportunityListProps { onView: (key: string) => void; onExplore: 
 /** Own summaries include unavailable vacancies and never depend on the public listing's current page. */
 export function SavedOpportunityList({ onView, onExplore }: SavedOpportunityListProps) {
   const state = useSavedOpportunityState();
-  const [page, setPage] = useState(1);
+  const [{ savedPage: page }, setQuery, correctQuery] = useRouteQuery({ savedPage: 1 });
+  const setPage = (update: number | ((value: number) => number)) => setQuery(value => ({ savedPage: typeof update === 'function' ? update(value.savedPage) : update }));
   const [result, setResult] = useState<SavedOpportunityPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,13 +26,13 @@ export function SavedOpportunityList({ onView, onExplore }: SavedOpportunityList
     void listSavedOpportunities(state.userId, page, controller.signal).then(value => {
       if (controller.signal.aborted) return;
       const lastPage = Math.max(1, Math.ceil(value.total / value.pageSize));
-      if (page > lastPage) { setPage(lastPage); return; }
+      if (page > lastPage) { correctQuery({savedPage:lastPage}); return; }
       setResult(value);
     }).catch((failure: unknown) => {
       if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'No se pudieron cargar las guardadas.');
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [state.userId, state.canRead, state.revision, page, revision]);
+  }, [state.userId, state.canRead, state.revision, page, revision, correctQuery]);
   const retry = (): void => { state.reload(); setRevision(value => value + 1); };
   return <>
     {!state.canRead ? <p className="saved-list-error" role="alert">No tienes permiso para consultar guardadas.</p>

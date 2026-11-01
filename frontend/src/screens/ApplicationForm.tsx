@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../hooks/useNavigation';
 import { useState,useId,useEffect,useRef } from 'react';
 import { useApplicationDraft } from '../hooks/useApplicationDraft';
 import { useAuth } from '../hooks/useAuth';
@@ -13,10 +14,12 @@ import '../styles/users/candidateEditor.css';
 interface ApplicationFormProps { opportunityKey:string;candidateState:CandidateProfileState;onSubmitted:(value:Application)=>void;onExit:()=>void; onBeforeLeave:(save:(()=>Promise<unknown>)|null)=>void }
 /** Four-step editor with real database autosave; the profile is never updated by editing form fields. */
 export function ApplicationForm({opportunityKey,candidateState,onSubmitted,onExit,onBeforeLeave}:ApplicationFormProps) {
-  const form=useApplicationDraft(opportunityKey,onSubmitted);const fieldId=useId();
+  const complete = (value: Application) => { guard.commit(); onSubmitted(value); };
+  const form=useApplicationDraft(opportunityKey,complete);const fieldId=useId();
   const container=useRef<HTMLDivElement>(null);
   const {session}=useAuth();
   const [document,setDocument]=useState<ResumeMetadata|null>(null);const [leaving,setLeaving]=useState(false);
+  const guard = useUnsavedChanges(Boolean(form.draft) && (!form.saved || form.saving || form.conflict), candidateState.busy || form.submitting, form.flush);
   const storedDraft=form.draft;const saveBeforeLeave=form.flush;const resumeBusy=candidateState.busy;
   useEffect(()=>{onBeforeLeave(storedDraft?()=>resumeBusy?Promise.reject(new Error('Espera a que termine la operación del CV.')):saveBeforeLeave():null);return()=>onBeforeLeave(null);},[storedDraft,saveBeforeLeave,onBeforeLeave,resumeBusy]);
   useEffect(()=>{if(form.error)focusFirstInvalid(container.current);},[form.error,form.step]);

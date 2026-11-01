@@ -65,6 +65,8 @@ test('la intención anónima conserva solo la clave de vacante y se puede cancel
     history: { replaceState(_state, _title, next) { url = new URL(next); } },
   }});
   context.after(() => { if (previous) Object.defineProperty(globalThis, 'window', previous); else delete globalThis.window; });
+  intent.configureSavedIntentNavigation(update => { url.search = update(new URLSearchParams(url.search)).toString(); });
+  context.after(() => intent.configureSavedIntentNavigation(null));
   intent.setSavedIntent('volunteer-2');
   assert.equal(intent.getSavedIntent(), 'volunteer-2');
   assert.deepEqual([...url.searchParams.entries()], [['guardar','volunteer-2']]);

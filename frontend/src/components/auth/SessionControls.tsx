@@ -1,3 +1,4 @@
+import { useNavigation } from '../../hooks/useNavigation';
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -6,6 +7,7 @@ interface SessionControlsProps { showCurrent?: boolean; showAll?: boolean; befor
 /** Offers server-confirmed logout actions where each control is needed. */
 export function SessionControls({ showCurrent = true, showAll = true, beforeClose }: SessionControlsProps) {
   const { logout } = useAuth();
+  const { run, go } = useNavigation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -13,7 +15,7 @@ export function SessionControls({ showCurrent = true, showAll = true, beforeClos
   const close = async (all: boolean): Promise<void> => {
     if (busy) return;
     setBusy(true); setError('');
-    try { await beforeClose?.(); await logout(all); }
+    try { const closed = await run(async () => { await beforeClose?.(); await logout(all); }); if (closed) go('/', true); }
     catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No fue posible cerrar la sesión. Inténtalo de nuevo.');
     } finally { setBusy(false); }

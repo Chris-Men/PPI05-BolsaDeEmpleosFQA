@@ -4,16 +4,15 @@ export const getSavedIntent = (): string | null => {
   const key = new URLSearchParams(window.location.search).get('guardar');
   return key && /^(job|volunteer)-[1-9]\d*$/.test(key) && Number(key.split('-')[1]) <= 2147483647 ? key : null;
 };
+type IntentWriter = (update: (query: URLSearchParams) => URLSearchParams) => void;
+let writer: IntentWriter | null = null;
+/** Session events share the router's query writer instead of overwriting its history metadata. */
+export const configureSavedIntentNavigation = (next: IntentWriter | null): void => { writer = next; };
 /** Removes a consumed or cancelled save request without changing other navigation parameters. */
 export const clearSavedIntent = (): void => {
-  if (typeof window === 'undefined') return;
-  const url = new URL(window.location.href);
-  if (!url.searchParams.has('guardar')) return;
-  url.searchParams.delete('guardar'); window.history.replaceState(null, '', url);
+  writer?.(query => { query.delete('guardar'); return query; });
 };
 /** Starts an explicit anonymous save action; mutually exclusive application intents are discarded. */
 export const setSavedIntent = (key: string): void => {
-  const url = new URL(window.location.href);
-  url.searchParams.set('guardar', key); url.searchParams.delete('postular'); url.searchParams.delete('postulacion');
-  window.history.replaceState(null, '', url);
+  writer?.(query => { query.set('guardar', key); query.delete('postular'); query.delete('postulacion'); return query; });
 };
