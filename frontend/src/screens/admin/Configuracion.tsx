@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
@@ -60,6 +61,8 @@ export default function Configuracion() {
   const [conflict, setConflict] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false); const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [revision, setRevision] = useState(0);
+  const dirty = Boolean(draft && document) && JSON.stringify(draft) !== JSON.stringify(document?.configuration);
+  const guard = useUnsavedChanges(dirty, busy);
   const requests = useRef(new Set<AbortController>());
   useEffect(() => { const controllers = requests.current; return () => { controllers.forEach(item => item.abort()); controllers.clear(); }; }, []);
   useEffect(() => {
@@ -163,11 +166,9 @@ export default function Configuracion() {
   };
   if (!allowed) return <p role="alert">No tienes permiso para consultar la configuración.</p>;
   if (loading) return <p role="status">Cargando configuración…</p>;
-  // Ask for confirmation only when there is something to lose.
-  const dirty = Boolean(draft && document) && JSON.stringify(draft) !== JSON.stringify(document?.configuration);
   return <section className="admin-screen configuracion-screen">
     {!editable && <p className="configuration-notice">Solo Super Admin puede modificar estos valores. Vista de consulta.</p>}
-    {error && !confirmReset && <div role="alert" className="configuration-error">{error} {conflict && <p>Recargar descartará las ediciones locales y mostrará la última versión guardada.</p>}<button type="button" disabled={busy} onClick={() => setRevision(value => value + 1)}>{conflict ? 'Recargar configuración' : 'Reintentar carga'}</button></div>}
+    {error && !confirmReset && <div role="alert" className="configuration-error">{error} {conflict && <p>Recargar descartará las ediciones locales y mostrará la última versión guardada.</p>}<button type="button" disabled={busy} onClick={() => guard.leave(() => setRevision(value => value + 1))}>{conflict ? 'Recargar configuración' : 'Reintentar carga'}</button></div>}
     {notice && <p role="status" className="configuration-notice">{notice}</p>}
     {draft && document && <form className="settings-grid" onChangeCapture={live.watch} onSubmit={save} noValidate>
       {sections.map(section => <div className="settings-card" key={section.key}><div className="form-section-title"><h3>{section.label}</h3><span>{section.description}</span></div>

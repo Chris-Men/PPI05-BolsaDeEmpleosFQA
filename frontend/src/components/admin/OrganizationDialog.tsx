@@ -1,4 +1,6 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useUnsavedChanges } from '../../hooks/useNavigation';
+import { useRef, useState, type FormEvent } from 'react';
+import { useModalDialog } from '../../hooks/useModalDialog';
 import { ApiError } from '../../services/api';
 import { createOrganization, updateOrganization } from '../../services/organizationService';
 import type { ManagedOrganization } from '../../types/organization';
@@ -15,24 +17,21 @@ interface OrganizationDialogProps {
 }
 
 /** Accessible modal for the API's editable fields; state changes use their own endpoint. */
-export function OrganizationDialog({ mode, organization, onClose, onSaved }: OrganizationDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function OrganizationDialog({ mode, organization, onClose: closeEditor, onSaved }: OrganizationDialogProps) {
+  const dialogRef = useModalDialog();
   const submitting = useRef(false);
   const [form, setForm] = useState({ name: organization?.name ?? '', email: organization?.email ?? '', description: organization?.description ?? '' });
   const [error, setError] = useState('');
   const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const viewing = mode === 'view';
+  const baseline = useRef(JSON.stringify(form));
+  const guard = useUnsavedChanges(!viewing && JSON.stringify(form) !== baseline.current, busy);
+  const onClose = () => guard.leave(closeEditor);
   const live = useLiveValidation(form, values => fieldErrors({ name: textError(values.name, 2, 150), email: emailError(values.email, false), description: values.description.trim().length > 5000 ? 'Máximo 5000 caracteres.' : '' }));
 
   // Click/tap outside behaves like "Cancelar"/"Cerrar"; blocked while saving.
   useBackdropClose(dialogRef, onClose, busy);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    return () => { dialog?.close(); };
-  }, []);
 
   /** Prevents duplicate writes and retains the form if validation or persistence fails. */
   const save = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -45,7 +44,7 @@ export function OrganizationDialog({ mode, organization, onClose, onSaved }: Org
     try {
       if (organization) await updateOrganization(organization.id, input);
       else await createOrganization(input);
-      onSaved();
+      guard.commit(); onSaved();
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No fue posible guardar la organización.');
       if (failure instanceof ApiError) setFields(Object.fromEntries(failure.validationErrors.map((field) => [field.field, field.message])));

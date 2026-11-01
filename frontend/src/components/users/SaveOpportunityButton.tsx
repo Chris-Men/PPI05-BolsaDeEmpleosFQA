@@ -1,3 +1,5 @@
+import { useAuth } from '../../hooks/useAuth';
+import { isAdministrator } from '../../utils/routes';
 import { useSavedOpportunityState } from '../../hooks/useSavedOpportunities';
 import '../../styles/users/savedOpportunities.css';
 
@@ -9,7 +11,9 @@ interface SaveOpportunityButtonProps {
 
 /** Reuses existing button appearances while all types share one account-scoped mutation state. */
 export function SaveOpportunityButton({ opportunityKey, className = 'save-opportunity-button', variant = 'full' }: SaveOpportunityButtonProps) {
+  const { session } = useAuth();
   const state = useSavedOpportunityState();
+  if (isAdministrator(session)) return null;
   const saved = state.keys.has(opportunityKey);
   const pending = state.pending.has(opportunityKey);
   const error = state.mutationErrors.get(opportunityKey);

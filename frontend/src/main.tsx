@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import { AppRoutes } from './routes/AppRoutes'
 import { AuthProvider } from './state/AuthProvider'
 import { SiteSettingsProvider } from './state/SiteSettingsProvider'
 import './index.css'
@@ -10,6 +10,6 @@ import { StatisticsExportMonitor } from './components/admin/StatisticsExportPane
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider><SiteSettingsProvider><StatisticsExportsProvider><App /><BackupOperationMonitor /><StatisticsExportMonitor /></StatisticsExportsProvider></SiteSettingsProvider></AuthProvider>
+    <AuthProvider><SiteSettingsProvider><StatisticsExportsProvider><AppRoutes /><BackupOperationMonitor /><StatisticsExportMonitor /></StatisticsExportsProvider></SiteSettingsProvider></AuthProvider>
   </React.StrictMode>,
 )

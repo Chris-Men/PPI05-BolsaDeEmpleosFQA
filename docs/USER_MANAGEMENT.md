@@ -2,7 +2,7 @@
 
 ## Autorización
 
-El panel conserva su navegación interna. El backend valida roles y permisos actuales en PostgreSQL; la interfaz oculta acciones no permitidas.
+El panel utiliza rutas bajo `/admin`; filtros y páginas se conservan en la URL. Los formularios de usuarios permanecen como diálogos locales con protección de cambios pendientes. Véase [Navegación del frontend](FRONTEND_NAVIGATION.md). El backend valida roles y permisos actuales en PostgreSQL; la interfaz oculta acciones no permitidas.
 
 | Acción | Candidato | Administrador | Super Admin |
 | --- | --- | --- | --- |

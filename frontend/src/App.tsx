@@ -1,4 +1,11 @@
+import { QuickViewDialog } from './components/QuickViewDialog';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { Navigate } from 'react-router';
+import { useNavigation } from './hooks/useNavigation';
+import { useRouteQuery } from './hooks/useRouteQuery';
+import { authenticationDestination, isAdministrator, isCandidate, legacyDestination, opportunityPath, screenPaths } from './utils/routes';
+import { getApplication } from './services/applicationService';
+import { AccountProfile } from './screens/AccountProfile';
 import { useOpportunityListing, useOpportunityCatalogs, useHomeStatistics } from './hooks/useOpportunities';
 import { getOpportunity } from './services/opportunityService';
 import { opportunityToJob, opportunityToVolunteer, opportunityToStudent } from './utils/opportunityPresentation';
@@ -19,7 +26,7 @@ import type {
 import { useAuth } from './hooks/useAuth';
 import { useSavedOpportunities } from './hooks/useSavedOpportunities';
 import { SavedOpportunitiesContext } from './state/savedOpportunitiesContext';
-import { clearSavedIntent, getSavedIntent, setSavedIntent } from './utils/savedIntent';
+import { clearSavedIntent, getSavedIntent } from './utils/savedIntent';
 import { sessionStore } from './services/sessionStore';
 import './styles/users/savedOpportunities.css';
 import { useCandidateProfile } from './hooks/useCandidateProfile';
@@ -56,6 +63,7 @@ import Navbar from './components/users/navbar';
 /** Remounts account-scoped state whenever the real identity changes. */
 export default function App() {
     const { status, session, error, retry } = useAuth();
+    const { route, location, go } = useNavigation();
 
     if (status === 'loading') {
         return (
@@ -85,19 +93,18 @@ export default function App() {
         );
     }
 
-    if (
-        session?.roles.some(
-            (role) =>
-                role === 'SUPER_ADMIN' ||
-                role === 'ADMINISTRATOR'
-        )
-    ) {
-        return (
-            <AuthenticatedDashboard
-                key={session.userId}
-            />
-        );
+    const legacy = legacyDestination(location.pathname, location.search);
+    if (legacy) return <Navigate to={legacy} replace />;
+    if (route.requiresAccount && !session) {
+        const params = new URLSearchParams({ returnTo: location.pathname + location.search });
+        const saved = new URLSearchParams(location.search).get('guardar'); if (saved) params.set('guardar', saved);
+        return <Navigate to={'/login?' + params} replace />;
     }
+    if (route.adminMenu && !isAdministrator(session) || route.candidateOnly && !isCandidate(session)) {
+        return <main className="session-status"><h1>Acceso no autorizado</h1><p>No tienes permiso para acceder a esta sección.</p><button onClick={() => go(session ? '/perfil' : '/')}>Volver</button></main>;
+    }
+    if (['login', 'register'].includes(route.screen) && session) return <Navigate to={authenticationDestination(location.search, session)} replace />;
+    if (route.adminMenu) return <AuthenticatedDashboard key={session?.userId} />;
 
     return (
         <PublicApp
@@ -110,9 +117,12 @@ export default function App() {
 /** Keeps public navigation, candidate profile, and applications scoped to one account. */
 function PublicApp() {
     const { session, logout } = useAuth();
+    const { route, location, go, back, run } = useNavigation();
+    const screen = route.screen;
     const savedState = useSavedOpportunities(session);
     const { canUpdate: savedCanUpdate, loading: savedLoading, total: savedTotal, error: savedError, change: changeSaved } = savedState;
     const [pendingSaveIntent, setPendingSaveIntent] = useState(getSavedIntent);
+    useEffect(() => { setPendingSaveIntent(getSavedIntent()); }, [location.search]);
     const [saveIntentError, setSaveIntentError] = useState('');
     const [saveIntentRetry, setSaveIntentRetry] = useState(0);
     const attemptedSaveIntent = useRef<string | null>(null);
@@ -122,54 +132,12 @@ function PublicApp() {
     // NAVEGACIÓN GLOBAL
     // ==========================================================
 
-    const getInitialScreen = (): ScreenName => {
-        const path = window.location.pathname;
+    const currentUser: CurrentUser | null = session ? {
+        email: session.user.email, role: session.roles.includes('SUPER_ADMIN') ? 'super-admin' : isAdministrator(session) ? 'administrator' : 'candidate',
+        name: session.user.fullName, initial: session.user.fullName.charAt(0).toUpperCase(),
+    } : null;
 
-        if (
-            path === '/reset-password' &&
-            new URLSearchParams(
-                window.location.search
-            ).has('token')
-        ) {
-            return 'reset-password';
-        }
-
-        if (path === '/forgot-password') {
-            return 'forgot-password';
-        }
-
-        if (getSavedIntent()) return session ? 'profile' : 'login';
-        const params = new URLSearchParams(window.location.search);
-        if (/^(job|volunteer)-[1-9][0-9]*$/.test(params.get('postular') ?? '')) return 'form';
-        if (/^[1-9][0-9]*$/.test(params.get('postulacion') ?? '')) return 'profile';
-        return 'home';
-    };
-
-
-    const [screen, setScreen] =
-        useState<ScreenName>(
-            getInitialScreen()
-        );
-
-
-    const [screenHistory, setScreenHistory] =
-        useState<ScreenName[]>([]);
-
-
-    const currentUser: CurrentUser | null =
-        session?.roles.includes('CANDIDATE')
-            ? {
-                email: session.user.email,
-                role: 'candidate',
-                name: session.user.fullName,
-                initial:
-                    session.user.fullName
-                        .charAt(0)
-                        .toUpperCase(),
-            }
-            : null;
-
-    const candidateState = useCandidateProfile(Boolean(currentUser));
+    const candidateState = useCandidateProfile(isCandidate(session));
     const beforeApplicationLeave = useRef<(() => Promise<unknown>) | null>(null);
     const registerApplicationGuard = useCallback((save: (() => Promise<unknown>) | null): void => { beforeApplicationLeave.current = save; }, []);
 
@@ -185,19 +153,14 @@ function PublicApp() {
 
     const volunteerApps: number[] = [];
     const studentApps: number[] = [];
-    const [activeStudentTab, setActiveStudentTab] =
-        useState<StudentOpportunityType>(
-            'social'
-        );
-
-
-    // ==========================================================
-    // MENÚ DEL USUARIO
-    // ==========================================================
+    const activeStudentTab: StudentOpportunityType = route.kind === 'INTERNSHIP' ? 'practica' : 'social';
+    const setActiveStudentTab = (update: StudentOpportunityType | ((previous: StudentOpportunityType) => StudentOpportunityType)): void => {
+        const next = typeof update === 'function' ? update(activeStudentTab) : update;
+        go(next === 'practica' ? '/estudiantes/practicas' : '/estudiantes/horas-sociales');
+    };
 
     const [userMenuOpen, setUserMenuOpen] =
         useState(false);
-    const [notificationsRequest, setNotificationsRequest] = useState(0);
 
 
     // ==========================================================
@@ -207,69 +170,105 @@ function PublicApp() {
     const [selectedJob, setSelectedJob] =
         useState<Job | null>(null);
     const [detailError, setDetailError] = useState('');
-    const detailRequest = useRef(0);
-    useEffect(() => () => { detailRequest.current += 1; }, []);
 
 
 
 
 
-    const [applicationKey, setApplicationKey] = useState<string | null>(new URLSearchParams(window.location.search).get('postular'));
+    const applicationKey = screen === 'form' ? route.opportunityKey ?? null : null;
     const [submittedApplication, setSubmittedApplication] = useState<Application | null>(null);
 
     // ==========================================================
     // QUICK VIEW
     // ==========================================================
 
-    const [qvOpen, setQvOpen] =
-        useState(false);
-
-
-    const [qvJob, setQvJob] =
-        useState<Job | null>(null);
+    const preview = new URLSearchParams(location.search).get('preview');
+    const qvOpen = Boolean(preview);
+    const [qvJob, storeQvJob] = useState<Job | null>(null);
+    const qvSelection = useRef<Job | null>(null);
+    const setQvJob: React.Dispatch<React.SetStateAction<Job | null>> = update => {
+      const next = typeof update === 'function' ? update(qvSelection.current) : update;
+      qvSelection.current = next; storeQvJob(next);
+    };
+    const setQvOpen: React.Dispatch<React.SetStateAction<boolean>> = update => {
+      const open = typeof update === 'function' ? update(qvOpen) : update;
+      const params = new URLSearchParams(location.search); params.delete('preview');
+      const base = location.pathname + (params.size ? '?' + params : '');
+      if (!open) { back(base); return; }
+      if (qvSelection.current) { params.set('preview', qvSelection.current.opportunityKey ?? 'job-' + qvSelection.current.id); go(location.pathname + '?' + params); }
+    };
+    useEffect(() => {
+      if (!preview) return;
+      let active = true; storeQvJob(null);
+      void getOpportunity(preview).then(value => { if (active) storeQvJob(opportunityToJob(value)); })
+        .catch((failure: unknown) => { if (active) setDetailError(failure instanceof Error ? failure.message : 'No se pudo cargar la vista rápida.'); });
+      return () => { active = false; };
+    }, [preview]);
 
 
     // ==========================================================
     // BÚSQUEDA / FILTROS
     // ==========================================================
 
-    const [searchQuery, setSearchQuery] =
-        useState('');
-
-
-    const [searchLocation, setSearchLocation] =
-        useState('Todo el país');
-
-
-    const [selectedArea, setSelectedArea] =
-        useState('Todos');
-
-
-    const [maxSalary, setMaxSalary] =
-        useState(1500);
+    const [publicFilters, setPublicFilters, correctPublicFilters] = useRouteQuery<{
+        search: string; location: string; modality?: string; categoryId?: number; salaryMax: number; page: number; pageSize: number;
+    }>({ search: '', location: '', modality: undefined, categoryId: undefined, salaryMax: 1500, page: 1, pageSize:20 }, {
+        pageSize:{max:100}, search: { maxLength: 150 }, modality: { choices: ['REMOTE', 'ON_SITE', 'HYBRID'] }, categoryId: { type: 'integer' }, salaryMax: { type: 'number', min: 0 },
+    }, ['jobs','detail','volunteers','students'].includes(screen));
     const dictionaries = useOpportunityCatalogs();
+    const searchQuery = publicFilters.search;
+    const searchLocation = publicFilters.modality === 'REMOTE' ? 'Remoto' : publicFilters.location || 'Todo el país';
+    const selectedArea = dictionaries.catalogs?.categories.find(item => item.id === publicFilters.categoryId)?.name ?? 'Todos';
+    const maxSalary = publicFilters.salaryMax;
+    const setSearchQuery = (search: string) => setPublicFilters(previous => ({ ...previous, search, page: 1 }));
+    const setSearchLocation = (location: string) => setPublicFilters(previous => ({ ...previous,
+        location: ['Todo el país', 'Remoto'].includes(location) ? '' : location, modality: location === 'Remoto' ? 'REMOTE' : undefined, page: 1 }));
+    const setSelectedArea = (name: string) => setPublicFilters(previous => ({ ...previous, categoryId: dictionaries.catalogs?.categories.find(item => item.name === name)?.id, page: 1 }));
+    const setMaxSalary = (update: number | ((previous: number) => number)) => setPublicFilters(previous => ({ ...previous,
+        salaryMax: typeof update === 'function' ? update(previous.salaryMax) : update, page: 1 }));
     const [publicDetail, setPublicDetail] = useState<Opportunity | null>(null);
     const [publicDetailError, setPublicDetailError] = useState('');
     const [publicDetailLoading, setPublicDetailLoading] = useState(false);
     const publicDetailRequest = useRef(0);
     useEffect(() => () => { publicDetailRequest.current += 1; }, []);
     const viewOpportunity = (key: string): void => {
-        const requestId = ++publicDetailRequest.current;
-        setPublicDetailError(''); setPublicDetailLoading(true);
-        void getOpportunity(key).then((value) => { if (publicDetailRequest.current === requestId) setPublicDetail(value); })
+        const requestId = ++publicDetailRequest.current; setPublicDetailError(''); setPublicDetailLoading(true);
+        void getOpportunity(key).then(value => { if (publicDetailRequest.current === requestId) go(opportunityPath(value.kind, key) + (location.pathname === opportunityPath(value.kind) ? location.search : '')); })
             .catch((failure: unknown) => { if (publicDetailRequest.current === requestId) setPublicDetailError(failure instanceof Error ? failure.message : 'La oportunidad no está disponible.'); })
             .finally(() => { if (publicDetailRequest.current === requestId) setPublicDetailLoading(false); });
     };
-    const kind: OpportunityKind = screen === 'volunteers' ? 'VOLUNTEER' : screen === 'students' ? (activeStudentTab === 'social' ? 'SOCIAL_HOURS' : 'INTERNSHIP') : 'EMPLOYMENT';
-    const filterIdentity = JSON.stringify([kind, searchQuery, searchLocation, selectedArea, maxSalary]);
-    const [pagination, setPagination] = useState({ identity: '', page: 1 });
-    const publicPage = pagination.identity === filterIdentity ? pagination.page : 1;
-    const category = dictionaries.catalogs?.categories.find((item) => item.name === selectedArea);
-    const listing = useOpportunityListing({ kind, page: publicPage, pageSize: 20,
+    const kind: OpportunityKind = route.kind ?? (screen === 'volunteers' ? 'VOLUNTEER' : 'EMPLOYMENT');
+    const publicPage = publicFilters.page;
+    useEffect(() => {
+        setSelectedJob(null); setPublicDetail(null); setDetailError(''); setPublicDetailError('');
+        if (!route.opportunityKey || screen === 'form') return;
+        let active = true; setPublicDetailLoading(true);
+        void getOpportunity(route.opportunityKey).then(value => {
+            if (!active) return;
+            const path = opportunityPath(value.kind, value.key);
+            if (path !== location.pathname) { go(path + location.search, true); return; }
+            if (value.kind === 'EMPLOYMENT') setSelectedJob(opportunityToJob(value)); else setPublicDetail(value);
+        }).catch((failure: unknown) => { if (active) { const message = failure instanceof Error ? failure.message : 'La oportunidad no está disponible.'; setDetailError(message); setPublicDetailError(message); } })
+            .finally(() => { if (active) setPublicDetailLoading(false); });
+        return () => { active = false; };
+    }, [route.opportunityKey, screen, location.pathname, location.search, go]);
+    useEffect(() => {
+        if (screen !== 'confirm' || !route.applicationId) return;
+        let active = true; setSubmittedApplication(null); setDetailError('');
+        void getApplication(route.applicationId).then(value => { if (active) setSubmittedApplication(value); })
+            .catch((failure: unknown) => { if (active) setDetailError(failure instanceof Error ? failure.message : 'No se encontró tu postulación.'); });
+        return () => { active = false; };
+    }, [screen, route.applicationId]);
+    const listing = useOpportunityListing({ kind, page: publicPage, pageSize: publicFilters.pageSize,
         search: searchQuery || undefined, location: ['Todo el país', 'Remoto'].includes(searchLocation) ? undefined : searchLocation,
-        modality: searchLocation === 'Remoto' ? 'REMOTE' : undefined,
-        categoryId: category?.id, salaryMax: kind === 'EMPLOYMENT' && maxSalary < 1500 ? maxSalary : undefined,
-    }, screen !== 'home');
+        modality: publicFilters.modality as Opportunity['modality'] | undefined,
+        categoryId: publicFilters.categoryId, salaryMax: kind === 'EMPLOYMENT' && maxSalary < 1500 ? maxSalary : undefined,
+    }, ['jobs','detail','volunteers','students'].includes(screen));
+    useEffect(() => {
+        if (!['jobs','volunteers','students'].includes(screen) || listing.loading || listing.error) return;
+        const lastPage = Math.max(1, Math.ceil(listing.page.total / listing.page.pageSize));
+        if (publicPage > lastPage) correctPublicFilters({ ...publicFilters, page: lastPage });
+    }, [screen, listing.loading, listing.error, listing.page.total, listing.page.pageSize, publicPage, publicFilters, correctPublicFilters]);
     const homeListing = useOpportunityListing({ kind: 'EMPLOYMENT', page: 1, pageSize: 6 }, screen === 'home');
     const homeStatistics = useHomeStatistics(screen === 'home');
     const jobs = (screen === 'home' ? homeListing.page.items : listing.page.items).filter((item) => item.kind === 'EMPLOYMENT').map(opportunityToJob);
@@ -294,90 +293,16 @@ function PublicApp() {
     // ==========================================================
 
     /** Saves application drafts before leaving; header requests can select the notifications tab. */
-    const navigateTo = (
-        nextScreen: ScreenName,
-        data: Job | null = null,
-        showNotifications = false
-    ) => {
-        if (screen === 'form' && nextScreen !== 'form' && beforeApplicationLeave.current) {
-            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; navigateTo(nextScreen, data, showNotifications); }).catch(() => undefined);
-            return;
+    const navigateTo = (nextScreen: ScreenName, data: Job | null = null, showNotifications = false): void => {
+        if (['login', 'register'].includes(screen) && ['home', 'profile', 'form'].includes(nextScreen) && sessionStore.getSnapshot().session) {
+            go(authenticationDestination(location.search, sessionStore.getSnapshot().session), true); return;
         }
-        const requestId = ++detailRequest.current;
-        publicDetailRequest.current += 1; setPublicDetail(null); setPublicDetailLoading(false); setPublicDetailError('');
-        if (!['form', 'login', 'register', 'forgot-password'].includes(nextScreen)) {
-            const url = new URL(window.location.href); url.searchParams.delete('postular');
-            if (nextScreen !== 'profile' || showNotifications) url.searchParams.delete('postulacion');
-            window.history.replaceState(null, '', url);
-        }
-
-        setScreenHistory(prev => [
-            ...prev,
-            screen
-        ]);
-
-
-        setScreen(nextScreen);
-        if (nextScreen === 'profile') setNotificationsRequest(value => showNotifications ? value + 1 : 0);
-
-
-        if (
-            data &&
-            nextScreen === 'detail'
-        ) {
-            setSelectedJob(null); setDetailError('');
-            if (data.opportunityKey) {
-                void getOpportunity(data.opportunityKey).then((value) => {
-                    if (detailRequest.current !== requestId) return;
-                    const fresh = opportunityToJob(value); setSelectedJob(fresh);
-                }).catch((failure: unknown) => {
-                    if (detailRequest.current === requestId) setDetailError(failure instanceof Error ? failure.message : 'La vacante no está disponible.');
-                });
-            }
-
-        }
-
-
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+        if (showNotifications) { go('/perfil/notificaciones'); return; }
+        if (nextScreen === 'detail' && data?.opportunityKey) { go('/empleos/' + data.opportunityKey + location.search); return; }
+        if (nextScreen in screenPaths) go(screenPaths[nextScreen as keyof typeof screenPaths] + (['login', 'register', 'forgot-password'].includes(nextScreen) ? location.search : ''));
+        else go('/');
     };
-
-
-    const goBack = () => {
-        if (screen === 'form' && beforeApplicationLeave.current) {
-            void beforeApplicationLeave.current().then(() => { beforeApplicationLeave.current = null; goBack(); }).catch(() => undefined);
-            return;
-        }
-        detailRequest.current += 1;
-
-        if (screenHistory.length > 0) {
-
-            const previousScreen =
-                screenHistory[
-                    screenHistory.length - 1
-                ];
-
-
-            setScreenHistory(prev =>
-                prev.slice(0, -1)
-            );
-
-
-            setScreen(previousScreen);
-
-        } else {
-
-            setScreen('home');
-
-        }
-    };
-
-
-    // ==========================================================
-    // TOAST
-    // ==========================================================
+    const goBack = (): void => back(route.parent + location.search);
 
     const showToast = useCallback((msg: string) => {
 
@@ -387,13 +312,13 @@ function PublicApp() {
     }, []);
 
     /** Commits Home's draft filters only when navigating to employment results. */
-    const searchFromHome = (query: string, location: string, area = 'Todos'): void => {
-        setSearchQuery(query.trim());
-        setSearchLocation(location);
-        setSelectedArea(area);
-        setMaxSalary(1500);
-        setPagination({ identity: '', page: 1 });
-        navigateTo('jobs');
+    const searchFromHome = (search: string, location: string, area = 'Todos'): void => {
+        const filters = new URLSearchParams();
+        if (search.trim()) filters.set('search', search.trim());
+        if (location === 'Remoto') filters.set('modality', 'REMOTE'); else if (location !== 'Todo el país') filters.set('location', location);
+        const category = dictionaries.catalogs?.categories.find(item => item.name === area);
+        if (category) filters.set('categoryId', String(category.id));
+        go('/empleos' + (filters.size ? '?' + filters : ''));
     };
 
 
@@ -447,7 +372,7 @@ function PublicApp() {
 
     const handleLogout = () => {
 
-        void logout().catch(
+        void run(async () => { await logout(); }).then(closed => { if (closed) go('/', true); }).catch(
             (failure: unknown) => {
 
                 showToast(
@@ -467,7 +392,7 @@ function PublicApp() {
 
     /** Preserves the public opportunity through candidate login or registration. */
     const requestSaveLogin = (key: string): void => {
-        setSavedIntent(key); setPendingSaveIntent(key); navigateTo('login');
+        setPendingSaveIntent(key); go('/login?guardar=' + encodeURIComponent(key) + '&returnTo=' + encodeURIComponent('/perfil?guardar=' + key));
     };
 
     // A deferred start survives StrictMode replay; transport identity guards prevent cross-account retries.
@@ -482,7 +407,7 @@ function PublicApp() {
             attemptedSaveIntent.current = attemptKey; setSaveIntentError('');
             void changeSaved(pendingSaveIntent, true).then(() => {
                 if (sessionStore.getSnapshot().session?.userId !== userId) return;
-                clearSavedIntent(); setPendingSaveIntent(null); setScreen('profile');
+                setPendingSaveIntent(null); go('/perfil', true);
                 showToast('Vacante guardada en tu perfil.');
             }).catch((failure: unknown) => {
                 if (sessionStore.getSnapshot().session?.userId === userId)
@@ -490,7 +415,7 @@ function PublicApp() {
             });
         }, 0);
         return () => clearTimeout(timer);
-    }, [session?.userId, pendingSaveIntent, savedCanUpdate, savedLoading, savedTotal, savedError, changeSaved, saveIntentRetry, showToast]);
+    }, [session?.userId, pendingSaveIntent, savedCanUpdate, savedLoading, savedTotal, savedError, changeSaved, saveIntentRetry, showToast, go]);
 
     // ==========================================================
     // POSTULACIONES
@@ -498,23 +423,13 @@ function PublicApp() {
 
     /** Preserves the vacancy in a public URL through login, registration and reload. */
     const openApplication = (key: string): void => {
-        const url = new URL(window.location.href); url.searchParams.set('postular', key); url.searchParams.delete('postulacion');
-        window.history.replaceState(null, '', url);
-        setApplicationKey(key); setQvOpen(false); setPublicDetail(null);
-        setScreenHistory(previous => [...previous, screen]); setScreen('form'); window.scrollTo({top:0,behavior:'smooth'});
+        if (session && !isCandidate(session)) { showToast('Solo los candidatos pueden postularse.'); return; }
+        go('/postular/' + encodeURIComponent(key));
     };
-    const handleVolunteerApplyClick = (spot: VolunteerSpot) => openApplication(spot.opportunityKey ?? 'volunteer-'+spot.id);
-    const handleStudentApplyClick = (spot: StudentSpot) => openApplication(spot.opportunityKey ?? 'job-'+spot.id);
-    const handleSubmittedApplication = (value: Application): void => { beforeApplicationLeave.current = null; setSubmittedApplication(value); navigateTo('confirm'); };
-    const viewSubmittedApplication = (): void => {
-        if (!submittedApplication) return;
-        const url = new URL(window.location.href); url.searchParams.set('postulacion', String(submittedApplication.id));
-        window.history.replaceState(null, '', url); navigateTo('profile');
-    };
-
-    // ==========================================================
-    // FILTROS
-    // ==========================================================
+    const handleVolunteerApplyClick = (spot: VolunteerSpot) => openApplication(spot.opportunityKey ?? 'volunteer-' + spot.id);
+    const handleStudentApplyClick = (spot: StudentSpot) => openApplication(spot.opportunityKey ?? 'job-' + spot.id);
+    const handleSubmittedApplication = (value: Application): void => { beforeApplicationLeave.current = null; setSubmittedApplication(value); go('/postulaciones/' + value.id + '/confirmacion', true); };
+    const viewSubmittedApplication = (): void => { if (submittedApplication) go('/perfil/postulaciones/' + submittedApplication.id); };
 
     const filteredJobs = jobs;
     const listingControls: OpportunityListingControls = {
@@ -526,16 +441,13 @@ function PublicApp() {
         selectedArea,
         onAreaChange: setSelectedArea,
         onClear: () => {
-            setSearchQuery('');
-            setSearchLocation('Todo el país');
-            setSelectedArea('Todos');
-            setMaxSalary(1500);
+            setPublicFilters({ search: '', location: '', modality: undefined, categoryId: undefined, salaryMax: 1500, page: 1, pageSize:20 });
             showToast('Filtros reiniciados');
         },
         total: listing.page.total,
         page: publicPage,
         pageSize: listing.page.pageSize,
-        onPageChange: (page) => setPagination({ identity: filterIdentity, page }),
+        onPageChange: (page) => setPublicFilters(previous => ({ ...previous, page })),
         loading: listing.loading,
         error: listing.error,
         catalogError: dictionaries.error,
@@ -818,7 +730,7 @@ function PublicApp() {
                         {screen === 'profile' && (
 
                             <span className="bcur">
-                                Mi perfil de candidato
+                                Mi perfil
                             </span>
 
                         )}
@@ -853,10 +765,13 @@ function PublicApp() {
             ====================================================== */}
 
             <div className="screen-container">
+                {screen === 'not-found' && <main className="session-status"><h1>Página no encontrada</h1><button onClick={() => go('/')}>Ir al inicio</button></main>}
+                {screen === 'profile' && isAdministrator(session) && <AccountProfile />}
+                {screen === 'confirm' && !submittedApplication && <p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando postulación…'}</p>}
                 {screen === 'detail' && !selectedJob && <div className="vacancy-status"><p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando vacante…'}</p>{detailError && <button type="button" onClick={() => navigateTo('jobs')}>Volver a las vacantes</button>}</div>}
                 {publicDetailLoading && <p className="vacancy-status" role="status">Cargando oportunidad…</p>}
                 {publicDetailError && <p className="vacancy-status" role="alert">{publicDetailError}</p>}
-                {publicDetail && <OpportunityDetailsDialog opportunity={publicDetail} onClose={() => setPublicDetail(null)} />}
+                {publicDetail && <OpportunityDetailsDialog opportunity={publicDetail} onClose={() => back(route.parent + location.search)} />}
 
 
                 {/* ==================================================
@@ -1035,7 +950,7 @@ function PublicApp() {
                     PERFIL
                 ================================================== */}
 
-                {screen === 'profile' && (
+                {screen === 'profile' && !isAdministrator(session) && (
 
                     <CandidateProfile
                         currentUser={currentUser}
@@ -1044,7 +959,6 @@ function PublicApp() {
                         onResume={openApplication}
                         navigateTo={navigateTo}
                         candidateState={candidateState}
-                        notificationsRequest={notificationsRequest}
                     />
 
                 )}
@@ -1056,15 +970,10 @@ function PublicApp() {
                 QUICK VIEW
             ====================================================== */}
 
+            {qvOpen && !qvJob && <QuickViewDialog onClose={() => setQvOpen(false)}><div id="qv-modal"><p role={detailError ? 'alert' : 'status'}>{detailError || 'Cargando vista rápida…'}</p><button type="button" onClick={() => setQvOpen(false)}>Cerrar</button></div></QuickViewDialog>}
             {qvOpen && qvJob && (
 
-                <div
-                    id="qv-overlay"
-                    onClick={() =>
-                        setQvOpen(false)
-                    }
-                >
-
+                <QuickViewDialog onClose={() => setQvOpen(false)}>
                     <div
                         id="qv-modal"
                         onClick={e =>
@@ -1150,20 +1059,16 @@ function PublicApp() {
 
                         <div className="qv-footer">
 
-                            <button
+                            {!isAdministrator(session) && <button
                                 className="qv-apply"
                                 onClick={() => {
-
-                                    setQvOpen(
-                                        false
-                                    );
 
                                     openApplication(qvJob.opportunityKey ?? 'job-'+qvJob.id);
 
                                 }}
                             >
                                 Aplicar ahora →
-                            </button>
+                            </button>}
 
 
                             <button
@@ -1181,7 +1086,7 @@ function PublicApp() {
 
                     </div>
 
-                </div>
+                </QuickViewDialog>
 
             )}
 

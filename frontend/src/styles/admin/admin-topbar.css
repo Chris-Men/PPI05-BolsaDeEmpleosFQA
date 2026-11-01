@@ -333,6 +333,54 @@
   animation: profileMenuIn 0.18s ease;
 }
 
+.topbar .profile-menu {
+  padding: 6px;
+}
+
+.topbar .profile-menu a,
+.topbar .profile-menu .session-controls button {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #37402f;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: none;
+}
+
+.topbar .profile-menu a:hover,
+.topbar .profile-menu a:focus-visible {
+  background: #f3f7ed;
+}
+
+.topbar .profile-menu .session-controls {
+  gap: 0;
+  margin-top: 4px;
+  padding: 4px 0 0;
+  border-top: 1px solid #e5eadf;
+}
+
+.topbar .profile-menu .session-controls button {
+  color: #b33a3a;
+}
+
+.topbar .profile-menu .session-controls button:hover,
+.topbar .profile-menu .session-controls button:focus-visible {
+  background: #fff1f1;
+}
+
+.topbar .profile-menu a:focus-visible,
+.topbar .profile-menu button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
 
 /* =====================================================
    ANIMATION

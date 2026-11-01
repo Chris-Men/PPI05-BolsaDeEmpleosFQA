@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 /** Screens available from the public application navigation. */
 export type ScreenName =
+  | "not-found"
   | "home"
   | "jobs"
   | "detail"
@@ -21,7 +22,7 @@ export type ScreenName =
 /** Candidate information used by the local profile demo. */
 export interface CurrentUser {
   email: string;
-  role: "candidate";
+  role: "candidate" | "administrator" | "super-admin";
   name: string;
   initial: string;
 }

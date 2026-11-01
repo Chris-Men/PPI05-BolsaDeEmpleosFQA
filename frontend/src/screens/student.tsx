@@ -1,3 +1,5 @@
+import { useAuth } from '../hooks/useAuth';
+import { isAdministrator } from '../utils/routes';
 import { SaveOpportunityButton } from '../components/users/SaveOpportunityButton';
 import type {
   StateSetter, StudentOpportunityType, StudentSpot,
@@ -19,6 +21,7 @@ export default function Students({
   listingControls, studentSpots, studentApps, activeStudentTab, setActiveStudentTab,
   handleStudentApplyClick, onView,
 }: StudentsProps) {
+  const { session } = useAuth();
   const filteredSpots = studentSpots.filter(
     spot => spot.tipo === activeStudentTab
   );
@@ -185,7 +188,7 @@ export default function Students({
 
               {/* POSTULACIÓN */}
               <button type="button" className="btn-vol-apply" onClick={() => { if (spot.opportunityKey) onView(spot.opportunityKey); }}>Ver detalles</button>
-              <button
+              {!isAdministrator(session) && <button
                 className="btn-vol-apply"
                 onClick={() => handleStudentApplyClick(spot)}
                 style={{ marginTop: '15px' }}
@@ -194,7 +197,7 @@ export default function Students({
                 {alreadyApplied
                   ? 'Postulado ✓'
                   : 'Postularme'}
-              </button>
+              </button>}
 
             </div>
           );

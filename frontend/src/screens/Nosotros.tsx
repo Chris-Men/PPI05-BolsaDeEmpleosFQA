@@ -33,7 +33,6 @@ import {
 
 import nosotrosDesktop from "../components/imagenes/img/nosotros.png";
 import nosotrosResponsive from "../components/imagenes/img/nosotros renponsiv.png";
-import fundadorImg from "../components/imagenes/img/Fundador.png";
 import "../styles/users/nosotros.css";
 import { useSiteSettings } from '../hooks/useSiteSettings';
 

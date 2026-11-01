@@ -1,4 +1,5 @@
-import { useId, useState } from 'react';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
+import { useEffect, useId } from 'react';
 import type { CandidateDemographics, CategoryStatistics } from '../../types/statistics';
 import { demographicStatisticsCharts, distributionPercent, statisticsCalendarLabel, type StatisticsDistribution } from '../../utils/statisticsPresentation';
 
@@ -11,9 +12,12 @@ type DistributionChartProps = Omit<StatisticsDistribution, 'key'>;
 
 /** Client pagination only slices aggregate rows; totals always describe the whole applied period. */
 export function CategoryStatisticsTable({ rows, published, applications }: CategoryStatisticsTableProps) {
-  const [page, setPage] = useState(0);
+  const [{ categoryPage }, setQuery, correctQuery] = useRouteQuery({ categoryPage: 1 });
+  const page = categoryPage - 1;
+  const setPage = (page: number) => setQuery({ categoryPage: page + 1 });
   const titleId = useId(); const pageSize = 10;
   const pages = Math.max(1, Math.ceil((rows?.length ?? 0) / pageSize)); const currentPage = Math.min(page, pages - 1);
+  useEffect(() => { if (rows && categoryPage > pages) correctQuery({categoryPage:pages}); }, [rows, categoryPage, pages, correctQuery]);
   return <section className="statistics-box statistics-category-panel" aria-labelledby={titleId}>
     <div className="statistics-box-header"><div><h3 id={titleId}>Oferta y demanda por categoría</h3><span>Publicaciones y postulaciones del período, según la categoría actual de cada oportunidad.</span></div></div>
     {!rows ? <p>Esperando indicadores…</p> : !rows.length ? <p>No hubo publicaciones ni postulaciones en este período.</p> : <>

@@ -1,7 +1,7 @@
+import { getResetCredential, clearResetCredential } from '../../utils/resetCredential';
 import { useLiveValidation } from '../../hooks/useLiveValidation';
 import { passwordErrors, fieldErrors } from '../../validation/fields';
 import {
-    useEffect,
     useRef,
     useState,
     type CSSProperties,
@@ -81,15 +81,10 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
 
     const passwordStrength = getPasswordStrength(password);
 
-    const [token] = useState(() => new URLSearchParams(window.location.search).get('token')?.trim() ?? '');
-
-    /** Remove the credential from the address bar before other navigation. */
-    useEffect(() => {
-        window.history.replaceState({}, document.title, '/reset-password');
-    }, []);
+    const [token] = useState(getResetCredential);
 
     const goToScreen = (nextScreen: 'login' | 'home') => {
-        window.history.replaceState({}, document.title, '/');
+        clearResetCredential();
         navigateTo(nextScreen);
     };
 
@@ -159,7 +154,7 @@ const ResetPassword = ({ navigateTo }: ResetPasswordProps) => {
              * Give the user a moment to read the confirmation before
              * returning to the login screen.
              */
-            window.history.replaceState({}, document.title, '/');
+            clearResetCredential();
 
             window.setTimeout(() => {
                 navigateTo('login');

@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useNavigation';
 import { closingDay, isNumericEdit, validateOpportunityValues } from '../../utils/opportunityValidation';
 import { focusFirstInvalid } from '../../utils/candidateValidation';
 import { siteToday } from '../../utils/statisticsDates';
@@ -36,7 +37,7 @@ const zoneOf = (department: string, zones: LocationZone[]): string =>
   zones.find((zone) => zone.departments.some((item) => item.name === department))?.name ?? '';
 
 /** All four types share one editor; a saved vacancy retains its original discriminator. */
-export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCancel }: OpportunityEditorProps) {
+export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCancel: closeEditor }: OpportunityEditorProps) {
   const { session } = useAuth();
   const formRef = useRef<HTMLFormElement>(null); const fieldId = useId();
   const [kind, setKind] = useState<OpportunityKind>(opportunity?.kind ?? 'EMPLOYMENT');
@@ -50,6 +51,9 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
   const [created, setCreated] = useState(false);
   /** Alerta de éxito: se muestra ~2 s y luego se vuelve al listado con onSaved. */
   const [success, setSuccess] = useState<{ title: string; message: string } | null>(null);
+  const initial = useRef(JSON.stringify({ values, kind, zone }));
+  const guard = useUnsavedChanges(!success && JSON.stringify({ values, kind, zone }) !== initial.current, busy);
+  const onCancel = () => guard.leave(closeEditor);
   const canSave = canManageVacancies(session, opportunity || created ? 'opportunities.update' : 'opportunities.create');
 
   /** Campos obligatorios (marcados con *). Dependen del tipo de vacante. */
@@ -161,7 +165,7 @@ export default function OpportunityEditor({ opportunity, catalogs, onSaved, onCa
       savedKey.current = saved.key; setCreated(true);
       if (publish) await setOpportunityStatus(saved.key, 'OPEN');
       // En lugar de salir de inmediato, muestra la alerta; ella llama a onSaved al terminar.
-      setSuccess(publish
+      guard.commit(); setSuccess(publish
         ? { title: 'Vacante publicada', message: 'La vacante se publicó correctamente y ya es visible para los candidatos.' }
         : opportunity?.status === 'OPEN'
           ? { title: 'Cambios guardados', message: 'Los cambios de la vacante se guardaron correctamente.' }

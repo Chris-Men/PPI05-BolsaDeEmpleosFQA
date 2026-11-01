@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useNavigation } from '../../hooks/useNavigation';
+import { useRouteQuery } from '../../hooks/useRouteQuery';
 import { useAuth } from '../../hooks/useAuth';
 import { useOpportunityCatalogs, useOpportunityListing } from '../../hooks/useOpportunities';
 import { useApplications } from '../../hooks/useApplications';
@@ -9,15 +11,25 @@ import { KIND_LABELS, type OpportunityKind } from '../../types/opportunity';
 import { ApplicationDetails } from './ApplicationDetails';
 import '../../styles/users/applicationsList.css';
 
-interface ApplicationListProps { admin?:boolean; onResume?:(key:string)=>void; onChanged?:()=>void; initialId?:number }
+interface ApplicationListProps { admin?:boolean; onResume?:(key:string)=>void; onChanged?:()=>void }
 /** One server-filtered list covers all four types and their separate attempts. */
-export function ApplicationList({admin=false,onResume,onChanged,initialId}:ApplicationListProps) {
-  const [filters,setFilters]=useState<ApplicationFilters>({page:1,pageSize:20}); const result=useApplications(filters,admin);
+export function ApplicationList({admin=false,onResume,onChanged}:ApplicationListProps) {
+  const { route, location, go, back } = useNavigation();
+  const base = admin ? '/admin/postulaciones' : '/perfil/postulaciones';
+  const selected = route.applicationId ?? null;
+  const setSelected = (id: number | null) => id ? go(base + '/' + id + location.search) : back(base + location.search);
+  const [filters,setFilters,correctFilters]=useRouteQuery<ApplicationFilters>({page:1,pageSize:20,search:undefined,kind:undefined,status:undefined,from:undefined,to:undefined,organizationId:undefined,candidateId:undefined,opportunityKey:undefined}, {pageSize:{max:100},organizationId:{type:'integer'},candidateId:{type:'integer'},opportunityKey:{pattern:'^(job|volunteer)-[1-9]\\d*$'},kind:{choices:Object.keys(KIND_LABELS)},status:{choices:Object.keys(APPLICATION_LABELS).filter(key=>key!=='UNKNOWN')},from:{type:'date'},to:{type:'date'}}); const result=useApplications(filters,admin);
   const {session}=useAuth();const dictionaries=useOpportunityCatalogs(admin,admin&&Boolean(session?.permissions.includes('opportunities.read')));
   const vacancies=useOpportunityListing({pageSize:100,search:filters.search},admin&&Boolean(session?.permissions.includes('opportunities.read')),true);
-  const [draftPage,setDraftPage]=useState(1);const [draftTotal,setDraftTotal]=useState(0);
-  const [selected,setSelected]=useState<number|null>(initialId??null);const [drafts,setDrafts]=useState<ApplicationDraft[]>([]);const [draftError,setDraftError]=useState('');const [discard,setDiscard]=useState<ApplicationDraft|null>(null);const [busy,setBusy]=useState(false);const [draftRevision,setDraftRevision]=useState(0);
-  useEffect(()=>{if(admin)return;let current=true;void listApplicationDrafts(draftPage).then(value=>{if(current){setDrafts(value.items);setDraftTotal(value.total);}}).catch((failure:unknown)=>{if(current)setDraftError(failure instanceof Error?failure.message:'No se pudieron cargar los borradores.');});return()=>{current=false;};},[admin,draftRevision,draftPage]);
+  const [{draftPage},setDraftQuery,correctDraftQuery]=useRouteQuery({draftPage:1});const setDraftPage=(update:number|((value:number)=>number))=>setDraftQuery(value=>({draftPage:typeof update==='function'?update(value.draftPage):update}));const [draftTotal,setDraftTotal]=useState(0);
+  const [drafts,setDrafts]=useState<ApplicationDraft[]>([]);const [draftError,setDraftError]=useState('');const [discard,setDiscard]=useState<ApplicationDraft|null>(null);const [busy,setBusy]=useState(false);const [draftRevision,setDraftRevision]=useState(0);
+  useEffect(()=>{if(admin)return;let current=true;void listApplicationDrafts(draftPage).then(value=>{if(current){const lastPage=Math.max(1,Math.ceil(value.total/value.pageSize));if(draftPage>lastPage){correctDraftQuery({draftPage:lastPage});return;}setDrafts(value.items);setDraftTotal(value.total);}}).catch((failure:unknown)=>{if(current)setDraftError(failure instanceof Error?failure.message:'No se pudieron cargar los borradores.');});return()=>{current=false;};},[admin,draftRevision,draftPage,correctDraftQuery]);
+  useEffect(()=>{
+    if(filters.from&&filters.to&&filters.from>filters.to){correctFilters({...filters,to:undefined,page:1});return;}
+    if(result.loading||result.error||result.page.page!==(filters.page??1))return;
+    const lastPage=Math.max(1,Math.ceil(result.page.total/result.page.pageSize));
+    if((filters.page??1)>lastPage)correctFilters({...filters,page:lastPage});
+  },[result.loading,result.error,result.page.page,result.page.total,result.page.pageSize,filters,correctFilters]);
   const changed=()=>{result.reload();onChanged?.();};
   const filter=(value:Partial<ApplicationFilters>)=>setFilters(previous=>({...previous,...value,page:1}));
   const discardDraft=async()=>{if(!discard||busy)return;setBusy(true);setDraftError('');try{await deleteApplicationDraft(discard.id);setDiscard(null);setDraftPage(1);setDraftRevision(value=>value+1);}catch(failure){setDraftError(failure instanceof Error?failure.message:'No se pudo descartar el borrador.');}finally{setBusy(false);}};

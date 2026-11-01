@@ -1,10 +1,10 @@
+import { useNavigation } from '../../hooks/useNavigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import { ArrowRight, Bell, Check, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useApplications';
 import { markNotificationRead } from '../../services/applicationService';
 import type { CandidateNotification } from '../../types/application';
-import { ApplicationDetails } from '../applications/ApplicationDetails';
 
 interface NotificationDropdownProps {
   open: boolean;
@@ -23,7 +23,7 @@ export function NotificationDropdown({ open, onOpenChange, onViewAll }: Notifica
   const canMarkRead = session?.permissions.includes('notifications.update.own');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState<number | null>(null);
+  const { go } = useNavigation();
   const { reload } = state;
 
   useEffect(() => { if (open) reload(); }, [open, reload]);
@@ -49,7 +49,7 @@ export function NotificationDropdown({ open, onOpenChange, onViewAll }: Notifica
     setBusy(true); setError('');
     try {
       if (!item.readAt && canMarkRead) await markNotificationRead(item.id);
-      if (item.applicationId) { onOpenChange(false); setSelected(item.applicationId); }
+      if (item.applicationId) { onOpenChange(false); go('/perfil/notificaciones/postulaciones/' + item.applicationId); }
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'No se pudo abrir la notificación.');
     } finally { setBusy(false); }
@@ -85,6 +85,5 @@ export function NotificationDropdown({ open, onOpenChange, onViewAll }: Notifica
       </div>
       <button type="button" className="nav-notifications-view-all" onClick={() => { onOpenChange(false); onViewAll(); }}>Ver todas <ArrowRight size={17} aria-hidden="true" /></button>
     </section>}
-    {selected !== null && <ApplicationDetails id={selected} onClose={() => { setSelected(null); trigger.current?.focus(); }} onChanged={reload} />}
   </div>;
 }
